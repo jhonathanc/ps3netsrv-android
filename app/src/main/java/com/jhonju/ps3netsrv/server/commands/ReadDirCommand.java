@@ -1,21 +1,13 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.results.ReadDirResult;
 import com.jhonju.ps3netsrv.server.results.ReadDirResultData;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ReadDirCommand implements ICommand {
     private Context ctx;
@@ -25,28 +17,24 @@ public class ReadDirCommand implements ICommand {
         this.ctx = ctx;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O) //TODO: FIND A WAY TO REMOVE THIS TO LET THE JAVA CODE INDEPENDENT OF ANDROID
     @Override
     public void executeTask() throws Exception {
         ReadDirResult result;
-        List<ReadDirResultData> entries = new ArrayList<>();
         File file = ctx.getFile();
         if (file == null || !(file.exists() && file.isDirectory())) {
-            result = new ReadDirResult(0);
+            ctx.getOutputStream().write(Utils.toByteArray(new ReadDirResult(0)));
         } else {
-            List<File> files = Files.list(Paths.get(file.getPath()))
-                    .map(Path::toFile)
-                    .collect(Collectors.toList());
+            File[] files = file.listFiles();
 
+            List<ReadDirResultData> entries = new ArrayList<>();
             for(File f : files) {
                 if (entries.size() == MAX_ENTRIES) break;
                 entries.add(new ReadDirResultData(f.isDirectory() ? 0 : f.length(), f.lastModified(), f.isDirectory(), f.getName()));
             }
-            result = new ReadDirResult(entries.size());
+            ctx.getOutputStream().write(Utils.toByteArray(new ReadDirResult(entries.size())));
+            if (entries.size() > 0)
+                ctx.getOutputStream().write(Utils.toByteArray(entries));
         }
         ctx.setFile(null);
-        ctx.getOutputStream().write(Utils.toByteArray(result));
-        if (entries.size() > 0)
-            ctx.getOutputStream().write(Utils.toByteArray(entries));
     }
 }

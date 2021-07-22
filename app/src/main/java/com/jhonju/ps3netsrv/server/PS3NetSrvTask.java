@@ -24,9 +24,8 @@ public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
     protected Void doInBackground(String... params) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (!isCancelled()) {
-                try (Socket socket = serverSocket.accept()) {
-                    new ServerThread(new Context(socket, folderPath)).start();
-                }
+                Socket socket = serverSocket.accept();
+                new ServerThread(new Context(socket, folderPath)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -44,8 +43,7 @@ public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
 
         public void run() {
             try {
-                while (true) {
-                    if (!ctx.isSocketConnected()) break;
+                while (ctx.isSocketConnected()) {
                     byte[] pct = new byte[CMD_DATA_SIZE];
                     ctx.getInputStream().read(pct);
                     if (Utils.isByteArrayEmpty(pct))

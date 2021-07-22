@@ -9,13 +9,12 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class OpenDirCommand implements ICommand {
-    private Context ctx;
-    private int dpLen;
-    private short[] pad = new short[12];
+public class OpenDirCommand  extends AbstractCommand implements ICommand {
+    private short dpLen;
+    private byte[] pad = new byte[12];
 
     public OpenDirCommand(Context ctx) {
-        this.ctx = ctx;
+        super(ctx);
         CommandData cmd = ctx.getCommandData();
         this.dpLen = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 0, 2)).getShort();
         for (byte i = 2; i < cmd.getData().length; i++)

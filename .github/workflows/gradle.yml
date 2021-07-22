@@ -29,4 +29,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ps3netsrv-android
-        path: app\build\outputs\apk\release
+        path: app\build\outputs\apk\debug

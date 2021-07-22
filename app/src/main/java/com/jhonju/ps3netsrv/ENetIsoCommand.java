@@ -42,7 +42,7 @@ public enum ENetIsoCommand {
     /* Replace this with any custom command */
     NETISO_CMD_CUSTOM_0(0x2412);
 
-    private static Map map = new HashMap<>();
+//    private static Map map = new HashMap<>();
 
     public final int value;
 

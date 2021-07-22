@@ -24,9 +24,9 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew assembleDebug
     - name: Upload files
       uses: actions/upload-artifact@v2
       with:
         name: ps3netsrv-android
-        path: app\build\outputs\apk\debug
+        path: app/build/outputs/apk/debug/app-debug.apk

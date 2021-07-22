@@ -50,13 +50,18 @@ public enum ENetIsoCommand {
         this.value = value;
     }
 
-    static {
-        for (ENetIsoCommand comm : ENetIsoCommand.values()) {
-            map.put(comm.value, comm);
-        }
-    }
+//    static {
+//        for (ENetIsoCommand comm : ENetIsoCommand.values()) {
+//            map.put(comm.value, comm);
+//        }
+//    }
 
     public static ENetIsoCommand valueOf(int command) {
-        return (ENetIsoCommand) map.get(command);
+        for (ENetIsoCommand comm : ENetIsoCommand.values()) {
+            if (comm.value == command) {
+                return comm;
+            }
+        }
+        return null;
     }
 };

@@ -3,8 +3,6 @@ package com.jhonju.ps3netsrv;
 import android.os.AsyncTask;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 

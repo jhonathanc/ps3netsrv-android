@@ -1,4 +1,6 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.server;
+
+import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 
 public class CommandData {
 

@@ -1,7 +1,4 @@
-package com.jhonju.ps3netsrv;
-
-import java.util.HashMap;
-import java.util.Map;
+package com.jhonju.ps3netsrv.server.enums;
 
 public enum ENetIsoCommand {
     /* Closes the active ro file (if any) and open/stat a new one */
@@ -42,19 +39,11 @@ public enum ENetIsoCommand {
     /* Replace this with any custom command */
     NETISO_CMD_CUSTOM_0(0x2412);
 
-//    private static Map map = new HashMap<>();
-
     public final int value;
 
-    private ENetIsoCommand(int value) {
+    ENetIsoCommand(int value) {
         this.value = value;
     }
-
-//    static {
-//        for (ENetIsoCommand comm : ENetIsoCommand.values()) {
-//            map.put(comm.value, comm);
-//        }
-//    }
 
     public static ENetIsoCommand valueOf(int command) {
         for (ENetIsoCommand comm : ENetIsoCommand.values()) {
@@ -64,4 +53,4 @@ public enum ENetIsoCommand {
         }
         return null;
     }
-};
+}

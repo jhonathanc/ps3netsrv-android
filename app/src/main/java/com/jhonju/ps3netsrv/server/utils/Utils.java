@@ -1,4 +1,4 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.server.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,24 +36,26 @@ public class Utils {
         for (Field field: fields) {
             field.setAccessible(true);
             Object value = field.get(obj);
-            if (value.getClass() == Boolean.class) {
-                byte[] teste = new byte[]{(byte) ((boolean)value? 1 : 0)};
-                out.write(teste);
-            } else if (value.getClass() == Long.class) {
-                out.write(longToBytes((long)value));
-            } else if (value.getClass() == Integer.class) {
-                out.write(intToBytes((int)value));
-            } else if (value.getClass() == String.class) {
-                out.write(((String)value).getBytes());
-            } else {
-                out.write(charToByteArray((char[])value));
+            if (value != null) {
+                if (value.getClass() == Boolean.class) {
+                    byte[] teste = new byte[]{(byte) ((boolean) value ? 1 : 0)};
+                    out.write(teste);
+                } else if (value.getClass() == Long.class) {
+                    out.write(longToBytes((long) value));
+                } else if (value.getClass() == Integer.class) {
+                    out.write(intToBytes((int) value));
+                } else if (value.getClass() == String.class) {
+                    out.write(((String) value).getBytes());
+                } else {
+                    out.write(charToByteArray((char[]) value));
+                }
             }
         }
     }
 
     private static byte[] charToByteArray(char[] chars) {
         CharBuffer charBuffer = CharBuffer.wrap(chars);
-        ByteBuffer byteBuffer = Charset.forName("UTF-8").encode(charBuffer);
+        ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(charBuffer);
         byte[] bytes = Arrays.copyOfRange(byteBuffer.array(),
                 byteBuffer.position(), byteBuffer.limit());
         Arrays.fill(byteBuffer.array(), (byte) 0); // clear sensitive data
@@ -81,8 +84,8 @@ public class Utils {
         if (byteArray.length == 0) {
             return true;
         }
-        for(int i = 0; i < byteArray.length; i++) {
-            if (byteArray[i] != '\0') {
+        for (byte b : byteArray) {
+            if (b != '\0') {
                 return false;
             }
         }

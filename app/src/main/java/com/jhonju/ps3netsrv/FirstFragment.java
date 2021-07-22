@@ -9,14 +9,14 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
 
 public class FirstFragment extends Fragment {
 
     private boolean isServerRunning = false;
-    PS3NetSrv server;
+    PS3NetSrvTask server;
 
     @Override
     public View onCreateView(
@@ -40,7 +40,7 @@ public class FirstFragment extends Fragment {
                     if (isServerRunning) {
                         server.cancel(true);
                     } else {
-                        server = new PS3NetSrv(port, folderPath);
+                        server = new PS3NetSrvTask(port, folderPath);
                         server.execute("");
                     }
                     isServerRunning = !isServerRunning;

@@ -1,8 +1,13 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.server.commands;
 
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
+
+import com.jhonju.ps3netsrv.server.Context;
+import com.jhonju.ps3netsrv.server.results.ReadDirResult;
+import com.jhonju.ps3netsrv.server.results.ReadDirResultData;
+import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -20,7 +25,7 @@ public class ReadDirCommand implements ICommand {
         this.ctx = ctx;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.O) //TODO: FIND A WAY TO REMOVE THIS TO LET THE JAVA CODE INDEPENDENT OF ANDROID
     @Override
     public void executeTask() throws Exception {
         ReadDirResult result;

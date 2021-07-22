@@ -1,6 +1,5 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.server.results;
 
-import java.io.IOException;
 import java.io.Serializable;
 
 public class OpenDirResult implements Serializable {

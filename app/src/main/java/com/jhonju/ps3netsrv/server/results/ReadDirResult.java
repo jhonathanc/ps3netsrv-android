@@ -1,4 +1,4 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.server.results;
 
 public class ReadDirResult {
     public final long dirSize;

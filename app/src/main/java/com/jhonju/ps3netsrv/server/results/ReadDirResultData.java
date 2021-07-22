@@ -1,6 +1,4 @@
-package com.jhonju.ps3netsrv;
-
-import java.util.Date;
+package com.jhonju.ps3netsrv.server.results;
 
 public class ReadDirResultData {
     public final long aFileSize;

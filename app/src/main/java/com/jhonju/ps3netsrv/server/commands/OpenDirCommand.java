@@ -1,8 +1,11 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.server.commands;
+
+import com.jhonju.ps3netsrv.server.CommandData;
+import com.jhonju.ps3netsrv.server.Context;
+import com.jhonju.ps3netsrv.server.results.OpenDirResult;
+import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -23,7 +26,7 @@ public class OpenDirCommand implements ICommand {
     public void executeTask() throws Exception {
         byte[] bFolderPath = new byte[16 + this.dpLen];
         ctx.getInputStream().read(bFolderPath, 16, dpLen);
-        String folderPath = SettingsService.getFolder() + new String(bFolderPath).replaceAll("\0", "");
+        String folderPath = ctx.getRootDirectory() + new String(bFolderPath).replaceAll("\0", "");
         File file = new File(folderPath);
         if (file.exists()) {
             ctx.setFile(file);
@@ -32,7 +35,5 @@ public class OpenDirCommand implements ICommand {
             ctx.setFile(null);
             ctx.getOutputStream().write(Utils.toByteArray(new OpenDirResult(-1)));
         }
-        //os.write(new OpenDirResult(file.isDirectory() ? 0 : -1).toByteArray());
-        //os.write(Utils.intToBytes(file.isDirectory() ? 0 : -1));
     }
 }

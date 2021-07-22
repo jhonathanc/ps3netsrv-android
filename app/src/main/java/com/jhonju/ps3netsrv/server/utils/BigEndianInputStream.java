@@ -1,4 +1,4 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.server.utils;
 
 import java.io.DataInputStream;
 import java.io.InputStream;

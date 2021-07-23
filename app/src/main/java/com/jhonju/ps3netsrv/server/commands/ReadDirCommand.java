@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReadDirCommand extends AbstractCommand implements ICommand {
+public class ReadDirCommand extends AbstractCommand {
     private static final long MAX_ENTRIES = 4096;
 
     public ReadDirCommand(Context ctx) {

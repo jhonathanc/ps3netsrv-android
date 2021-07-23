@@ -9,7 +9,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class OpenDirCommand  extends AbstractCommand implements ICommand {
+public class OpenDirCommand  extends AbstractCommand {
     private short dpLen;
     private byte[] pad = new byte[12];
 

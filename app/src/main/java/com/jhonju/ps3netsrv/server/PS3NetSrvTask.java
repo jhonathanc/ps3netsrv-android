@@ -6,6 +6,7 @@ import com.jhonju.ps3netsrv.server.commands.ICommand;
 import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;
 import com.jhonju.ps3netsrv.server.commands.OpenFileCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadDirCommand;
+import com.jhonju.ps3netsrv.server.commands.ReadFileCriticalCommand;
 import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
@@ -77,7 +78,10 @@ public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
                     //handleReadFile(ctx);
                     break;
                 case NETISO_CMD_READ_FILE_CRITICAL:
-                    //handleReadFileCritical(ctx);
+                    cmd = new ReadFileCriticalCommand(ctx);
+                    break;
+                case NETISO_CMD_READ_CD_2048_CRITICAL:
+                    //
                     break;
                 default:
                     throw new Exception("Deu pau");

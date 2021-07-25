@@ -5,7 +5,9 @@ import com.jhonju.ps3netsrv.server.utils.BigEndianInputStream;
 import com.jhonju.ps3netsrv.server.utils.BigEndianOutputStream;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -21,6 +23,7 @@ public class Context {
     private BigEndianInputStream inputStream;
     private BigEndianOutputStream outputStream;
     private File file;
+    private RandomAccessFile readOnlyFile;
 
     public Context(Socket socket, String rootDirectory) throws IOException {
         this.rootDirectory = rootDirectory;
@@ -50,6 +53,18 @@ public class Context {
 
     public void setFile(File file) {
         this.file = file;
+    }
+
+    public RandomAccessFile getReadOnlyFile() {
+        try {
+            if ((file != null) && (file.exists()))
+                return new RandomAccessFile(file, "r");
+            else
+                return null;
+        } catch (FileNotFoundException fe) {
+            fe.printStackTrace(); //should never throw this exception...
+            return null;
+        }
     }
 
     public CommandData getCommandData() {

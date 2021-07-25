@@ -36,11 +36,10 @@ public class StatFileCommand extends AbstractCommand {
             if (file.isDirectory()) {
                 statResult = new StatFileResult(0, 0, 0, 0, true);
             } else {
-                javaxt.io.File jxtFile = new javaxt.io.File(filePath);
+                javaxt.io.File jxtFile = new javaxt.io.File(file);
                 long modifiedTime = 0;
                 long creationTime = 0;
                 long lastAccessTime = 0;
-
 
                 Date modifiedDate = jxtFile.getLastModifiedTime();
                 if (modifiedDate != null)

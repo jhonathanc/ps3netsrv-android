@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 
 import com.jhonju.ps3netsrv.server.commands.ICommand;
 import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;
+import com.jhonju.ps3netsrv.server.commands.OpenFileCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadDirCommand;
 import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
 import com.jhonju.ps3netsrv.server.utils.Utils;
@@ -70,7 +71,7 @@ public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
                     cmd = new StatFileCommand(ctx);
                     break;
                 case NETISO_CMD_OPEN_FILE:
-                    //handleOpenFile(ctx);
+                    cmd = new OpenFileCommand(ctx);
                     break;
                 case NETISO_CMD_READ_FILE:
                     //handleReadFile(ctx);

@@ -53,18 +53,20 @@ public class Context {
 
     public void setFile(File file) {
         this.file = file;
+        if ((file != null) && file.exists() && !file.isDirectory()) {
+            try {
+                readOnlyFile = new RandomAccessFile(file, "r");
+            } catch (FileNotFoundException fe) {
+                readOnlyFile = null;
+                fe.printStackTrace();
+            }
+        } else {
+            readOnlyFile = null;
+        }
     }
 
     public RandomAccessFile getReadOnlyFile() {
-        try {
-            if ((file != null) && (file.exists()))
-                return new RandomAccessFile(file, "r");
-            else
-                return null;
-        } catch (FileNotFoundException fe) {
-            fe.printStackTrace(); //should never throw this exception...
-            return null;
-        }
+        return readOnlyFile;
     }
 
     public CommandData getCommandData() {

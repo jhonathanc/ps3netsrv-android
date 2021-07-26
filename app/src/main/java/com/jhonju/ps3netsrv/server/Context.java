@@ -2,12 +2,12 @@ package com.jhonju.ps3netsrv.server;
 
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
 import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
-import com.jhonju.ps3netsrv.server.utils.BigEndianInputStream;
-import com.jhonju.ps3netsrv.server.utils.BigEndianOutputStream;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -20,19 +20,13 @@ public class Context {
     private String rootDirectory;
     private Socket socket;
     private CommandData commandData;
-    private InetAddress remoteAddress;
-    private BigEndianInputStream inputStream;
-    private BigEndianOutputStream outputStream;
     private File file;
     private RandomAccessFile readOnlyFile;
     private CDSectorSize cdSectorSize;
 
-    public Context(Socket socket, String rootDirectory) throws IOException {
+    public Context(Socket socket, String rootDirectory) {
         this.rootDirectory = rootDirectory;
         this.socket = socket;
-        remoteAddress = socket.getInetAddress();
-        inputStream = new BigEndianInputStream(socket.getInputStream());
-        outputStream = new BigEndianOutputStream(socket.getOutputStream());
         this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
     }
 
@@ -49,13 +43,13 @@ public class Context {
     }
 
     public InetAddress getRemoteAddress() {
-        return remoteAddress;
+        return socket.getInetAddress();
     }
 
-    public BigEndianInputStream getInputStream() { return inputStream; }
+    public InputStream getInputStream() throws IOException { return socket.getInputStream(); }
 
-    public BigEndianOutputStream getOutputStream() {
-        return outputStream;
+    public OutputStream getOutputStream() throws IOException {
+        return socket.getOutputStream();
     }
 
     public File getFile() {

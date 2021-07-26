@@ -1,11 +1,11 @@
 package com.jhonju.ps3netsrv.server.enums;
 
 public enum CDSectorSize {
-    CD_SECTOR_2048(2048)
+    CD_SECTOR_2352(2352)
+    , CD_SECTOR_2048(2048)
     , CD_SECTOR_2328(2328)
     , CD_SECTOR_2336(2336)
     , CD_SECTOR_2340(2340)
-    , CD_SECTOR_2352(2352)
     , CD_SECTOR_2368(2368)
     , CD_SECTOR_2448(2448);
 

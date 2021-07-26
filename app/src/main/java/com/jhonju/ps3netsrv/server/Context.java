@@ -1,5 +1,6 @@
 package com.jhonju.ps3netsrv.server;
 
+import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
 import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 import com.jhonju.ps3netsrv.server.utils.BigEndianInputStream;
 import com.jhonju.ps3netsrv.server.utils.BigEndianOutputStream;
@@ -24,6 +25,7 @@ public class Context {
     private BigEndianOutputStream outputStream;
     private File file;
     private RandomAccessFile readOnlyFile;
+    private CDSectorSize cdSectorSize;
 
     public Context(Socket socket, String rootDirectory) throws IOException {
         this.rootDirectory = rootDirectory;
@@ -31,11 +33,20 @@ public class Context {
         remoteAddress = socket.getInetAddress();
         inputStream = new BigEndianInputStream(socket.getInputStream());
         outputStream = new BigEndianOutputStream(socket.getOutputStream());
+        this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
     }
 
     public String getRootDirectory() { return rootDirectory; }
 
     public boolean isSocketConnected() { return socket.isConnected(); }
+
+    public CDSectorSize getCdSectorSize() {
+        return cdSectorSize;
+    }
+
+    public void setCdSectorSize(CDSectorSize cdSectorSize) {
+        this.cdSectorSize = cdSectorSize;
+    }
 
     public InetAddress getRemoteAddress() {
         return remoteAddress;

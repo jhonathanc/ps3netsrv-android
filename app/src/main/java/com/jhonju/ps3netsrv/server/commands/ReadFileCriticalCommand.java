@@ -23,7 +23,8 @@ public class ReadFileCriticalCommand extends AbstractCommand {
         byte[] result = new byte[numBytes];
         RandomAccessFile file = ctx.getReadOnlyFile();
         file.seek(offset);
-        file.read(result);
+        if (file.read(result) < 0)
+            throw new Exception("Error reading file.");
         ctx.getOutputStream().write(result);
     }
 }

@@ -50,9 +50,10 @@ public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
             try {
                 while (ctx.isSocketConnected()) {
                     byte[] pct = new byte[CMD_DATA_SIZE];
-                    ctx.getInputStream().read(pct);
-                    if (Utils.isByteArrayEmpty(pct))
+                    if (!Utils.readCommandData(ctx.getInputStream(), pct))
                         break;
+                    if (Utils.isByteArrayEmpty(pct))
+                        continue;
                     ctx.setCommandData(pct);
                     handleContext(ctx);
                 }

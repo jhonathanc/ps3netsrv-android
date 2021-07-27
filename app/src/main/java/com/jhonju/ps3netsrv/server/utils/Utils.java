@@ -91,4 +91,17 @@ public class Utils {
         }
         return true;
     }
+
+    public static boolean readCommandData(InputStream in, byte[] data) throws IOException {
+        boolean readAllCommand = true;
+        for(byte i=0; i < data.length; i++) {
+            Integer readByte = in.read();
+            if (readByte < 0) {
+                readAllCommand = false;
+                break;
+            }
+            data[i] = readByte.byteValue();
+        }
+        return readAllCommand;
+    }
 }

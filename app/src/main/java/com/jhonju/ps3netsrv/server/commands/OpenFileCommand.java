@@ -13,7 +13,6 @@ import java.util.Arrays;
 
 public class OpenFileCommand extends AbstractCommand {
     private short fpLen;
-    private byte[] pad = new byte[12];
     private long CD_MINIMUM_SIZE = 0x200000L;
     private long CD_MAXIMUM_SIZE = 0x35000000L;
 
@@ -21,22 +20,21 @@ public class OpenFileCommand extends AbstractCommand {
         super(ctx);
         CommandData cmd = ctx.getCommandData();
         this.fpLen = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 0, 2)).getShort();
-        for (byte i = 2; i < cmd.getData().length; i++)
-            pad[i-2] = cmd.getData()[i];
     }
 
     @Override
     public void executeTask() throws Exception {
         ctx.setFile(null);
-
-        byte[] bfilePath = new byte[16 + this.fpLen];
-        ctx.getInputStream().read(bfilePath, 16, fpLen);
+        byte[] bfilePath = new byte[this.fpLen];
+        if (!Utils.readCommandData(ctx.getInputStream(), bfilePath))
+            return;
         String filePath = ctx.getRootDirectory() + new String(bfilePath).replaceAll("\0", "");
         File file = new File(filePath);
         if (file.exists()) {
             ctx.setFile(file);
+            long fileLength = file.length();
             RandomAccessFile readOnlyFile = ctx.getReadOnlyFile();
-            if (file.length() >= CD_MINIMUM_SIZE && file.length() <= CD_MAXIMUM_SIZE) {
+            if (fileLength >= CD_MINIMUM_SIZE && fileLength <= CD_MAXIMUM_SIZE) {
                 for (CDSectorSize cdSec : CDSectorSize.values()) {
                     long position = (cdSec.cdSectorSize<<4) + 0x18;
                     byte[] buffer = new byte[20];
@@ -49,7 +47,7 @@ public class OpenFileCommand extends AbstractCommand {
                     }
                 }
             }
-            ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(file.length(), file.lastModified())));
+            ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(fileLength, file.lastModified())));
         } else {
             ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(-1, file.lastModified())));
         }

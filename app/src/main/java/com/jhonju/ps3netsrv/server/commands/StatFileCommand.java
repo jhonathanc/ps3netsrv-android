@@ -12,22 +12,21 @@ import java.util.Date;
 
 public class StatFileCommand extends AbstractCommand {
     private short fpLen;
-    private byte[] pad = new byte[12];
 
     public StatFileCommand(Context ctx) {
         super(ctx);
         CommandData cmd = ctx.getCommandData();
         this.fpLen = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 0, 2)).getShort();
-        for (byte i = 2; i < cmd.getData().length; i++)
-            pad[i-2] = cmd.getData()[i];
     }
 
     @Override
     public void executeTask() throws Exception {
         ctx.setFile(null);
 
-        byte[] bfilePath = new byte[16 + this.fpLen];
-        ctx.getInputStream().read(bfilePath, 16, fpLen);
+        byte[] bfilePath = new byte[this.fpLen];
+        if (!Utils.readCommandData(ctx.getInputStream(), bfilePath))
+            return;
+
         String filePath = ctx.getRootDirectory() + new String(bfilePath).replaceAll("\0", "");
         File file = new File(filePath);
         if (file.exists()) {

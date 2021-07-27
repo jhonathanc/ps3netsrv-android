@@ -28,9 +28,9 @@ public class ReadCD2048Command extends AbstractCommand {
 
         long offset = this.startSector * ctx.getCdSectorSize().cdSectorSize;
 
+        RandomAccessFile file = ctx.getReadOnlyFile();
         for (int i = 0; i < sectorCount; i++) {
             byte[] result = new byte[MAX_RESULT_SIZE];
-            RandomAccessFile file = ctx.getReadOnlyFile();
             file.seek(offset + 24);
             file.read(result);
             ctx.getOutputStream().write(result);

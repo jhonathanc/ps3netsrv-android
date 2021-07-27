@@ -24,6 +24,11 @@ public class ReadFileCommand extends AbstractCommand {
         byte[] result = new byte[numBytes];
         RandomAccessFile file = ctx.getReadOnlyFile();
         file.seek(offset);
-        ctx.getOutputStream().write(Utils.intToBytes(file.read(result)));
+        int bytesRead = file.read(result);
+        if (bytesRead <= 0) {
+            throw new Exception("Error on read file");
+        }
+        ctx.getOutputStream().write(Utils.intToBytes(bytesRead));
+        ctx.getOutputStream().write(result);
     }
 }

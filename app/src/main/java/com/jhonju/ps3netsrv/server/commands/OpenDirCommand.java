@@ -11,20 +11,19 @@ import java.util.Arrays;
 
 public class OpenDirCommand  extends AbstractCommand {
     private short dpLen;
-    private byte[] pad = new byte[12];
 
     public OpenDirCommand(Context ctx) {
         super(ctx);
         CommandData cmd = ctx.getCommandData();
         this.dpLen = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 0, 2)).getShort();
-        for (byte i = 2; i < cmd.getData().length; i++)
-            pad[i-2] = cmd.getData()[i];
     }
 
     @Override
     public void executeTask() throws Exception {
-        byte[] bFolderPath = new byte[16 + this.dpLen];
-        ctx.getInputStream().read(bFolderPath, 16, dpLen);
+        byte[] bFolderPath = new byte[this.dpLen];
+        if (!Utils.readCommandData(ctx.getInputStream(), bFolderPath))
+            return;
+
         String folderPath = ctx.getRootDirectory() + new String(bFolderPath).replaceAll("\0", "");
         File file = new File(folderPath);
         if (file.exists()) {

@@ -1,10 +1,8 @@
 package com.jhonju.ps3netsrv.server.utils;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -62,12 +60,6 @@ public class Utils {
         return bytes;
     }
 
-    public static Object deserialize(byte[] data) throws IOException, ClassNotFoundException {
-        ByteArrayInputStream in = new ByteArrayInputStream(data);
-        ObjectInputStream is = new ObjectInputStream(in);
-        return is.readObject();
-    }
-
     public static byte[] longToBytes(final long i) {
         ByteBuffer bb = ByteBuffer.allocate(8);
         bb.putLong(i);
@@ -93,15 +85,13 @@ public class Utils {
     }
 
     public static boolean readCommandData(InputStream in, byte[] data) throws IOException {
-        boolean readAllCommand = true;
-        for(byte i=0; i < data.length; i++) {
+        for (byte i=0; i < data.length; i++) {
             Integer readByte = in.read();
             if (readByte < 0) {
-                readAllCommand = false;
-                break;
+                return false;
             }
             data[i] = readByte.byteValue();
         }
-        return readAllCommand;
+        return true;
     }
 }

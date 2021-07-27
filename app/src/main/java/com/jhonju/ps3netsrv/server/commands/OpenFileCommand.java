@@ -13,8 +13,8 @@ import java.util.Arrays;
 
 public class OpenFileCommand extends AbstractCommand {
     private short fpLen;
-    private long CD_MINIMUM_SIZE = 0x200000L;
-    private long CD_MAXIMUM_SIZE = 0x35000000L;
+    private static final long CD_MINIMUM_SIZE = 0x200000L;
+    private static final long CD_MAXIMUM_SIZE = 0x35000000L;
 
     public OpenFileCommand(Context ctx) {
         super(ctx);

@@ -1,6 +1,9 @@
 package com.jhonju.ps3netsrv.server;
 
-import android.os.AsyncTask;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.Callable;
 
 import com.jhonju.ps3netsrv.server.commands.ICommand;
 import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;
@@ -12,11 +15,7 @@ import com.jhonju.ps3netsrv.server.commands.ReadFileCriticalCommand;
 import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-
-public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
+public class PS3NetSrvTask implements Callable<Void> {
     private int port;
     private String folderPath;
 
@@ -24,11 +23,11 @@ public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
         this.port = port;
         this.folderPath = folderPath;
     }
-
-    @Override
-    protected Void doInBackground(String... params) {
+    
+	@Override
+	public Void call() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            while (!isCancelled()) {
+            while (true) {
                 Socket socket = serverSocket.accept();
                 new ServerThread(new Context(socket, folderPath)).start();
             }
@@ -36,9 +35,9 @@ public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
             e.printStackTrace();
         }
         return null;
-    }
+	}
 
-    private class ServerThread extends Thread {
+    private static class ServerThread extends Thread {
         private static final byte CMD_DATA_SIZE = 16;
         private Context ctx;
 
@@ -63,7 +62,7 @@ public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
         }
 
         private void handleContext(Context ctx) throws Exception {
-            ICommand cmd = null;
+            ICommand cmd;
             switch (ctx.getCommandData().getOpCode()) {
                 case NETISO_CMD_OPEN_DIR:
                     cmd = new OpenDirCommand(ctx);
@@ -88,9 +87,6 @@ public class PS3NetSrvTask extends AsyncTask<String, Void, Void> {
                     break;
                 default:
                     throw new Exception("Deu pau");
-            }
-            if (cmd == null) {
-                throw new Exception("Not implemented yet");
             }
             cmd.executeTask();
         }

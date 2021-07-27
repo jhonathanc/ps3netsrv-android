@@ -1,8 +1,6 @@
 package com.jhonju.ps3netsrv.server.results;
 
-import java.io.Serializable;
-
-public class OpenDirResult implements Serializable {
+public class OpenDirResult {
     public final int openResult;
 
     public OpenDirResult(int openResult) {

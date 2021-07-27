@@ -16,7 +16,7 @@ import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
 public class FirstFragment extends Fragment {
 
     private boolean isServerRunning = false;
-    PS3NetSrvTask server;
+    private static PS3NetSrvTask server;
 
     @Override
     public View onCreateView(
@@ -38,10 +38,10 @@ public class FirstFragment extends Fragment {
                 int port = SettingsService.getPort();
                 try {
                     if (isServerRunning) {
-                        server.cancel(true);
+                        //TODO: develop the cancel method.
                     } else {
                         server = new PS3NetSrvTask(port, folderPath);
-                        server.execute("");
+                        server.call();
                     }
                     isServerRunning = !isServerRunning;
                     btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);

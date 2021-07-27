@@ -18,7 +18,6 @@ public class ReadDirCommand extends AbstractCommand {
 
     @Override
     public void executeTask() throws Exception {
-        ReadDirResult result;
         File file = ctx.getFile();
         if (file == null || !(file.exists() && file.isDirectory())) {
             ctx.getOutputStream().write(Utils.toByteArray(new ReadDirResult(0)));

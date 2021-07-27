@@ -3,6 +3,7 @@ package com.jhonju.ps3netsrv.server.commands;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Date;
 
 import com.jhonju.ps3netsrv.server.CommandData;
 import com.jhonju.ps3netsrv.server.Context;
@@ -34,22 +35,22 @@ public class StatFileCommand extends AbstractCommand {
             if (file.isDirectory()) {
                 statResult = new StatFileResult(0, 0, 0, 0, true);
             } else {
-//                javaxt.io.File jxtFile = new javaxt.io.File(file);
+                javaxt.io.File jxtFile = new javaxt.io.File(file);
                 long modifiedTime = 0;
                 long creationTime = 0;
                 long lastAccessTime = 0;
 
-//                Date modifiedDate = jxtFile.getLastModifiedTime();
-//                if (modifiedDate != null)
-//                    modifiedTime = modifiedDate.getTime();
-//
-//                Date creationDate = jxtFile.getCreationTime();
-//                if (creationDate != null)
-//                    creationTime = creationDate.getTime();
-//
-//                Date lastAccessDate = jxtFile.getLastAccessTime();
-//                if (lastAccessDate != null)
-//                    lastAccessTime = lastAccessDate.getTime();
+                Date modifiedDate = jxtFile.getLastModifiedTime();
+                if (modifiedDate != null)
+                    modifiedTime = modifiedDate.getTime();
+
+                Date creationDate = jxtFile.getCreationTime();
+                if (creationDate != null)
+                    creationTime = creationDate.getTime();
+
+                Date lastAccessDate = jxtFile.getLastAccessTime();
+                if (lastAccessDate != null)
+                    lastAccessTime = lastAccessDate.getTime();
 
                 statResult = new StatFileResult(file.length(), modifiedTime, creationTime, lastAccessTime, false);
             }

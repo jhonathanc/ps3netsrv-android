@@ -15,14 +15,12 @@ import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 public class PS3NetSrvTask implements Runnable {
-    private int port;
     private String folderPath;
     ServerSocket serverSocket;
 
     volatile boolean shutdown = false;
 
     public PS3NetSrvTask(int port, String folderPath) throws Exception {
-        this.port = port;
         this.folderPath = folderPath;
         serverSocket = new ServerSocket(port);
     }

@@ -3,7 +3,6 @@ package com.jhonju.ps3netsrv.server.commands;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Date;
 
 import com.jhonju.ps3netsrv.server.CommandData;
 import com.jhonju.ps3netsrv.server.Context;

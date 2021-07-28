@@ -21,7 +21,7 @@ public class PS3NetSrvMain {
         System.out.println("Server is running at " + port);
         System.out.println("Server is running at " + folderPath);
         server = new PS3NetSrvTask(port, folderPath);
-        server.call();
+        server.run();
         System.out.println("Server end");
     }
 }

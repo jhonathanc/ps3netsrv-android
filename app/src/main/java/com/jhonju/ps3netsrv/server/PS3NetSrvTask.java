@@ -15,27 +15,36 @@ import com.jhonju.ps3netsrv.server.commands.ReadFileCriticalCommand;
 import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
-public class PS3NetSrvTask implements Callable<Void> {
+public class PS3NetSrvTask implements Runnable {
     private int port;
     private String folderPath;
+    ServerSocket serverSocket;
 
-    public PS3NetSrvTask(int port, String folderPath) {
+    volatile boolean shutdown = false;
+
+    public PS3NetSrvTask(int port, String folderPath) throws Exception {
         this.port = port;
         this.folderPath = folderPath;
+        serverSocket = new ServerSocket(port);
     }
-    
-	@Override
-	public Void call() {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            while (true) {
+
+    @Override
+    public void run() {
+        try {
+            while (!shutdown) {
                 Socket socket = serverSocket.accept();
                 new ServerThread(new Context(socket, folderPath)).start();
             }
+            System.out.println("Thread end");
         } catch (IOException e) {
-            e.printStackTrace();
+            //just let it die alone - the serverSocket.close() throws this exception
         }
-        return null;
-	}
+    }
+
+    public void shutdown() throws IOException {
+        serverSocket.close();
+        shutdown = true;
+    }
 
     private static class ServerThread extends Thread {
         private static final byte CMD_DATA_SIZE = 16;

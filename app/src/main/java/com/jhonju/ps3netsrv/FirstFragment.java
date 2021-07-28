@@ -13,9 +13,14 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.snackbar.Snackbar;
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class FirstFragment extends Fragment {
 
     private boolean isServerRunning = false;
+    private static ExecutorService executorService;
     private static PS3NetSrvTask server;
 
     @Override
@@ -38,10 +43,14 @@ public class FirstFragment extends Fragment {
                 int port = SettingsService.getPort();
                 try {
                     if (isServerRunning) {
-                        //TODO: develop the cancel method.
+                        server.shutdown();
+                        executorService.shutdownNow();
                     } else {
                         server = new PS3NetSrvTask(port, folderPath);
-                        server.call();
+                        if (executorService == null || executorService.isTerminated()) {
+                            executorService = Executors.newSingleThreadExecutor();
+                        }
+                        executorService.execute(server);
                     }
                     isServerRunning = !isServerRunning;
                     btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);

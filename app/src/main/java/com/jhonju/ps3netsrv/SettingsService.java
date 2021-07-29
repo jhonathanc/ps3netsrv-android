@@ -4,6 +4,8 @@ import android.content.SharedPreferences;
 import android.os.Environment;
 import android.provider.MediaStore;
 
+import java.io.File;
+
 public class SettingsService {
     private static final String settings = "settings";
     private static SharedPreferences spPort = PS3NetSrvApp.getAppContext().getSharedPreferences("PORT",0);
@@ -14,8 +16,17 @@ public class SettingsService {
     }
 
     public static String getFolder() {
-        //return spFolder.getString(settings, PS3NetSrvApp.getAppContext().getApplicationInfo().dataDir);
-        return spFolder.getString(settings, PS3NetSrvApp.getAppContext().getExternalFilesDir(null).getAbsolutePath());
+        String state = Environment.getExternalStorageState();
+        if(Environment.MEDIA_MOUNTED.equals(state)) {
+            File baseDirFile = PS3NetSrvApp.getAppContext().getExternalFilesDir(null);
+            if(baseDirFile == null) {
+                return PS3NetSrvApp.getAppContext().getFilesDir().getAbsolutePath();
+            } else {
+                return baseDirFile.getAbsolutePath();
+            }
+        } else {
+            return PS3NetSrvApp.getAppContext().getFilesDir().getAbsolutePath();
+        }
     }
 
     public static void setPort(int port) {

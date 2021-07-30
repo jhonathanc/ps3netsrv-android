@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
+import com.jhonju.ps3netsrv.utils.Utils;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,7 +55,7 @@ public class FirstFragment extends Fragment {
                     isServerRunning = !isServerRunning;
                     btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);
 
-                    String serverRunningMsg = isServerRunning ? String.format(getResources().getString(R.string.server_running), port, folderPath) :
+                    String serverRunningMsg = isServerRunning ? String.format(getResources().getString(R.string.server_running), Utils.getIPAddress(true), port, folderPath) :
                             getResources().getString(R.string.server_stopped);
 
                     tvServerState.setText(serverRunningMsg);

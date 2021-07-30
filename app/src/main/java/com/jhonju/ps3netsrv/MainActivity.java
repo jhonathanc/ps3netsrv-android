@@ -1,5 +1,6 @@
 package com.jhonju.ps3netsrv;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
@@ -10,6 +11,10 @@ import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.tbruyelle.rxpermissions2.RxPermissions;
+
+import io.reactivex.functions.Consumer;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -19,6 +24,18 @@ public class MainActivity extends AppCompatActivity {
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        RxPermissions rxPermissions = new RxPermissions(this); // where this is an Activity instance // Must be done during an initialization phase like onCreate
+        rxPermissions.request(Manifest.permission.READ_EXTERNAL_STORAGE).subscribe(new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean granted) throws Exception {
+                if (granted) {
+                    //
+                } else {
+                    //
+                }
+            }
+        });
     }
 
     @Override

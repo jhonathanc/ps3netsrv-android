@@ -2,7 +2,6 @@ package com.jhonju.ps3netsrv;
 
 import android.content.SharedPreferences;
 import android.os.Environment;
-import android.provider.MediaStore;
 
 import java.io.File;
 
@@ -16,6 +15,10 @@ public class SettingsService {
     }
 
     public static String getFolder() {
+        return spFolder.getString(settings, getDefaultFolder());
+    }
+
+    private static String getDefaultFolder() {
         String state = Environment.getExternalStorageState();
         if(Environment.MEDIA_MOUNTED.equals(state)) {
             File baseDirFile = PS3NetSrvApp.getAppContext().getExternalFilesDir(null);

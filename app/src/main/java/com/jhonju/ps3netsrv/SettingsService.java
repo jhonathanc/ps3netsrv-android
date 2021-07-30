@@ -35,12 +35,12 @@ public class SettingsService {
     public static void setPort(int port) {
         SharedPreferences.Editor editor = spPort.edit();
         editor.putInt(settings, port);
-        editor.commit();
+        editor.apply();
     }
 
     public static void setFolder(String folder) {
         SharedPreferences.Editor editor = spFolder.edit();
         editor.putString(settings, folder);
-        editor.commit();
+        editor.apply();
     }
 }

@@ -1,18 +1,27 @@
 package com.jhonju.ps3netsrv;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.jhonju.ps3netsrv.ps3netsrv.SimpleFileChooser;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 
 import java.io.File;
 import java.util.Objects;
+
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -43,13 +52,25 @@ public class SettingsActivity extends AppCompatActivity {
         ((TextInputLayout) findViewById(R.id.tilPort)).getEditText().setText(SettingsService.getPort() + "");
     }
 
+    private boolean showMessage(View view, String message) {
+        if (!message.equals("")) {
+            Snackbar.make(view, message, Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+            return true;
+        }
+        return false;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         loadSettings();
+
+        final SimpleFileChooser fileDialog = new SimpleFileChooser(this, Environment.getExternalStorageDirectory(), onFileSelectedListener, true);
 
         Button btnSave = findViewById(R.id.btnSave);
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -62,15 +83,25 @@ public class SettingsActivity extends AppCompatActivity {
                 if (!hasError)
                     showMessage(view, getResources().getString(R.string.saveSuccess));
             }
+        });
 
-            private boolean showMessage(View view, String message) {
-                if (!message.equals("")) {
-                    Snackbar.make(view, message, Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                    return true;
-                }
-                return false;
+        final TextInputEditText etFolder = findViewById(R.id.etFolder);
+
+        etFolder.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                fileDialog.showDialog();
             }
         });
     }
+
+    // Event when a file is selected on file dialog.
+    private SimpleFileChooser.FileSelectedListener onFileSelectedListener = new SimpleFileChooser.FileSelectedListener() {
+        @Override
+        public void onFileSelected(File file) {
+            // create shortcut using file path
+            SettingsService.setFolder(file.getAbsolutePath());
+            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(file.getAbsolutePath());
+        }
+    };
 }

@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">ps3netsrv</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+
+    <string name="port">Port:</string>
+    <string name="folder">Folder:</string>
+    <integer name="defaultPort">38008</integer>
+    <string name="negativePortValue">Port can\'t be negative.</string>
+    <string name="invalidPortValue">Invalid port</string>
+    <string name="invalidFolder">Invalid folder</string>
+    <string name="saveSuccess">The settings have been saved</string>
+    <string name="save">Save</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="start_server">Start server</string>
+    <string name="stop_server">Stop server</string>
+    <string name="server_stopped">Server is stopped</string>
+    <string name="server_running">Server is running at %s\nport %d\nfolder %s</string>
+    <string name="read_external_permission_error">You need to grant permission to read storage first</string>
+</resources>

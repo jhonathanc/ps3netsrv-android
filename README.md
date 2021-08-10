@@ -16,6 +16,6 @@ Features missing from original ps3netsrv that I still wants to develop:
 
 I also have to improve the interface, because it's a lot uggly.
 
-The project is developed using only native Java libraries, to avoid problems with licensing.
+The project is developed using only native Android/Java libraries, to avoid problems with licensing.
 
 If you want to contribute, feel free to open a PR.

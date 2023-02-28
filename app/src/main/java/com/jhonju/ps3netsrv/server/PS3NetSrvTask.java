@@ -12,13 +12,14 @@ import com.jhonju.ps3netsrv.server.commands.ReadDirCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadFileCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadFileCriticalCommand;
 import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
+import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 public class PS3NetSrvTask implements Runnable {
-    private String folderPath;
+    private final String folderPath;
     ServerSocket serverSocket;
 
-    volatile boolean shutdown = false;
+    volatile boolean running = true;
 
     public PS3NetSrvTask(int port, String folderPath) throws Exception {
         this.folderPath = folderPath;
@@ -28,9 +29,10 @@ public class PS3NetSrvTask implements Runnable {
     @Override
     public void run() {
         try {
-            while (!shutdown) {
-                Socket socket = serverSocket.accept();
-                new ServerThread(new Context(socket, folderPath)).start();
+            while (running) {
+                try (Socket socket = serverSocket.accept()) {
+                    new ServerThread(new Context(socket, folderPath)).start();
+                }
             }
             System.out.println("Thread end");
         } catch (IOException e) {
@@ -40,27 +42,27 @@ public class PS3NetSrvTask implements Runnable {
 
     public void shutdown() throws IOException {
         serverSocket.close();
-        shutdown = true;
+        running = false;
     }
 
     private static class ServerThread extends Thread {
         private static final byte CMD_DATA_SIZE = 16;
-        private Context ctx;
+        private final Context context;
 
-        public ServerThread(Context ctx) {
-            this.ctx = ctx;
+        public ServerThread(Context context) {
+            this.context = context;
         }
 
         public void run() {
             try {
-                while (ctx.isSocketConnected()) {
-                    byte[] pct = new byte[CMD_DATA_SIZE];
-                    if (!Utils.readCommandData(ctx.getInputStream(), pct))
+                while (context.isSocketConnected()) {
+                    byte[] packet = new byte[CMD_DATA_SIZE];
+                    if (!Utils.readCommandData(context.getInputStream(), packet))
                         break;
-                    if (Utils.isByteArrayEmpty(pct))
+                    if (Utils.isByteArrayEmpty(packet))
                         continue;
-                    ctx.setCommandData(pct);
-                    handleContext(ctx);
+                    context.setCommandData(packet);
+                    handleContext(context);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -68,33 +70,34 @@ public class PS3NetSrvTask implements Runnable {
         }
 
         private void handleContext(Context ctx) throws Exception {
-            ICommand cmd;
-            switch (ctx.getCommandData().getOpCode()) {
+            ICommand command;
+            ENetIsoCommand opCode = ctx.getCommandData().getOpCode();
+            switch (opCode) {
                 case NETISO_CMD_OPEN_DIR:
-                    cmd = new OpenDirCommand(ctx);
+                    command = new OpenDirCommand(ctx);
                     break;
                 case NETISO_CMD_READ_DIR:
-                    cmd = new ReadDirCommand(ctx);
+                    command = new ReadDirCommand(ctx);
                     break;
                 case NETISO_CMD_STAT_FILE:
-                    cmd = new StatFileCommand(ctx);
+                    command = new StatFileCommand(ctx);
                     break;
                 case NETISO_CMD_OPEN_FILE:
-                    cmd = new OpenFileCommand(ctx);
+                    command = new OpenFileCommand(ctx);
                     break;
                 case NETISO_CMD_READ_FILE:
-                    cmd = new ReadFileCommand(ctx);
+                    command = new ReadFileCommand(ctx);
                     break;
                 case NETISO_CMD_READ_FILE_CRITICAL:
-                    cmd = new ReadFileCriticalCommand(ctx);
+                    command = new ReadFileCriticalCommand(ctx);
                     break;
                 case NETISO_CMD_READ_CD_2048_CRITICAL:
-                    cmd = new ReadCD2048Command(ctx);
+                    command = new ReadCD2048Command(ctx);
                     break;
                 default:
-                    throw new Exception("Deu pau");
+                    throw new Exception("OpCode not implemented!");
             }
-            cmd.executeTask();
+            command.executeTask();
         }
     }
 }

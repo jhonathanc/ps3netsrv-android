@@ -7,15 +7,10 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class ReadFileCriticalCommand extends AbstractCommand {
-    int numBytes;
-    long offset;
+public class ReadFileCriticalCommand extends ReadFileCommand {
 
     public ReadFileCriticalCommand(Context ctx) {
         super(ctx);
-        CommandData cmd = ctx.getCommandData();
-        this.numBytes = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 2, 6)).getInt();
-        this.offset = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 6, cmd.getData().length)).getLong();
     }
 
     @Override

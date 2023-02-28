@@ -58,7 +58,7 @@ public class Context {
 
     public void setFile(File file) {
         this.file = file;
-        if ((file != null) && file.exists() && !file.isDirectory()) {
+        if (file != null && file.isFile()) {
             try {
                 readOnlyFile = new RandomAccessFile(file, "r");
             } catch (FileNotFoundException fe) {

@@ -32,7 +32,7 @@ public class PS3NetSrvTask implements Runnable {
 
     public void run() {
         try {
-            while (running) {
+            while (isRunning) {
                 Socket socket = serverSocket.accept();
                 pool.execute(new Handler(new Context(socket, folderPath)));
             }

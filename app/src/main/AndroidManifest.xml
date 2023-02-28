@@ -29,6 +29,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name=".PS3NetService"
+            android:enabled="true" />
     </application>
 
 </manifest>

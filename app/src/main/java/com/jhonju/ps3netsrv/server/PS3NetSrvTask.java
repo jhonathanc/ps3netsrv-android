@@ -30,9 +30,8 @@ public class PS3NetSrvTask implements Runnable {
     public void run() {
         try {
             while (running) {
-                try (Socket socket = serverSocket.accept()) {
-                    new ServerThread(new Context(socket, folderPath)).start();
-                }
+                Socket socket = serverSocket.accept();
+                new ServerThread(new Context(socket, folderPath)).start();
             }
             System.out.println("Thread end");
         } catch (IOException e) {

@@ -38,7 +38,11 @@ public class Utils {
                 // Verifica se a interface de rede está conectada e é a mesma que a conexão ativa
                 if (networkInterface.isUp() && !networkInterface.isLoopback() && networkInterface.getInterfaceAddresses().size() > 0) {
                     for (InterfaceAddress address : networkInterface.getInterfaceAddresses()) {
-                        if (address.getAddress().getAddress().length == 4) {
+                        if (useIPv4) {
+                            if (address.getAddress().getAddress().length == 4) {
+                                return address.getAddress().getHostAddress();
+                            }
+                        } else if (address.getAddress().getAddress().length > 4) {
                             return address.getAddress().getHostAddress();
                         }
                     }

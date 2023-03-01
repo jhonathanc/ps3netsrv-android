@@ -1,6 +1,7 @@
 package com.jhonju.ps3netsrv;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,7 +39,7 @@ public class FirstFragment extends Fragment {
                     if (isServerRunning) {
                         getActivity().stopService(new Intent(getActivity(), PS3NetService.class));
                     } else {
-                        getActivity().startService(new Intent(getActivity(), PS3NetService.class));
+                        startPs3NetService();
                     }
                     isServerRunning = !isServerRunning;
                     btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);
@@ -55,5 +56,13 @@ public class FirstFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void startPs3NetService() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            getActivity().startForegroundService(new Intent(getActivity(), PS3NetService.class));
+        } else {
+            getActivity().startService(new Intent(getActivity(), PS3NetService.class));
+        }
     }
 }

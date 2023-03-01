@@ -5,7 +5,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import com.jhonju.ps3netsrv.server.commands.ICommand;
 import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;
@@ -43,19 +42,10 @@ public class PS3NetSrvTask implements Runnable {
         }
     }
 
-    public void shutdown() {
+    public void shutdown() throws IOException {
     	isRunning = false;
-        try {
-        	pool.awaitTermination(5, TimeUnit.SECONDS);
-        } catch (Exception ex) {
-        	System.out.println(ex.getMessage());
-        } finally {
-        	try {
-        		serverSocket.close();
-        	} catch (IOException e) {
-        		System.out.println(e.getMessage());
-			}
-        }
+        pool.shutdownNow();
+        serverSocket.close();
     }
 
     private static class Handler implements Runnable {

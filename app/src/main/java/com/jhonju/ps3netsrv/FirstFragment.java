@@ -40,14 +40,11 @@ public class FirstFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 try {
-                    ConnectivityManager connManager = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-                    NetworkInfo wifiInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
                     if (isServerRunning) {
                         getActivity().stopService(new Intent(getActivity(), PS3NetService.class));
                     } else {
-                        if (!wifiInfo.isConnected()) {
-                            Snackbar.make(view, "The wifi connection is disabled", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                        if (!Utils.isConnectedToLocal()) {
+                            Snackbar.make(view, "The ethernet/wifi connection is disabled", Snackbar.LENGTH_LONG).setAction("Action", null).show();
                             return;
                         }
                         startPs3NetService();

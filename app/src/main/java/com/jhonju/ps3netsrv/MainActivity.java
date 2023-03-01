@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,7 +25,15 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        connManager.setNetworkPreference(ConnectivityManager.TYPE_WIFI);
+        NetworkInfo ethernetInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
+        if (ethernetInfo != null && ethernetInfo.isConnected()) {
+            connManager.setNetworkPreference(ConnectivityManager.TYPE_ETHERNET);
+        } else {
+            NetworkInfo wifiInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+            if (wifiInfo != null && wifiInfo.isConnected()) {
+                connManager.setNetworkPreference(ConnectivityManager.TYPE_WIFI);
+            }
+        }
 
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Toolbar toolbar = findViewById(R.id.toolbar);

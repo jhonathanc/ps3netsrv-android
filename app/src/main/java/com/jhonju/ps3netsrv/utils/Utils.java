@@ -9,6 +9,8 @@ import android.net.wifi.WifiManager;
 
 import com.jhonju.ps3netsrv.PS3NetSrvApp;
 
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
@@ -38,12 +40,11 @@ public class Utils {
                 // Verifica se a interface de rede está conectada e é a mesma que a conexão ativa
                 if (networkInterface.isUp() && !networkInterface.isLoopback() && networkInterface.getInterfaceAddresses().size() > 0) {
                     for (InterfaceAddress address : networkInterface.getInterfaceAddresses()) {
-                        if (useIPv4) {
-                            if (address.getAddress().getAddress().length == 4) {
-                                return address.getAddress().getHostAddress();
-                            }
-                        } else if (address.getAddress().getAddress().length > 4) {
-                            return address.getAddress().getHostAddress();
+                        InetAddress inetAddress = address.getAddress();
+                        if (useIPv4 && inetAddress instanceof Inet4Address) {
+                            return inetAddress.getHostAddress();
+                        } else if (!useIPv4 && inetAddress instanceof Inet6Address) {
+                            return inetAddress.getHostAddress();
                         }
                     }
                 }

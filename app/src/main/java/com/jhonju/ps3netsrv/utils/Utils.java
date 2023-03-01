@@ -1,10 +1,14 @@
 package com.jhonju.ps3netsrv.utils;
 
+import static android.content.Context.WIFI_SERVICE;
+
+import android.net.wifi.WifiManager;
+
+import com.jhonju.ps3netsrv.PS3NetSrvApp;
+
 import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Collections;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class Utils {
 
@@ -14,29 +18,10 @@ public class Utils {
      * @param useIPv4 true=return ipv4, false=return ipv6
      * @return address or empty string
      */
-    public static String getIPAddress(boolean useIPv4) throws SocketException {
-        String ip = "<NOT ABLE TO GET IP>";
-        List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-        for (NetworkInterface intf : interfaces) {
-            List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
-            for (InetAddress addr : addrs) {
-                if (!addr.isLoopbackAddress()) {
-                    String sAddr = addr.getHostAddress();
-                    boolean isIPv4 = sAddr.indexOf(':') < 0;
-
-                    if (useIPv4) {
-                        if (isIPv4)
-                            ip = sAddr;
-                    } else {
-                        if (!isIPv4) {
-                            int delim = sAddr.indexOf('%'); // drop ip6 zone suffix
-                            ip = delim < 0 ? sAddr.toUpperCase() : sAddr.substring(0, delim).toUpperCase();
-                        }
-                    }
-                }
-            }
-        }
-        return ip;
+    public static String getIPAddress(boolean useIPv4) throws Exception {
+        WifiManager wm = (WifiManager) PS3NetSrvApp.getAppContext().getApplicationContext().getSystemService(WIFI_SERVICE);
+        byte[] bytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(wm.getConnectionInfo().getIpAddress()).array();
+        return InetAddress.getByAddress(bytes).getHostAddress();
     }
 
 }

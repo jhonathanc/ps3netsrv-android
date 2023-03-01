@@ -34,21 +34,22 @@ public class FirstFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        ConnectivityManager connManager = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo wifiInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        if (!wifiInfo.isConnected()) {
-            Snackbar.make(view, "The wifi connection is disabled", Snackbar.LENGTH_LONG).setAction("Action", null).show();
-        }
-
         final TextView tvServerState = view.findViewById(R.id.tvServerStopped);
         final Button btnStartServer = view.findViewById(R.id.button_start_stop_server);
         view.findViewById(R.id.button_start_stop_server).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
+                    ConnectivityManager connManager = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+                    NetworkInfo wifiInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
                     if (isServerRunning) {
                         getActivity().stopService(new Intent(getActivity(), PS3NetService.class));
                     } else {
+                        if (!wifiInfo.isConnected()) {
+                            Snackbar.make(view, "The wifi connection is disabled", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                            return;
+                        }
                         startPs3NetService();
                     }
                     isServerRunning = !isServerRunning;

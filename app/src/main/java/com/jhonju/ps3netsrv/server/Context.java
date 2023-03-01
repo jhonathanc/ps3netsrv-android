@@ -14,7 +14,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class Context {
+public class Context implements AutoCloseable {
     private static final byte OP_CODE_SIZE = 2;
 
     private String rootDirectory;
@@ -80,5 +80,10 @@ public class Context {
 
     public void setCommandData(byte[] data) {
         this.commandData = new CommandData(ENetIsoCommand.valueOf(ByteBuffer.wrap(Arrays.copyOfRange(data, 0, OP_CODE_SIZE)).getShort()), Arrays.copyOfRange(data, OP_CODE_SIZE, data.length));
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (readOnlyFile != null) readOnlyFile.close();
     }
 }

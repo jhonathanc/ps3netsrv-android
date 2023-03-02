@@ -4,8 +4,8 @@ Android ps3netsrv
 Work in progress.
 
 There is 2 main issues I need to fix yet:
-1. Put the server running as a service (to avoid Android put the application to "sleep").
-2. Some devices are experiencing a low server performance (I'm trying to discover what is happening yet).
+- [x] Put the server running as a service (to avoid Android put the application to "sleep").
+- [ ] Some devices are experiencing a low server performance (I'm trying to discover what is happening yet).
 
 Features missing from original ps3netsrv that I still wants to develop:
 1. Multi part ISO.

@@ -1,5 +1,8 @@
 package com.jhonju.ps3netsrv;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +33,7 @@ public class FirstFragment extends Fragment {
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         final TextView tvServerState = view.findViewById(R.id.tvServerStopped);
         final Button btnStartServer = view.findViewById(R.id.button_start_stop_server);
         view.findViewById(R.id.button_start_stop_server).setOnClickListener(new View.OnClickListener() {
@@ -39,6 +43,10 @@ public class FirstFragment extends Fragment {
                     if (isServerRunning) {
                         getActivity().stopService(new Intent(getActivity(), PS3NetService.class));
                     } else {
+                        if (!Utils.isConnectedToLocal()) {
+                            Snackbar.make(view, "The ethernet/wifi connection is disabled", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                            return;
+                        }
                         startPs3NetService();
                     }
                     isServerRunning = !isServerRunning;

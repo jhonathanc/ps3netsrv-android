@@ -43,7 +43,7 @@ public class PS3NetSrvTask implements Runnable {
     }
 
     public void shutdown() throws IOException {
-    	isRunning = false;
+        isRunning = false;
         pool.shutdownNow();
         serverSocket.close();
     }
@@ -69,7 +69,7 @@ public class PS3NetSrvTask implements Runnable {
                     handleContext(context);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                new RuntimeException(e);
             }
         }
 
@@ -99,7 +99,7 @@ public class PS3NetSrvTask implements Runnable {
                     command = new ReadCD2048Command(ctx);
                     break;
                 default:
-                    throw new Exception("OpCode not implemented!");
+                    throw new Exception("OpCode not implemented: " + opCode.toString());
             }
             command.executeTask();
         }

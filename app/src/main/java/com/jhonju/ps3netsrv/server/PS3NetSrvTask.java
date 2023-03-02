@@ -102,6 +102,7 @@ public class PS3NetSrvTask implements Runnable {
                     throw new Exception("OpCode not implemented: " + opCode.toString());
             }
             command.executeTask();
+            ctx.getOutputStream().flush();
         }
     }
 }

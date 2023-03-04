@@ -2,6 +2,7 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import com.jhonju.ps3netsrv.server.CommandData;
@@ -23,28 +24,15 @@ public class StatFileCommand extends AbstractCommand {
         ctx.setFile(null);
         byte[] bfilePath = Utils.readCommandData(ctx.getInputStream(), this.fpLen);
 
-        String filePath = ctx.getRootDirectory() + new String(bfilePath).replaceAll("\0", "");
-        File file = new File(filePath);
+        File file = new File(ctx.getRootDirectory(), new String(bfilePath, StandardCharsets.UTF_8).replaceAll("\\x00+$", ""));
         if (file.exists()) {
             ctx.setFile(file);
             StatFileResult statResult;
             if (file.isDirectory()) {
-                statResult = new StatFileResult(0, 0, 0, 0, true);
+                statResult = new StatFileResult(0, file.lastModified() / 1000, file.lastModified() / 1000, 0, true);
             } else {
-//                javaxt.io.File jxtFile = new javaxt.io.File(file);
-                long modifiedTime = file.lastModified();
-                long creationTime = 0;
-                long lastAccessTime = 0;
-//
-//                Date creationDate = jxtFile.getCreationTime();
-//                if (creationDate != null)
-//                    creationTime = creationDate.getTime();
-//
-//                Date lastAccessDate = jxtFile.getLastAccessTime();
-//                if (lastAccessDate != null)
-//                    lastAccessTime = lastAccessDate.getTime();
-
-                statResult = new StatFileResult(file.length(), modifiedTime, creationTime, lastAccessTime, false);
+                long[] fileStats = Utils.getFileStats(file);
+                statResult = new StatFileResult(file.length(), file.lastModified() / 1000, fileStats[0] / 1000, fileStats[1] / 1000, false);
             }
             ctx.getOutputStream().write(Utils.toByteArray(statResult));
         } else {

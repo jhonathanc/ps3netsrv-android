@@ -22,12 +22,10 @@ public class ReadDirCommand extends AbstractCommand {
         if (file == null || !(file.exists() && file.isDirectory())) {
             ctx.getOutputStream().write(Utils.toByteArray(new ReadDirResult(0)));
         } else {
-            File[] files = file.listFiles();
-
             List<ReadDirResultData> entries = new ArrayList<>();
-            for(File f : files) {
+            for(File f : file.listFiles()) {
                 if (entries.size() == MAX_ENTRIES) break;
-                entries.add(new ReadDirResultData(f.isDirectory() ? 0 : f.length(), f.lastModified(), f.isDirectory(), f.getName()));
+                entries.add(new ReadDirResultData(f.isDirectory() ? 0 : f.length(), f.lastModified() / 1000, f.isDirectory(), f.getName()));
             }
             ctx.getOutputStream().write(Utils.toByteArray(new ReadDirResult(entries.size())));
             if (entries.size() > 0)

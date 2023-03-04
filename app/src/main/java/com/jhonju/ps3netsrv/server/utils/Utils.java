@@ -1,6 +1,7 @@
 package com.jhonju.ps3netsrv.server.utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -24,38 +25,37 @@ public class Utils {
 
     private static void listObjectToByteArray(Object obj, ByteArrayOutputStream out) throws Exception {
         List<?> list = (List<?>) obj;
-        for(Object o : list) {
+        for (Object o : list) {
             singleObjectToByteArray(o, out);
         }
     }
 
     private static void singleObjectToByteArray(Object obj, ByteArrayOutputStream out) throws Exception {
         Field[] fields = obj.getClass().getDeclaredFields();
-        for (Field field: fields) {
+        for (Field field : fields) {
             field.setAccessible(true);
             Object value = field.get(obj);
             if (value != null) {
-                if (value.getClass() == Boolean.class) {
-                    byte[] teste = new byte[]{(byte) ((boolean) value ? 1 : 0)};
-                    out.write(teste);
-                } else if (value.getClass() == Long.class) {
+                if (value instanceof Boolean) {
+                    out.write(((Boolean) value) ? 1 : 0);
+                } else if (value instanceof Long) {
                     out.write(longToBytes((long) value));
-                } else if (value.getClass() == Integer.class) {
+                } else if (value instanceof Integer) {
                     out.write(intToBytes((int) value));
-                } else if (value.getClass() == String.class) {
-                    out.write(((String) value).getBytes());
-                } else {
-                    out.write(charToByteArray((char[]) value));
+                } else if (value instanceof String) {
+                    out.write(((String) value).getBytes(StandardCharsets.UTF_8));
+                } else if (value instanceof char[]) {
+                    out.write(charArrayToByteArray((char[]) value));
                 }
             }
         }
     }
 
-    private static byte[] charToByteArray(char[] chars) {
+    private static byte[] charArrayToByteArray(char[] chars) {
         CharBuffer charBuffer = CharBuffer.wrap(chars);
         ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(charBuffer);
-        byte[] bytes = Arrays.copyOfRange(byteBuffer.array(),
-                byteBuffer.position(), byteBuffer.limit());
+        byte[] bytes = new byte[byteBuffer.remaining()];
+        byteBuffer.get(bytes);
         Arrays.fill(byteBuffer.array(), (byte) 0); // clear sensitive data
         return bytes;
     }
@@ -84,14 +84,9 @@ public class Utils {
         return true;
     }
 
-    public static boolean readCommandData(InputStream in, byte[] data) throws IOException {
-        for (byte i=0; i < data.length; i++) {
-            Integer readByte = in.read();
-            if (readByte < 0) {
-                return false;
-            }
-            data[i] = readByte.byteValue();
-        }
-        return true;
+    public static byte[] readCommandData(InputStream in, int size) throws IOException {
+        byte[] data = new byte[size];
+        if (in.read(data) < 0) return null;
+        return data;
     }
 }

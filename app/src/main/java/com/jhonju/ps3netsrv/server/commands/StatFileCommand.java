@@ -21,10 +21,7 @@ public class StatFileCommand extends AbstractCommand {
     @Override
     public void executeTask() throws Exception {
         ctx.setFile(null);
-
-        byte[] bfilePath = new byte[this.fpLen];
-        if (!Utils.readCommandData(ctx.getInputStream(), bfilePath))
-            return;
+        byte[] bfilePath = Utils.readCommandData(ctx.getInputStream(), this.fpLen);
 
         String filePath = ctx.getRootDirectory() + new String(bfilePath).replaceAll("\0", "");
         File file = new File(filePath);

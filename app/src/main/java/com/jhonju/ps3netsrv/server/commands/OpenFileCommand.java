@@ -7,8 +7,10 @@ import com.jhonju.ps3netsrv.server.results.OpenFileResult;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class OpenFileCommand extends AbstractCommand {
@@ -24,32 +26,41 @@ public class OpenFileCommand extends AbstractCommand {
 
     @Override
     public void executeTask() throws Exception {
-        ctx.setFile(null);
-        byte[] bfilePath = new byte[this.fpLen];
-        if (!Utils.readCommandData(ctx.getInputStream(), bfilePath))
-            return;
-        String filePath = ctx.getRootDirectory() + new String(bfilePath).replaceAll("\0", "");
-        File file = new File(filePath);
-        if (file.exists()) {
-            ctx.setFile(file);
-            long fileLength = file.length();
-            RandomAccessFile readOnlyFile = ctx.getReadOnlyFile();
-            if (fileLength >= CD_MINIMUM_SIZE && fileLength <= CD_MAXIMUM_SIZE) {
-                for (CDSectorSize cdSec : CDSectorSize.values()) {
-                    long position = (cdSec.cdSectorSize<<4) + 0x18;
-                    byte[] buffer = new byte[20];
-                    readOnlyFile.seek(position);
-                    readOnlyFile.read(buffer);
-                    String strBuffer = new String(buffer);
-                    if (strBuffer.contains("PLAYSTATION ") || strBuffer.contains("CD001")) {
-                        ctx.setCdSectorSize(cdSec);
-                        break;
-                    }
-                }
+        try {
+            File file = new File(ctx.getRootDirectory(), getFilePath());
+            if (!file.exists()) {
+                ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(-1, file.lastModified())));
+                return;
             }
-            ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(fileLength, file.lastModified())));
-        } else {
-            ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(-1, file.lastModified())));
+            ctx.setFile(file);
+            determineCdSectorSize(file);
+            ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(file.length(), file.lastModified())));
+        } catch (IOException e) {
+            ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(-1, -1)));
+            throw e;
+        }
+    }
+
+    private String getFilePath() throws IOException {
+        byte[] bfilePath = Utils.readCommandData(ctx.getInputStream(), this.fpLen);
+        return new String(bfilePath, StandardCharsets.UTF_8).replaceAll("\\x00+$", "");
+    }
+
+    private void determineCdSectorSize(File file) throws IOException {
+        if (file.length() < CD_MINIMUM_SIZE || file.length() > CD_MAXIMUM_SIZE) {
+            return;
+        }
+
+        for (CDSectorSize cdSec : CDSectorSize.values()) {
+            long position = (cdSec.cdSectorSize << 4) + 0x18;
+            byte[] buffer = new byte[20];
+            ctx.getReadOnlyFile().seek(position);
+            ctx.getReadOnlyFile().read(buffer);
+            String strBuffer = new String(buffer, StandardCharsets.US_ASCII);
+            if (strBuffer.contains("PLAYSTATION ") || strBuffer.contains("CD001")) {
+                ctx.setCdSectorSize(cdSec);
+                break;
+            }
         }
     }
 }

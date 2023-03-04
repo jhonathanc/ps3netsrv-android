@@ -60,9 +60,8 @@ public class PS3NetSrvTask implements Runnable {
         public void run() {
             try {
                 while (context.isSocketConnected()) {
-                    byte[] packet = new byte[CMD_DATA_SIZE];
-                    if (!Utils.readCommandData(context.getInputStream(), packet))
-                        break;
+                    byte[] packet = Utils.readCommandData(context.getInputStream(), CMD_DATA_SIZE);
+                    if (packet == null) break;
                     if (Utils.isByteArrayEmpty(packet))
                         continue;
                     context.setCommandData(packet);
@@ -101,8 +100,15 @@ public class PS3NetSrvTask implements Runnable {
                 default:
                     throw new Exception("OpCode not implemented: " + opCode.toString());
             }
-            command.executeTask();
-            ctx.getOutputStream().flush();
+
+            try {
+                command.executeTask();
+            } catch (Exception ex) {
+                System.err.println(ex.getMessage());
+                throw ex;
+            } finally {
+                ctx.getOutputStream().flush();
+            }
         }
     }
 }

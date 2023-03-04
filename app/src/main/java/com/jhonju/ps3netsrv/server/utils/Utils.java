@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -121,32 +122,67 @@ public class Utils {
         return null;
     }
 
+    private enum FileStat {
+        CREATION_DATE
+        , ACCESS_DATE
+    }
+
+    private static Date getFileStatsWindows(String filePath, FileStat fileStat) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy hh:mm");
+        String command = (fileStat == FileStat.CREATION_DATE ? "/TC" : "/TA");
+        Process process = Runtime.getRuntime().exec(new String[] {"dir", command, filePath });
+        process.waitFor();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] arr = line.split("\\s+");
+                String date = arr[0] + " " + arr[1];
+                try {
+                    return sdf.parse(date);
+                } catch (ParseException pe) {
+                    continue;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Date getFileStatsOSX(String filePath, FileStat fileStat) throws Exception {
+        String command = (fileStat == FileStat.CREATION_DATE ? "-laUT" : "-lauT");
+        Process process = Runtime.getRuntime().exec(new String[] { "ls", command, filePath });
+        process.waitFor();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            List<String> lines = new ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+            return parseOSXDate(lines.iterator());
+        }
+    }
+
     public static long[] getFileStats(File file) throws Exception {
         long[] stats = { 0, 0 };
         String filePath = file.getCanonicalPath();
         if (isWindows) {
-
-        } else if (isOSX) {
-            Process process = Runtime.getRuntime().exec(new String[] { "ls", "-laUT", filePath });
-            process.waitFor();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                List<String> lines = new ArrayList<>();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    lines.add(line);
-                }
-                stats[0] = parseOSXDate(lines.iterator()).getTime();
+            Date creationDate = getFileStatsWindows(filePath, FileStat.CREATION_DATE);
+            if (creationDate != null) {
+                stats[0] = creationDate.getTime();
             }
 
-            process = Runtime.getRuntime().exec(new String[] { "ls", "-lauT", filePath });
-            process.waitFor();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                List<String> lines = new ArrayList<>();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    lines.add(line);
-                }
-                stats[1] = parseOSXDate(lines.iterator()).getTime();
+            Date accessDate = getFileStatsWindows(filePath, FileStat.ACCESS_DATE);
+            if (accessDate != null) {
+                stats[1] = accessDate.getTime();
+            }
+        } else if (isOSX) {
+            Date creationDate = getFileStatsOSX(filePath, FileStat.CREATION_DATE);
+            if (creationDate != null) {
+                stats[0] = creationDate.getTime();
+            }
+
+            Date accessDate = getFileStatsOSX(filePath, FileStat.ACCESS_DATE);
+            if (accessDate != null) {
+                stats[1] = accessDate.getTime();
             }
         } else if (isSolaris) {
             Process process = Runtime.getRuntime().exec(new String[] { "ls", "-E", filePath, "| grep 'crtime=' | sed 's/^.*crtime=//'" });

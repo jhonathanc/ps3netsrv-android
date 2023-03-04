@@ -1,7 +1,6 @@
 package com.jhonju.ps3netsrv.server.utils;
 
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;

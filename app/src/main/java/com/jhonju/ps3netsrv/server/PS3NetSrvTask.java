@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.jhonju.ps3netsrv.server.commands.CreateFileCommand;
 import com.jhonju.ps3netsrv.server.commands.ICommand;
 import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;
 import com.jhonju.ps3netsrv.server.commands.OpenFileCommand;
@@ -14,6 +15,7 @@ import com.jhonju.ps3netsrv.server.commands.ReadDirCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadFileCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadFileCriticalCommand;
 import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
+import com.jhonju.ps3netsrv.server.commands.WriteFileCommand;
 import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
@@ -96,6 +98,12 @@ public class PS3NetSrvTask implements Runnable {
                     break;
                 case NETISO_CMD_READ_CD_2048_CRITICAL:
                     command = new ReadCD2048Command(ctx);
+                    break;
+                case NETISO_CMD_CREATE_FILE:
+                    command = new CreateFileCommand(ctx);
+                    break;
+                case NETISO_CMD_WRITE_FILE:
+                    command = new WriteFileCommand(ctx);
                     break;
                 default:
                     throw new Exception("OpCode not implemented: " + opCode.toString());

@@ -22,6 +22,8 @@ public class Context implements AutoCloseable {
     private CommandData commandData;
     private File file;
     private RandomAccessFile readOnlyFile;
+
+    private File writeOnlyFile;
     private CDSectorSize cdSectorSize;
 
     public Context(Socket socket, String rootDirectory) {
@@ -68,6 +70,14 @@ public class Context implements AutoCloseable {
         } else {
             readOnlyFile = null;
         }
+    }
+
+    public File getWriteOnlyFile() {
+        return writeOnlyFile;
+    }
+
+    public void setWriteOnlyFile(File writeOnlyFile) {
+        this.writeOnlyFile = writeOnlyFile;
     }
 
     public RandomAccessFile getReadOnlyFile() {

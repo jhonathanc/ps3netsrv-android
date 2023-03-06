@@ -9,8 +9,6 @@ public class StatFileCommand extends FileCommand {
 
     public StatFileCommand(Context ctx) {
         super(ctx);
-        CommandData cmd = ctx.getCommandData();
-        this.fpLen = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 0, 2)).getShort();
     }
 
     @Override

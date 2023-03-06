@@ -2,7 +2,6 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
-import com.jhonju.ps3netsrv.server.results.OpenFileResult;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.File;
@@ -16,6 +15,16 @@ public class OpenFileCommand extends FileCommand {
 
     public OpenFileCommand(Context ctx) {
         super(ctx);
+    }
+
+    private static class OpenFileResult {
+        public final long aFileSize;
+        public final long bMTime;
+
+        public OpenFileResult(long fileSize, long mTime) {
+            this.aFileSize = fileSize;
+            this.bMTime = mTime;
+        }
     }
 
     @Override

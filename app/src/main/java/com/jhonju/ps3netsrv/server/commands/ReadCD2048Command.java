@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class ReadCD2048Command extends AbstractCommand {
-    private static final int BUFFER_SIZE = 3145728;
+
     private static final short MAX_RESULT_SIZE = 2048;
 
     private int startSector;

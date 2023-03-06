@@ -1,17 +1,11 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import java.io.File;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-
-import com.jhonju.ps3netsrv.server.CommandData;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.results.StatFileResult;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
-public class StatFileCommand extends AbstractCommand {
-    private short fpLen;
+public class StatFileCommand extends FileCommand {
 
     public StatFileCommand(Context ctx) {
         super(ctx);
@@ -22,9 +16,7 @@ public class StatFileCommand extends AbstractCommand {
     @Override
     public void executeTask() throws Exception {
         ctx.setFile(null);
-        byte[] bfilePath = Utils.readCommandData(ctx.getInputStream(), this.fpLen);
-
-        File file = new File(ctx.getRootDirectory(), new String(bfilePath, StandardCharsets.UTF_8).replaceAll("\\x00+$", ""));
+        File file = getFile();
         if (file.exists()) {
             ctx.setFile(file);
             StatFileResult statResult;

@@ -59,7 +59,7 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
             result.accessedTime = fileTimes[1] / 1000;
             result.isDirectory = fileAux.isDirectory();
             result.fileNameLength = (short) fileAux.getName().length();
-            //ctx.getOutputStream().write(Utils.toByteArray(result)); //check if it is correct...
+            ctx.getOutputStream().write(Utils.toByteArray(result));
             ctx.getOutputStream().write(Utils.toByteArray(fileAux.getName()));
         }
     }

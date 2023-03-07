@@ -46,7 +46,7 @@ public class ReadDirEntryCommand extends AbstractCommand {
             result.isDirectory = fileAux.isDirectory();
             result.fileSize = fileAux.isDirectory() ? 0L : file.length();
             result.fileNameLength = (short) fileAux.getName().length();
-            //ctx.getOutputStream().write(Utils.toByteArray(result)); //check if it is correct...
+            ctx.getOutputStream().write(Utils.toByteArray(result));
             ctx.getOutputStream().write(Utils.toByteArray(fileAux.getName()));
         }
     }

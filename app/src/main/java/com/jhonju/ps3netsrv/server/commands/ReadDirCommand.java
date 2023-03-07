@@ -51,8 +51,9 @@ public class ReadDirCommand extends AbstractCommand {
             ctx.getOutputStream().write(Utils.toByteArray(new ReadDirResult(0)));
         } else {
             List<ReadDirResultData> entries = new ArrayList<>();
-            if (file.listFiles() != null) {
-                for (File f : Objects.requireNonNull(file.listFiles())) {
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File f : files) {
                     if (entries.size() == MAX_ENTRIES) break;
                     entries.add(new ReadDirResultData(f.isDirectory() ? 0 : f.length(), f.lastModified() / 1000, f.isDirectory(), f.getName()));
                 }

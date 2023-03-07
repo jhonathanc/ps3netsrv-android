@@ -22,7 +22,6 @@ public class Context implements AutoCloseable {
     private CommandData commandData;
     private File file;
     private RandomAccessFile readOnlyFile;
-
     private File writeOnlyFile;
     private CDSectorSize cdSectorSize;
 

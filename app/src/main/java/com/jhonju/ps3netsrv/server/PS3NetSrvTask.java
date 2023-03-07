@@ -7,11 +7,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.jhonju.ps3netsrv.server.commands.CreateFileCommand;
+import com.jhonju.ps3netsrv.server.commands.DeleteFileCommand;
+import com.jhonju.ps3netsrv.server.commands.GetDirSizeCommand;
 import com.jhonju.ps3netsrv.server.commands.ICommand;
+import com.jhonju.ps3netsrv.server.commands.MakeDirCommand;
 import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;
 import com.jhonju.ps3netsrv.server.commands.OpenFileCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadCD2048Command;
 import com.jhonju.ps3netsrv.server.commands.ReadDirCommand;
+import com.jhonju.ps3netsrv.server.commands.ReadDirEntryCommand;
+import com.jhonju.ps3netsrv.server.commands.ReadDirEntryCommandV2;
 import com.jhonju.ps3netsrv.server.commands.ReadFileCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadFileCriticalCommand;
 import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
@@ -104,6 +109,22 @@ public class PS3NetSrvTask implements Runnable {
                     break;
                 case NETISO_CMD_WRITE_FILE:
                     command = new WriteFileCommand(ctx);
+                    break;
+                case NETISO_CMD_MKDIR:
+                    command = new MakeDirCommand(ctx);
+                    break;
+                case NETISO_CMD_RMDIR:
+                case NETISO_CMD_DELETE_FILE:
+                    command = new DeleteFileCommand(ctx);
+                    break;
+                case NETISO_CMD_GET_DIR_SIZE:
+                    command = new GetDirSizeCommand(ctx);
+                    break;
+                case NETISO_CMD_READ_DIR_ENTRY:
+                    command = new ReadDirEntryCommand(ctx);
+                    break;
+                case NETISO_CMD_READ_DIR_ENTRY_V2:
+                    command = new ReadDirEntryCommandV2(ctx);
                     break;
                 default:
                     throw new Exception("OpCode not implemented: " + opCode.toString());

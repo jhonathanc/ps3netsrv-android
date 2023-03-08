@@ -26,10 +26,7 @@ public class PS3NetSrvTask implements Runnable {
         try {
             serverSocket = new ServerSocket(port);
             while (isRunning) {
-                Socket socket = serverSocket.accept();
-                ContextHandler handler = new ContextHandler(new Context(socket, folderPath));
-                handler.setUncaughtExceptionHandler(exceptionHandler);
-                pool.execute(handler);
+                pool.execute(new ContextHandler(new Context(serverSocket.accept(), folderPath), exceptionHandler));
             }
         } catch (SocketException e) {
             System.err.println(e.getMessage()); //just let it die

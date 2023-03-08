@@ -23,7 +23,9 @@ public class ContextHandler extends Thread {
     private static final byte CMD_DATA_SIZE = 16;
     private final Context context;
 
-    public ContextHandler(Context context) {
+    public ContextHandler(Context context, ThreadExceptionHandler exceptionHandler) {
+        super();
+        setUncaughtExceptionHandler(exceptionHandler);
         this.context = context;
     }
 

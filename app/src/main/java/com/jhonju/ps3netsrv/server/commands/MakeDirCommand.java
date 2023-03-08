@@ -14,11 +14,6 @@ public class MakeDirCommand extends FileCommand {
 
     @Override
     public void executeTask() throws Exception {
-        File file = getFile();
-        if (file.mkdir())  {
-            ctx.getOutputStream().write(Utils.intToBytes(0));
-        } else {
-            ctx.getOutputStream().write(Utils.intToBytes(-1));
-        }
+        send(Utils.intToBytes(getFile().mkdir() ? 0 : -1));
     }
 }

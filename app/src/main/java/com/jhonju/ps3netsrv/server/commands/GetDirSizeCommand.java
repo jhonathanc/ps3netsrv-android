@@ -15,11 +15,10 @@ public class GetDirSizeCommand extends FileCommand {
     @Override
     public void executeTask() throws Exception {
         try {
-            long fileSize = calculateFileSize(getFile());
-            ctx.getOutputStream().write(Utils.longToBytes(fileSize));
+            send(Utils.longToBytes(calculateFileSize(getFile())));
         } catch (IOException ex) {
             System.err.println("Error: command GetDirSizeCommand failed");
-            ctx.getOutputStream().write(Utils.longToBytes(-1));
+            send(Utils.longToBytes(-1));
             throw ex;
         }
     }

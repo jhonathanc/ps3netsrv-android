@@ -23,9 +23,9 @@ public class CreateFileCommand extends FileCommand {
                 throw new IOException("ERROR: create error on " + file.getCanonicalPath());
             }
             ctx.setWriteOnlyFile(file);
-            ctx.getOutputStream().write(Utils.intToBytes(0));
+            send(Utils.intToBytes(0));
         } catch (IOException ex) {
-            ctx.getOutputStream().write(Utils.intToBytes(-1));
+            send(Utils.intToBytes(-1));
             throw ex;
         }
     }

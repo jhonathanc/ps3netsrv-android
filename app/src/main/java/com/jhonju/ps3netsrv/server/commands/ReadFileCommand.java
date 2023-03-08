@@ -21,14 +21,15 @@ public class ReadFileCommand extends AbstractCommand {
 
     @Override
     public void executeTask() throws Exception {
-        byte[] result = new byte[numBytes];
+        byte[] readFileResult = new byte[numBytes];
         RandomAccessFile file = ctx.getReadOnlyFile();
         file.seek(offset);
-        int bytesRead = file.read(result);
+        int bytesRead = file.read(readFileResult);
         if (bytesRead < 0) {
             throw new Exception("Error on read file");
         }
-        ctx.getOutputStream().write(Utils.intToBytes(bytesRead));
-        ctx.getOutputStream().write(result);
+
+        byte[][] result = { Utils.toByteArray(Utils.intToBytes(bytesRead)), readFileResult };
+        send(result);
     }
 }

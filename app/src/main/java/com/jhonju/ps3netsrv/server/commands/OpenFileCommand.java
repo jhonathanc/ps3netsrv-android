@@ -32,14 +32,14 @@ public class OpenFileCommand extends FileCommand {
         try {
             File file = getFile();
             if (!file.exists()) {
-                ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(-1, file.lastModified())));
+                send(Utils.toByteArray(new OpenFileResult(-1, file.lastModified())));
                 return;
             }
             ctx.setFile(file);
             determineCdSectorSize(file);
-            ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(file.length(), file.lastModified())));
+            send(Utils.toByteArray(new OpenFileResult(file.length(), file.lastModified())));
         } catch (IOException e) {
-            ctx.getOutputStream().write(Utils.toByteArray(new OpenFileResult(-1, -1)));
+            send(Utils.toByteArray(new OpenFileResult(-1, -1)));
             throw e;
         }
     }

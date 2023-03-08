@@ -3,9 +3,12 @@ package com.jhonju.ps3netsrv.server.commands;
 import com.jhonju.ps3netsrv.server.CommandData;
 import com.jhonju.ps3netsrv.server.Context;
 
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ReadCD2048Command extends AbstractCommand {
 
@@ -23,19 +26,27 @@ public class ReadCD2048Command extends AbstractCommand {
 
     @Override
     public void executeTask() throws Exception {
-        if (sectorCount * MAX_RESULT_SIZE > BUFFER_SIZE) throw new Exception("This situation wasn't expected, too many sectors read!");
-        if (ctx.getFile() == null) throw new Exception("File shouldn't be null");
-
-        long offset = this.startSector * ctx.getCdSectorSize().cdSectorSize;
-
-        RandomAccessFile file = ctx.getReadOnlyFile();
-        for (int i = 0; i < sectorCount; i++) {
-            byte[] result = new byte[MAX_RESULT_SIZE];
-            file.seek(offset + 24);
-            file.read(result);
-            ctx.getOutputStream().write(result);
-            offset += ctx.getCdSectorSize().cdSectorSize; // skip subchannel data
+        final int MAX_SECTORS = BUFFER_SIZE / MAX_RESULT_SIZE;
+        if (sectorCount > MAX_SECTORS) {
+            throw new IllegalArgumentException("Too many sectors read!");
         }
+        if (ctx.getFile() == null) {
+            throw new IllegalArgumentException("File shouldn't be null");
+        }
+        send(readSectors(ctx.getReadOnlyFile(), startSector * ctx.getCdSectorSize().cdSectorSize, sectorCount));
+    }
+
+    private byte[][] readSectors(RandomAccessFile file, long offset, int count) throws IOException {
+        final int SECTOR_SIZE = ctx.getCdSectorSize().cdSectorSize;
+        final int BYTES_TO_SKIP = 24;
+
+        byte[][] result = new byte[count][MAX_RESULT_SIZE];
+        for (int i = 0; i < count; i++) {
+            file.seek(offset + BYTES_TO_SKIP);
+            file.read(result[i]);
+            offset += SECTOR_SIZE;
+        }
+        return result;
     }
 
 }

@@ -26,9 +26,9 @@ public class ReadDirEntryCommand extends AbstractCommand {
     @Override
     public void executeTask() throws Exception {
         File file = ctx.getFile();
-        ReadDirEntryResult result = new ReadDirEntryResult();
+        ReadDirEntryResult entryResult = new ReadDirEntryResult();
         if (file == null || !file.isDirectory()) {
-            ctx.getOutputStream().write(Utils.toByteArray(result));
+            send(Utils.toByteArray(entryResult));
             return;
         } else {
             File fileAux = null;
@@ -40,14 +40,15 @@ public class ReadDirEntryCommand extends AbstractCommand {
             }
             if (fileAux == null) {
                 ctx.setFile(null);
-                ctx.getOutputStream().write(Utils.toByteArray(result));
+                send(Utils.toByteArray(entryResult));
                 return;
             }
-            result.isDirectory = fileAux.isDirectory();
-            result.fileSize = fileAux.isDirectory() ? 0L : file.length();
-            result.fileNameLength = (short) fileAux.getName().length();
-            ctx.getOutputStream().write(Utils.toByteArray(result));
-            ctx.getOutputStream().write(Utils.toByteArray(fileAux.getName()));
+            entryResult.isDirectory = fileAux.isDirectory();
+            entryResult.fileSize = fileAux.isDirectory() ? 0L : file.length();
+            entryResult.fileNameLength = (short) fileAux.getName().length();
+
+            byte[][] result = { Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()) };
+            send(result);
         }
     }
 }

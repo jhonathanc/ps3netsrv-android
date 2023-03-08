@@ -47,9 +47,9 @@ public class StatFileCommand extends FileCommand {
                 long[] fileStats = Utils.getFileStats(file);
                 statResult = new StatFileResult(file.length(), file.lastModified() / 1000, fileStats[0] / 1000, fileStats[1] / 1000, false);
             }
-            ctx.getOutputStream().write(Utils.toByteArray(statResult));
+            send(Utils.toByteArray(statResult));
         } else {
-            ctx.getOutputStream().write(Utils.toByteArray(new StatFileResult()));
+            send(Utils.toByteArray(new StatFileResult()));
         }
     }
 }

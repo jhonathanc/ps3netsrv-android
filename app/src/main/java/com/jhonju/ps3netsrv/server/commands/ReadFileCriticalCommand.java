@@ -17,6 +17,6 @@ public class ReadFileCriticalCommand extends ReadFileCommand {
         file.seek(offset);
         if (file.read(result) < 0)
             throw new Exception("Error reading file.");
-        ctx.getOutputStream().write(result);
+        send(result);
     }
 }

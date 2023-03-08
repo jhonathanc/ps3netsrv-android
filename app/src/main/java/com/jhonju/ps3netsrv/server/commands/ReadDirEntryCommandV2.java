@@ -35,9 +35,9 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
     @Override
     public void executeTask() throws Exception {
         File file = ctx.getFile();
-        ReadDirEntryResultV2 result = new ReadDirEntryResultV2();
+        ReadDirEntryResultV2 entryResult = new ReadDirEntryResultV2();
         if (file == null || !file.isDirectory()) {
-            ctx.getOutputStream().write(Utils.toByteArray(result));
+            send(Utils.toByteArray(entryResult));
             return;
         } else {
             File fileAux = null;
@@ -49,18 +49,19 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
             }
             if (fileAux == null) {
                 ctx.setFile(null);
-                ctx.getOutputStream().write(Utils.toByteArray(result));
+                send(Utils.toByteArray(entryResult));
                 return;
             }
             long[] fileTimes = Utils.getFileStats(fileAux);
-            result.fileSize = fileAux.isDirectory() ? 0L : file.length();
-            result.modifiedTime = fileAux.lastModified() / 1000;
-            result.creationTime = fileTimes[0] / 1000;
-            result.accessedTime = fileTimes[1] / 1000;
-            result.isDirectory = fileAux.isDirectory();
-            result.fileNameLength = (short) fileAux.getName().length();
-            ctx.getOutputStream().write(Utils.toByteArray(result));
-            ctx.getOutputStream().write(Utils.toByteArray(fileAux.getName()));
+            entryResult.fileSize = fileAux.isDirectory() ? 0L : file.length();
+            entryResult.modifiedTime = fileAux.lastModified() / 1000;
+            entryResult.creationTime = fileTimes[0] / 1000;
+            entryResult.accessedTime = fileTimes[1] / 1000;
+            entryResult.isDirectory = fileAux.isDirectory();
+            entryResult.fileNameLength = (short) fileAux.getName().length();
+
+            byte[][] result = { Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()) };
+            send(result);
         }
     }
 }

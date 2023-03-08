@@ -7,145 +7,49 @@ import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.jhonju.ps3netsrv.server.commands.CreateFileCommand;
-import com.jhonju.ps3netsrv.server.commands.DeleteFileCommand;
-import com.jhonju.ps3netsrv.server.commands.GetDirSizeCommand;
-import com.jhonju.ps3netsrv.server.commands.ICommand;
-import com.jhonju.ps3netsrv.server.commands.MakeDirCommand;
-import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;
-import com.jhonju.ps3netsrv.server.commands.OpenFileCommand;
-import com.jhonju.ps3netsrv.server.commands.ReadCD2048Command;
-import com.jhonju.ps3netsrv.server.commands.ReadDirCommand;
-import com.jhonju.ps3netsrv.server.commands.ReadDirEntryCommand;
-import com.jhonju.ps3netsrv.server.commands.ReadDirEntryCommandV2;
-import com.jhonju.ps3netsrv.server.commands.ReadFileCommand;
-import com.jhonju.ps3netsrv.server.commands.ReadFileCriticalCommand;
-import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
-import com.jhonju.ps3netsrv.server.commands.WriteFileCommand;
-import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
-import com.jhonju.ps3netsrv.server.utils.Utils;
-
 public class PS3NetSrvTask implements Runnable {
-	private static ExecutorService pool;
-
-    private static ThreadExceptionHandler exceptionHandler;
-    private static String folderPath;
+	private final ExecutorService pool;
+    private final ThreadExceptionHandler exceptionHandler;
+    private final String folderPath;
+    private final int port;
     private ServerSocket serverSocket;
-    private volatile boolean isRunning = true;
+    private boolean isRunning = true;
 
-    public PS3NetSrvTask(int port, String folderPath, ThreadExceptionHandler exceptionHandler) throws Exception {
+    public PS3NetSrvTask(int port, String folderPath, ThreadExceptionHandler exceptionHandler) {
         this.folderPath = folderPath;
+        this.port = port;
         this.exceptionHandler = exceptionHandler;
-        serverSocket = new ServerSocket(port);
-        pool = Executors.newFixedThreadPool(5);
+        this.pool = Executors.newFixedThreadPool(5);
     }
 
     public void run() {
         try {
+            serverSocket = new ServerSocket(port);
             while (isRunning) {
                 Socket socket = serverSocket.accept();
-                Handler handler = new Handler(new Context(socket, folderPath));
+                ContextHandler handler = new ContextHandler(new Context(socket, folderPath));
                 handler.setUncaughtExceptionHandler(exceptionHandler);
                 pool.execute(handler);
             }
-        } catch (IOException e) {
-            System.out.println(e.getMessage()); //just let it die
+        } catch (SocketException e) {
+            System.err.println(e.getMessage()); //just let it die
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         } finally {
-        	pool.shutdown();
+            shutdown();
         }
     }
 
-    public void shutdown() throws IOException {
+    public void shutdown() {
         isRunning = false;
         pool.shutdownNow();
-        serverSocket.close();
-    }
-
-    private static class Handler extends Thread {
-        private static final byte CMD_DATA_SIZE = 16;
-        private final Context context;
-
-        public Handler(Context context) {
-            this.context = context;
-        }
-
-        @Override
-        public void run() {
-            try {
-                while (context.isSocketConnected()) {
-                    byte[] packet = Utils.readCommandData(context.getInputStream(), CMD_DATA_SIZE);
-                    if (packet == null) break;
-                    if (Utils.isByteArrayEmpty(packet))
-                        continue;
-                    context.setCommandData(packet);
-                    handleContext(context);
-                }
-            } catch (Exception e) {
-                System.err.println(e.getMessage());
-                e.printStackTrace();
-                new RuntimeException(e);
-            }
-        }
-
-        private void handleContext(Context ctx) throws Exception {
-            ICommand command;
-            ENetIsoCommand opCode = ctx.getCommandData().getOpCode();
-            switch (opCode) {
-                case NETISO_CMD_OPEN_DIR:
-                    command = new OpenDirCommand(ctx);
-                    break;
-                case NETISO_CMD_READ_DIR:
-                    command = new ReadDirCommand(ctx);
-                    break;
-                case NETISO_CMD_STAT_FILE:
-                    command = new StatFileCommand(ctx);
-                    break;
-                case NETISO_CMD_OPEN_FILE:
-                    command = new OpenFileCommand(ctx);
-                    break;
-                case NETISO_CMD_READ_FILE:
-                    command = new ReadFileCommand(ctx);
-                    break;
-                case NETISO_CMD_READ_FILE_CRITICAL:
-                    command = new ReadFileCriticalCommand(ctx);
-                    break;
-                case NETISO_CMD_READ_CD_2048_CRITICAL:
-                    command = new ReadCD2048Command(ctx);
-                    break;
-                case NETISO_CMD_CREATE_FILE:
-                    command = new CreateFileCommand(ctx);
-                    break;
-                case NETISO_CMD_WRITE_FILE:
-                    command = new WriteFileCommand(ctx);
-                    break;
-                case NETISO_CMD_MKDIR:
-                    command = new MakeDirCommand(ctx);
-                    break;
-                case NETISO_CMD_RMDIR:
-                case NETISO_CMD_DELETE_FILE:
-                    command = new DeleteFileCommand(ctx);
-                    break;
-                case NETISO_CMD_GET_DIR_SIZE:
-                    command = new GetDirSizeCommand(ctx);
-                    break;
-                case NETISO_CMD_READ_DIR_ENTRY:
-                    command = new ReadDirEntryCommand(ctx);
-                    break;
-                case NETISO_CMD_READ_DIR_ENTRY_V2:
-                    command = new ReadDirEntryCommandV2(ctx);
-                    break;
-                default:
-                    throw new Exception("OpCode not implemented: " + opCode.toString());
-            }
-
-            try {
-                command.executeTask();
-            } catch (Exception ex) {
-                System.err.println(ex.getMessage());
-                throw ex;
-            } finally {
-                ctx.getOutputStream().flush();
-            }
+        try {
+            if (serverSocket != null) serverSocket.close();
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            throw new RuntimeException("Error on close serversocket", e);
+        } finally {
+            serverSocket = null;
         }
     }
 }

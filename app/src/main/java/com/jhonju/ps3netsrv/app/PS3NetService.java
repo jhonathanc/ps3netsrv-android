@@ -13,6 +13,8 @@ import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.jhonju.ps3netsrv.R;
+import com.jhonju.ps3netsrv.app.utils.Utils;
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
 import com.jhonju.ps3netsrv.server.ThreadExceptionHandler;
 
@@ -21,43 +23,47 @@ import java.util.concurrent.Executors;
 
 public class PS3NetService extends Service {
     private static ExecutorService executorService;
-    private static PS3NetSrvTask server;
+    private static PS3NetSrvTask task;
 
     private class AndroidThreadExceptionHandler extends ThreadExceptionHandler {
         @Override
         public void uncaughtException(Thread t, Throwable e) {
-            Intent intent = new Intent();
-            intent.setAction("com.jhonju.ps3netsrv.ERROR");
-            intent.putExtra("error_message", e.getMessage());
-            sendBroadcast(intent);
+            sendBroadcast(Utils.getErrorIntent(e.getMessage()));
         }
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        executorService = Executors.newSingleThreadExecutor();
+        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), new AndroidThreadExceptionHandler());
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
         try {
             startTask();
         } catch (Exception e) {
+            System.err.println(e.getMessage());
+            sendBroadcast(Utils.getErrorIntent(e.getMessage()));
             stopTask();
-            throw new RuntimeException(e);
         }
+        return super.onStartCommand(intent, flags, startId);
     }
 
     private void stopTask() {
         try {
-            if (server != null) server.shutdown();
+            if (task != null) task.shutdown();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.err.println(e.getMessage());
+            sendBroadcast(Utils.getErrorIntent(e.getMessage()));
         } finally {
             if (!executorService.isShutdown()) executorService.shutdownNow();
         }
     }
 
-    private void startTask() throws Exception {
-        server = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), new AndroidThreadExceptionHandler());
-        executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(server);
+    private void startTask() {
+        executorService.execute(task);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String NOTIFICATION_CHANNEL_ID = getPackageName();

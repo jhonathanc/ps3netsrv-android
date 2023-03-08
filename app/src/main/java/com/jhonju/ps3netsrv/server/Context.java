@@ -92,7 +92,22 @@ public class Context implements AutoCloseable {
     }
 
     @Override
-    public void close() throws IOException {
-        if (readOnlyFile != null) readOnlyFile.close();
+    public void close() {
+        try {
+            if (readOnlyFile != null) readOnlyFile.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Error on close context - closing file");
+        } finally {
+            readOnlyFile = null;
+        }
+        if (socket != null && !socket.isClosed()) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                throw new RuntimeException("Error on close context - closing socket");
+            } finally {
+                socket = null;
+            }
+        }
     }
 }

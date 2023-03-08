@@ -87,15 +87,7 @@ public class Utils {
     }
 
     public static boolean isByteArrayEmpty(byte[] byteArray) {
-        if (byteArray.length == 0) {
-            return true;
-        }
-        for (byte b : byteArray) {
-            if (b != '\0') {
-                return false;
-            }
-        }
-        return true;
+        return (byteArray.length == 0 || Arrays.equals(byteArray, new byte[byteArray.length]));
     }
 
     public static byte[] readCommandData(InputStream in, int size) throws IOException {

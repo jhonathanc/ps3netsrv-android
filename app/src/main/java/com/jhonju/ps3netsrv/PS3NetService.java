@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
+import com.jhonju.ps3netsrv.server.ThreadExceptionHandler;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,6 +22,16 @@ import java.util.concurrent.Executors;
 public class PS3NetService extends Service {
     private static ExecutorService executorService;
     private static PS3NetSrvTask server;
+
+    private class AndroidThreadExceptionHandler extends ThreadExceptionHandler {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            Intent intent = new Intent();
+            intent.setAction("com.jhonju.ps3netsrv.ERROR");
+            intent.putExtra("error_message", e.getMessage());
+            sendBroadcast(intent);
+        }
+    }
 
     @Override
     public void onCreate() {
@@ -44,7 +55,7 @@ public class PS3NetService extends Service {
     }
 
     private void startTask() throws Exception {
-        server = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder());
+        server = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), new AndroidThreadExceptionHandler());
         executorService = Executors.newSingleThreadExecutor();
         executorService.execute(server);
 
@@ -78,7 +89,5 @@ public class PS3NetService extends Service {
 
     @Nullable
     @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
+    public IBinder onBind(Intent intent) { return null; }
 }

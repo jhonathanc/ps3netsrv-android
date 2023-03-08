@@ -1,6 +1,7 @@
 package com.jhonju.ps3netsrv;
 
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
+import com.jhonju.ps3netsrv.server.ThreadExceptionHandler;
 
 public class PS3NetSrvMain {
     private static PS3NetSrvTask server;
@@ -20,7 +21,7 @@ public class PS3NetSrvMain {
         }
         System.out.println("Server is running at " + port);
         System.out.println("Server is running at " + folderPath);
-        server = new PS3NetSrvTask(port, folderPath);
+        server = new PS3NetSrvTask(port, folderPath, new ThreadExceptionHandler());
         server.run();
         System.out.println("Server end");
     }

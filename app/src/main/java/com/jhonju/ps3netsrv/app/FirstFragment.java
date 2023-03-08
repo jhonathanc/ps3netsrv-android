@@ -1,8 +1,5 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.app;
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,7 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.jhonju.ps3netsrv.utils.Utils;
+import com.jhonju.ps3netsrv.R;
+import com.jhonju.ps3netsrv.app.utils.Utils;
 
 public class FirstFragment extends Fragment {
 

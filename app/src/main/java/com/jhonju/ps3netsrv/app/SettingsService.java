@@ -1,7 +1,9 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.app;
 
 import android.content.SharedPreferences;
 import android.os.Environment;
+
+import com.jhonju.ps3netsrv.R;
 
 import java.io.File;
 

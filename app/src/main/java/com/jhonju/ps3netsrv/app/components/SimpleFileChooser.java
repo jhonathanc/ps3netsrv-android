@@ -1,4 +1,4 @@
-package com.jhonju.ps3netsrv.ps3netsrv;
+package com.jhonju.ps3netsrv.app.components;
 
 import android.app.Activity;
 import android.app.AlertDialog;

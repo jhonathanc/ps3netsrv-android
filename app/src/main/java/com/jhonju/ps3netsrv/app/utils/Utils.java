@@ -1,10 +1,10 @@
-package com.jhonju.ps3netsrv.utils;
+package com.jhonju.ps3netsrv.app.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import com.jhonju.ps3netsrv.PS3NetSrvApp;
+import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 
 import java.net.Inet4Address;
 import java.net.Inet6Address;

@@ -1,4 +1,4 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.app;
 
 import android.Manifest;
 import android.os.Bundle;
@@ -6,7 +6,8 @@ import android.os.Bundle;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.jhonju.ps3netsrv.ps3netsrv.SimpleFileChooser;
+import com.jhonju.ps3netsrv.R;
+import com.jhonju.ps3netsrv.app.components.SimpleFileChooser;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;

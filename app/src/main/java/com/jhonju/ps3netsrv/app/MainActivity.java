@@ -1,4 +1,4 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.app;
 
 import android.Manifest;
 import android.content.Context;
@@ -16,6 +16,8 @@ import androidx.core.content.ContextCompat;
 
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.jhonju.ps3netsrv.R;
 
 public class MainActivity extends AppCompatActivity {
 

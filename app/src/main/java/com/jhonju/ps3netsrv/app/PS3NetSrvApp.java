@@ -1,4 +1,4 @@
-package com.jhonju.ps3netsrv;
+package com.jhonju.ps3netsrv.app;
 
 import android.app.Application;
 import android.content.Context;

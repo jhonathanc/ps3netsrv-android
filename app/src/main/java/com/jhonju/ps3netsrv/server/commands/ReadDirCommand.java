@@ -47,7 +47,7 @@ public class ReadDirCommand extends AbstractCommand {
                     entries.add(new ReadDirResultData(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName()));
                 }
             }
-            send(new byte[][]{ Utils.longToBytes(entries.size()), entries.size() > EMPTY_SIZE ? Utils.toByteArray(entries) : null });
+            send(Utils.longToBytes(entries.size()), entries.size() > EMPTY_SIZE ? Utils.toByteArray(entries) : null);
         }
         ctx.setFile(null);
     }

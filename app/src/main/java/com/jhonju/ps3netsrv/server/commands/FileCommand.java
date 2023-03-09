@@ -1,6 +1,5 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import com.jhonju.ps3netsrv.server.CommandData;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
@@ -8,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public abstract class FileCommand extends AbstractCommand {
 

@@ -39,29 +39,31 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
         if (file == null || !file.isDirectory()) {
             send(Utils.toByteArray(entryResult));
             return;
-        } else {
-            File fileAux = null;
-            for (String fileName : file.list()) {
+        }
+        File fileAux = null;
+        String[] fileList = file.list();
+        if (fileList != null) {
+            for (String fileName : fileList) {
                 fileAux = new File(file.getCanonicalPath() + "/" + fileName);
                 if (fileAux.getName().length() <= MAX_FILE_NAME_LENGTH) {
                     break;
                 }
             }
-            if (fileAux == null) {
-                ctx.setFile(null);
-                send(Utils.toByteArray(entryResult));
-                return;
-            }
-            long[] fileTimes = Utils.getFileStats(fileAux);
-            entryResult.aFileSize = fileAux.isDirectory() ? EMPTY_SIZE : file.length();
-            entryResult.bModifiedTime = fileAux.lastModified() / MILLISECONDS_IN_SECOND;
-            entryResult.cCreationTime = fileTimes[0] / MILLISECONDS_IN_SECOND;
-            entryResult.dAccessedTime = fileTimes[1] / MILLISECONDS_IN_SECOND;
-            entryResult.fIsDirectory = fileAux.isDirectory();
-            entryResult.eFileNameLength = (short) fileAux.getName().length();
-
-            byte[][] result = { Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()) };
-            send(result);
         }
+        if (fileAux == null) {
+            ctx.setFile(null);
+            send(Utils.toByteArray(entryResult));
+            return;
+        }
+        long[] fileTimes = Utils.getFileStats(fileAux);
+        entryResult.aFileSize = fileAux.isDirectory() ? EMPTY_SIZE : file.length();
+        entryResult.bModifiedTime = fileAux.lastModified() / MILLISECONDS_IN_SECOND;
+        entryResult.cCreationTime = fileTimes[0] / MILLISECONDS_IN_SECOND;
+        entryResult.dAccessedTime = fileTimes[1] / MILLISECONDS_IN_SECOND;
+        entryResult.fIsDirectory = fileAux.isDirectory();
+        entryResult.eFileNameLength = (short) fileAux.getName().length();
+
+        byte[][] result = { Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()) };
+        send(result);
     }
 }

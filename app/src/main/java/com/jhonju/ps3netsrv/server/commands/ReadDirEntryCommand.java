@@ -33,25 +33,27 @@ public class ReadDirEntryCommand extends AbstractCommand {
         if (file == null || !file.isDirectory()) {
             send(Utils.toByteArray(entryResult));
             return;
-        } else {
-            File fileAux = null;
-            for (String fileName : file.list()) {
+        }
+        File fileAux = null;
+        String[] fileList = file.list();
+        if (fileList != null) {
+            for (String fileName : fileList) {
                 fileAux = new File(file.getCanonicalPath() + "/" + fileName);
                 if (fileAux.getName().length() <= MAX_FILE_NAME_LENGTH) {
                     break;
                 }
             }
-            if (fileAux == null) {
-                ctx.setFile(null);
-                send(Utils.toByteArray(entryResult));
-                return;
-            }
-            entryResult.cIsDirectory = fileAux.isDirectory();
-            entryResult.aFileSize = fileAux.isDirectory() ? EMPTY_SIZE : file.length();
-            entryResult.bFileNameLength = (short) fileAux.getName().length();
-
-            byte[][] result = { Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()) };
-            send(result);
         }
+        if (fileAux == null) {
+            ctx.setFile(null);
+            send(Utils.toByteArray(entryResult));
+            return;
+        }
+        entryResult.cIsDirectory = fileAux.isDirectory();
+        entryResult.aFileSize = fileAux.isDirectory() ? EMPTY_SIZE : file.length();
+        entryResult.bFileNameLength = (short) fileAux.getName().length();
+
+        byte[][] result = { Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()) };
+        send(result);
     }
 }

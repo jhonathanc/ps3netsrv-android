@@ -1,21 +1,17 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import com.jhonju.ps3netsrv.server.CommandData;
 import com.jhonju.ps3netsrv.server.Context;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class ReadCD2048Command extends AbstractCommand {
 
     private static final short MAX_RESULT_SIZE = 2048;
 
-    private int startSector;
-    private int sectorCount;
+    private final int startSector;
+    private final int sectorCount;
 
     public ReadCD2048Command(Context ctx) {
         super(ctx);

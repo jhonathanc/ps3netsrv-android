@@ -17,7 +17,7 @@ import java.util.Arrays;
 public class Context implements AutoCloseable {
     private static final byte OP_CODE_SIZE = 2;
 
-    private String rootDirectory;
+    private final String rootDirectory;
     private Socket socket;
     private CommandData commandData;
     private File file;

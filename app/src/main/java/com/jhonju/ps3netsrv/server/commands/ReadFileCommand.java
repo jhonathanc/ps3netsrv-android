@@ -1,12 +1,10 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import com.jhonju.ps3netsrv.server.CommandData;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 public class ReadFileCommand extends AbstractCommand {
     protected int numBytes;

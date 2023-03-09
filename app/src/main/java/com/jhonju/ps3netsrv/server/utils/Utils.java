@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -46,6 +47,13 @@ public class Utils {
 
     private static void singleObjectToByteArray(Object obj, ByteArrayOutputStream out) throws Exception {
         Field[] fields = obj.getClass().getDeclaredFields();
+        Arrays.sort(fields, new Comparator<Field>() {
+            @Override
+            public int compare(Field field1, Field field2) {
+                return field1.getName().compareTo(field2.getName());
+            }
+        });
+
         for (Field field : fields) {
             field.setAccessible(true);
             Object value = field.get(obj);

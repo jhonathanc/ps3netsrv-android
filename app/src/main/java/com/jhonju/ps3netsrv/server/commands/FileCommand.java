@@ -12,16 +12,15 @@ import java.util.Arrays;
 
 public abstract class FileCommand extends AbstractCommand {
 
-    protected short fpLen;
+    protected short filePathLength;
 
     public FileCommand(Context ctx) {
         super(ctx);
-        CommandData cmd = ctx.getCommandData();
-        this.fpLen = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 0, 2)).getShort();
+        this.filePathLength = ByteBuffer.wrap(ctx.getCommandData().getData()).getShort();
     }
 
     protected File getFile() throws IOException {
-        byte[] bfilePath = Utils.readCommandData(ctx.getInputStream(), this.fpLen);
+        byte[] bfilePath = Utils.readCommandData(ctx.getInputStream(), this.filePathLength);
         if (bfilePath == null) {
             throw new IOException("ERROR: command failed receiving filename.");
         }

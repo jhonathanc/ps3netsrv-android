@@ -98,11 +98,6 @@ public class ContextHandler extends Thread {
             default:
                 throw new Exception("OpCode not implemented: " + opCode.name());
         }
-
-        try {
-            command.executeTask();
-        } finally {
-            ctx.getOutputStream().flush();
-        }
+        command.executeTask();
     }
 }

@@ -15,7 +15,7 @@ public class ReadFileCriticalCommand extends ReadFileCommand {
         byte[] result = new byte[numBytes];
         RandomAccessFile file = ctx.getReadOnlyFile();
         file.seek(offset);
-        if (file.read(result) < 0)
+        if (file.read(result) < EMPTY_SIZE)
             throw new Exception("Error reading file.");
         send(result);
     }

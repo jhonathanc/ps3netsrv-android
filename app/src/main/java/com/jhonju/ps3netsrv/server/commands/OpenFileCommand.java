@@ -18,12 +18,14 @@ public class OpenFileCommand extends FileCommand {
     }
 
     private static class OpenFileResult {
-        public final long aFileSize;
-        public final long bMTime;
+        public long aFileSize = ERROR_CODE;
+        public long bModifiedTime = ERROR_CODE;
 
-        public OpenFileResult(long fileSize, long mTime) {
+        public OpenFileResult() { }
+
+        public OpenFileResult(long fileSize, long modifiedTime) {
             this.aFileSize = fileSize;
-            this.bMTime = mTime;
+            this.bModifiedTime = modifiedTime;
         }
     }
 
@@ -32,14 +34,14 @@ public class OpenFileCommand extends FileCommand {
         try {
             File file = getFile();
             if (!file.exists()) {
-                send(Utils.toByteArray(new OpenFileResult(-1, file.lastModified())));
+                send(Utils.toByteArray(new OpenFileResult()));
                 return;
             }
             ctx.setFile(file);
             determineCdSectorSize(file);
             send(Utils.toByteArray(new OpenFileResult(file.length(), file.lastModified())));
         } catch (IOException e) {
-            send(Utils.toByteArray(new OpenFileResult(-1, -1)));
+            send(Utils.toByteArray(new OpenFileResult()));
             throw e;
         }
     }
@@ -50,7 +52,7 @@ public class OpenFileCommand extends FileCommand {
         }
 
         for (CDSectorSize cdSec : CDSectorSize.values()) {
-            long position = (cdSec.cdSectorSize << 4) + 0x18;
+            long position = (cdSec.cdSectorSize << 4) + BYTES_TO_SKIP;
             byte[] buffer = new byte[20];
             ctx.getReadOnlyFile().seek(position);
             ctx.getReadOnlyFile().read(buffer);

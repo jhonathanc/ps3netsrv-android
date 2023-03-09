@@ -18,13 +18,13 @@ public class GetDirSizeCommand extends FileCommand {
             send(Utils.longToBytes(calculateFileSize(getFile())));
         } catch (IOException ex) {
             System.err.println("Error: command GetDirSizeCommand failed");
-            send(Utils.longToBytes(-1));
+            send(Utils.longToBytes(ERROR_CODE));
             throw ex;
         }
     }
 
     private static long calculateFileSize(File file) {
-        long fileSize = 0;
+        long fileSize = EMPTY_SIZE;
         if (file.isDirectory()) {
             File[] files = file.listFiles();
             if (files != null) {

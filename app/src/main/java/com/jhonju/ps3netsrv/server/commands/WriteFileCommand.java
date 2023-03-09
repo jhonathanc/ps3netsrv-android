@@ -15,20 +15,19 @@ public class WriteFileCommand extends AbstractCommand {
 
     public WriteFileCommand(Context ctx) {
         super(ctx);
-        CommandData cmd = ctx.getCommandData();
-        this.numBytes = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 2, 6)).getInt();
+        this.numBytes = ByteBuffer.wrap(ctx.getCommandData().getData()).getInt(2);
     }
 
     @Override
     public void executeTask() throws Exception {
         if (ctx.getReadOnlyFile() == null) {
-            send(Utils.intToBytes(-1));
+            send(Utils.intToBytes(ERROR_CODE));
             return;
         }
 
         if (numBytes > BUFFER_SIZE) {
             System.err.println(String.format("ERROR: data to write (%i) is larger than buffer size (%i)", numBytes, BUFFER_SIZE));
-            send(Utils.intToBytes(-1));
+            send(Utils.intToBytes(ERROR_CODE));
             return;
         }
 
@@ -38,7 +37,7 @@ public class WriteFileCommand extends AbstractCommand {
                 fos.write(content);
                 send(Utils.intToBytes(content.length));
             } catch (IOException ex) {
-                send(Utils.intToBytes(-1));
+                send(Utils.intToBytes(ERROR_CODE));
                 throw ex;
             }
         }

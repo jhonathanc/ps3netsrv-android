@@ -13,6 +13,6 @@ public class DeleteFileCommand extends FileCommand {
 
     @Override
     public void executeTask() throws Exception {
-        send(Utils.intToBytes(getFile().delete() ? 0 : -1));
+        send(Utils.intToBytes(getFile().delete() ? SUCCESS_CODE : ERROR_CODE));
     }
 }

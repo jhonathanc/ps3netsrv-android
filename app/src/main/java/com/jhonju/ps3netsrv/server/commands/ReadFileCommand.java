@@ -9,14 +9,14 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class ReadFileCommand extends AbstractCommand {
-    int numBytes;
-    long offset;
+    protected int numBytes;
+    protected long offset;
 
     public ReadFileCommand(Context ctx) {
         super(ctx);
-        CommandData cmd = ctx.getCommandData();
-        this.numBytes = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 2, 6)).getInt();
-        this.offset = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 6, cmd.getData().length)).getLong();
+        ByteBuffer buffer = ByteBuffer.wrap(ctx.getCommandData().getData());
+        this.numBytes = buffer.getInt(2);
+        this.offset = buffer.getLong(6);
     }
 
     @Override
@@ -25,7 +25,7 @@ public class ReadFileCommand extends AbstractCommand {
         RandomAccessFile file = ctx.getReadOnlyFile();
         file.seek(offset);
         int bytesRead = file.read(readFileResult);
-        if (bytesRead < 0) {
+        if (bytesRead < EMPTY_SIZE) {
             throw new Exception("Error on read file");
         }
 

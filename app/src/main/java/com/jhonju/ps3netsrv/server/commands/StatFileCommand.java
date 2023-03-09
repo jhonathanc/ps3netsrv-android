@@ -26,10 +26,10 @@ public class StatFileCommand extends FileCommand {
         }
 
         public StatFileResult() {
-            this.aFileSize = -1;
-            this.bModifiedTime = 0;
-            this.cCreationTime = 0;
-            this.dLastAccessTime = 0;
+            this.aFileSize = -1L;
+            this.bModifiedTime = 0L;
+            this.cCreationTime = 0L;
+            this.dLastAccessTime = 0L;
             this.eIsDirectory = false;
         }
     }
@@ -42,10 +42,10 @@ public class StatFileCommand extends FileCommand {
             ctx.setFile(file);
             StatFileResult statResult;
             if (file.isDirectory()) {
-                statResult = new StatFileResult(0, file.lastModified() / 1000, file.lastModified() / 1000, 0, true);
+                statResult = new StatFileResult(EMPTY_SIZE, file.lastModified() / MILLISECONDS_IN_SECOND, file.lastModified() / MILLISECONDS_IN_SECOND, 0, true);
             } else {
                 long[] fileStats = Utils.getFileStats(file);
-                statResult = new StatFileResult(file.length(), file.lastModified() / 1000, fileStats[0] / 1000, fileStats[1] / 1000, false);
+                statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0] / MILLISECONDS_IN_SECOND, fileStats[1] / MILLISECONDS_IN_SECOND, false);
             }
             send(Utils.toByteArray(statResult));
         } else {

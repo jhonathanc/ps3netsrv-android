@@ -19,9 +19,9 @@ public class ReadCD2048Command extends AbstractCommand {
 
     public ReadCD2048Command(Context ctx) {
         super(ctx);
-        CommandData cmd = ctx.getCommandData();
-        this.startSector = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 2, 6)).getInt();
-        this.sectorCount = ByteBuffer.wrap(Arrays.copyOfRange(cmd.getData(), 6, 10)).getInt();
+        ByteBuffer buffer = ByteBuffer.wrap(ctx.getCommandData().getData());
+        this.startSector = buffer.getInt(2);
+        this.sectorCount = buffer.getInt(6);
     }
 
     @Override
@@ -38,7 +38,6 @@ public class ReadCD2048Command extends AbstractCommand {
 
     private byte[][] readSectors(RandomAccessFile file, long offset, int count) throws IOException {
         final int SECTOR_SIZE = ctx.getCdSectorSize().cdSectorSize;
-        final int BYTES_TO_SKIP = 24;
 
         byte[][] result = new byte[count][MAX_RESULT_SIZE];
         for (int i = 0; i < count; i++) {

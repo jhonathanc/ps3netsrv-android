@@ -7,19 +7,22 @@ import java.io.File;
 
 public class ReadDirEntryCommand extends AbstractCommand {
 
+    private static final short MAX_FILE_NAME_LENGTH = 255;
+    private static final short EMPTY_FILE_NAME_LENGTH = 0;
+
     public ReadDirEntryCommand(Context ctx) {
         super(ctx);
     }
 
     private static class ReadDirEntryResult {
-        public long fileSize;
-        public short fileNameLength;
-        public boolean isDirectory;
+        public long aFileSize;
+        public short bFileNameLength;
+        public boolean cIsDirectory;
 
         public ReadDirEntryResult() {
-            this.fileSize = 0L;
-            this.fileNameLength = 0;
-            this.isDirectory = false;
+            this.aFileSize = EMPTY_SIZE;
+            this.bFileNameLength = EMPTY_FILE_NAME_LENGTH;
+            this.cIsDirectory = false;
         }
     }
 
@@ -34,7 +37,7 @@ public class ReadDirEntryCommand extends AbstractCommand {
             File fileAux = null;
             for (String fileName : file.list()) {
                 fileAux = new File(file.getCanonicalPath() + "/" + fileName);
-                if (fileAux.getName().length() <= 255) {
+                if (fileAux.getName().length() <= MAX_FILE_NAME_LENGTH) {
                     break;
                 }
             }
@@ -43,9 +46,9 @@ public class ReadDirEntryCommand extends AbstractCommand {
                 send(Utils.toByteArray(entryResult));
                 return;
             }
-            entryResult.isDirectory = fileAux.isDirectory();
-            entryResult.fileSize = fileAux.isDirectory() ? 0L : file.length();
-            entryResult.fileNameLength = (short) fileAux.getName().length();
+            entryResult.cIsDirectory = fileAux.isDirectory();
+            entryResult.aFileSize = fileAux.isDirectory() ? EMPTY_SIZE : file.length();
+            entryResult.bFileNameLength = (short) fileAux.getName().length();
 
             byte[][] result = { Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()) };
             send(result);

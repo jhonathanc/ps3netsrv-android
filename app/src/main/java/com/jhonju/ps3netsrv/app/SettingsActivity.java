@@ -47,8 +47,8 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void loadSettings() {
-        ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(SettingsService.getFolder());
-        ((TextInputLayout) findViewById(R.id.tilPort)).getEditText().setText(SettingsService.getPort() + "");
+        Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).setText(SettingsService.getFolder());
+        Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilPort)).getEditText()).setText(SettingsService.getPort() + "");
     }
 
     private boolean showMessage(View view, String message) {
@@ -103,7 +103,7 @@ public class SettingsActivity extends AppCompatActivity {
         public void onFileSelected(File file) {
             // create shortcut using file path
             SettingsService.setFolder(file.getAbsolutePath());
-            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(file.getAbsolutePath());
+            Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).setText(file.getAbsolutePath());
         }
     };
 }

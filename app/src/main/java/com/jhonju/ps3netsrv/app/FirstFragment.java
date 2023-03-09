@@ -39,7 +39,7 @@ public class FirstFragment extends Fragment {
             public void onClick(View view) {
                 try {
                     if (isServerRunning) {
-                        getActivity().stopService(new Intent(getActivity(), PS3NetService.class));
+                        requireActivity().stopService(new Intent(getActivity(), PS3NetService.class));
                     } else {
                         if (!Utils.isConnectedToLocal()) {
                             Snackbar.make(view, "The ethernet/wifi connection is disabled", Snackbar.LENGTH_LONG).setAction("Action", null).show();
@@ -66,9 +66,9 @@ public class FirstFragment extends Fragment {
 
     private void startPs3NetService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            getActivity().startForegroundService(new Intent(getActivity(), PS3NetService.class));
+            requireActivity().startForegroundService(new Intent(getActivity(), PS3NetService.class));
         } else {
-            getActivity().startService(new Intent(getActivity(), PS3NetService.class));
+            requireActivity().startService(new Intent(getActivity(), PS3NetService.class));
         }
     }
 }

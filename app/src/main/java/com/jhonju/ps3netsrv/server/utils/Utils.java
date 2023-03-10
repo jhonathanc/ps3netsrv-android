@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -22,12 +23,11 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 @SuppressLint("SimpleDateFormat")
 public class Utils {
 
-    private static final String osName = Objects.requireNonNull(System.getProperty("os.name"));
+    private static final String osName = System.getProperty("os.name");
     public static final boolean isWindows = osName.toLowerCase().startsWith("windows");
     public static final boolean isOSX = osName.toLowerCase().contains("os x");
     public static final boolean isSolaris = osName.toLowerCase().contains("sunos");
@@ -87,20 +87,15 @@ public class Utils {
     }
 
     public static byte[] longToBytes(final long value) {
-        byte[] result = new byte[8];
-        for (int i = 0; i < 8; i++) {
-            result[i] = (byte) (value >> (i * 8));
-        }
-        return result;
+        ByteBuffer bb = ByteBuffer.allocate(8);
+        bb.putLong(value);
+        return bb.order(ByteOrder.LITTLE_ENDIAN).array();
     }
 
     public static byte[] intToBytes(final int value) {
-        return new byte[] {
-                (byte) (value >>> 24),
-                (byte) (value >>> 16),
-                (byte) (value >>> 8),
-                (byte) value
-        };
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        bb.putInt(value);
+        return bb.order(ByteOrder.LITTLE_ENDIAN).array();
     }
 
     public static boolean isByteArrayEmpty(byte[] byteArray) {
@@ -201,7 +196,7 @@ public class Utils {
             if (line == null) {
                 System.err.println("Could not determine creation date for file: " + file.getName());
             } else {
-                stats[0] = Objects.requireNonNull(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(line)).getTime();
+                stats[0] = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(line).getTime();
             }
 
             process = Runtime.getRuntime().exec(new String[] { "ls", "-lauE", filePath });
@@ -221,11 +216,11 @@ public class Utils {
                     int year = cal.get(Calendar.YEAR);
                     int actualMonth = cal.get(Calendar.MONTH);
 
-                    cal.setTime(Objects.requireNonNull(new SimpleDateFormat("MMM").parse(month)));
+                    cal.setTime(new SimpleDateFormat("MMM").parse(month));
                     if (cal.get(Calendar.MONTH) > actualMonth) year--;
 
                     String dateString = month + " " + parts[6] + " " + year + " " + parts[7];
-                    stats[1] = Objects.requireNonNull(new SimpleDateFormat("MMM dd yyyy HH:mm").parse(dateString)).getTime();
+                    stats[1] = new SimpleDateFormat("MMM dd yyyy HH:mm").parse(dateString).getTime();
                 }
             }
         } else {
@@ -236,7 +231,7 @@ public class Utils {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line = reader.readLine();
                 if (line != null) {
-                    stats[1] = Objects.requireNonNull(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z").parse(line)).getTime();
+                    stats[1] = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z").parse(line).getTime();
                 }
             }
         }

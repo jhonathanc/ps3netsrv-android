@@ -8,8 +8,8 @@ import java.io.IOException;
 
 public class GetDirSizeCommand extends FileCommand {
 
-    public GetDirSizeCommand(Context ctx) {
-        super(ctx);
+    public GetDirSizeCommand(Context ctx, short filePathLength) {
+        super(ctx, filePathLength);
     }
 
     @Override

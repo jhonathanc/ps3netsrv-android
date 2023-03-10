@@ -4,17 +4,15 @@ import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 
 public class ReadFileCommand extends AbstractCommand {
     protected int numBytes;
     protected long offset;
 
-    public ReadFileCommand(Context ctx) {
+    public ReadFileCommand(Context ctx, int numBytes, long offset) {
         super(ctx);
-        ByteBuffer buffer = ByteBuffer.wrap(ctx.getCommandData().getData());
-        this.numBytes = buffer.getInt(2);
-        this.offset = buffer.getLong(6);
+        this.numBytes = numBytes;
+        this.offset = offset;
     }
 
     @Override

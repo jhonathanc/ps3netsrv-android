@@ -33,10 +33,10 @@ public abstract class AbstractCommand implements ICommand {
         byte[] result = new byte[size];
 
         int destPos = 0;
-        for (byte[] bytes : results) {
-            if (bytes != null && bytes.length > EMPTY_SIZE) {
-                System.arraycopy(bytes, 0, result, destPos, bytes.length);
-                destPos += bytes.length;
+        for (int i = 0; i < results.length; i++) {
+            if (results[i] != null && results[i].length > EMPTY_SIZE) {
+                System.arraycopy(results[i], 0, result, destPos, results[i].length);
+                destPos += results[i].length;
             }
         }
         ctx.getOutputStream().write(result);

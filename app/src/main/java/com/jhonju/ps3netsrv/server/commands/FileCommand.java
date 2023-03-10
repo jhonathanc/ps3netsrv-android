@@ -5,16 +5,15 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public abstract class FileCommand extends AbstractCommand {
 
     protected short filePathLength;
 
-    public FileCommand(Context ctx) {
+    public FileCommand(Context ctx, short filePathLength) {
         super(ctx);
-        this.filePathLength = ByteBuffer.wrap(ctx.getCommandData().getData()).getShort();
+        this.filePathLength = filePathLength;
     }
 
     protected File getFile() throws IOException {

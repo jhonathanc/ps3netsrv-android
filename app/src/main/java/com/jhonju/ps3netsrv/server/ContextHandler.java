@@ -19,8 +19,11 @@ import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
+import java.nio.ByteBuffer;
+
 public class ContextHandler extends Thread {
     private static final byte CMD_DATA_SIZE = 16;
+    private static final byte OP_CODE_SIZE = 2;
     private final Context context;
 
     public ContextHandler(Context context, ThreadExceptionHandler exceptionHandler) {
@@ -37,8 +40,7 @@ public class ContextHandler extends Thread {
                 if (packet == null) break;
                 if (Utils.isByteArrayEmpty(packet))
                     continue;
-                ctx.setCommandData(packet);
-                handleContext(ctx);
+                handleContext(ctx, packet);
             }
         } catch (PS3NetSrvException e) {
             throw new RuntimeException(e);
@@ -48,46 +50,50 @@ public class ContextHandler extends Thread {
         }
     }
 
-    private void handleContext(Context ctx) throws Exception {
-        ICommand command;
-        ENetIsoCommand opCode = ctx.getCommandData().getOpCode();
+    private void handleContext(Context ctx, byte[] packet) throws Exception {
+        final ICommand command;
+        ByteBuffer buffer = ByteBuffer.wrap(packet);
+        ENetIsoCommand opCode = ENetIsoCommand.valueOf(buffer.getShort());
+        if (opCode == null) {
+            throw new PS3NetSrvException("invalid opCode: " + buffer.getShort());
+        }
         switch (opCode) {
             case NETISO_CMD_OPEN_DIR:
-                command = new OpenDirCommand(ctx);
+                command = new OpenDirCommand(ctx, buffer.getShort(2));
                 break;
             case NETISO_CMD_READ_DIR:
                 command = new ReadDirCommand(ctx);
                 break;
             case NETISO_CMD_STAT_FILE:
-                command = new StatFileCommand(ctx);
+                command = new StatFileCommand(ctx, buffer.getShort(2));
                 break;
             case NETISO_CMD_OPEN_FILE:
-                command = new OpenFileCommand(ctx);
+                command = new OpenFileCommand(ctx, buffer.getShort(2));
                 break;
             case NETISO_CMD_READ_FILE:
-                command = new ReadFileCommand(ctx);
+                command = new ReadFileCommand(ctx, buffer.getInt(4), buffer.getLong(8));
                 break;
             case NETISO_CMD_READ_FILE_CRITICAL:
-                command = new ReadFileCriticalCommand(ctx);
+                command = new ReadFileCriticalCommand(ctx, buffer.getInt(4), buffer.getLong(8));
                 break;
             case NETISO_CMD_READ_CD_2048_CRITICAL:
-                command = new ReadCD2048Command(ctx);
+                command = new ReadCD2048Command(ctx, buffer.getInt(4), buffer.getInt(8));
                 break;
             case NETISO_CMD_CREATE_FILE:
-                command = new CreateFileCommand(ctx);
+                command = new CreateFileCommand(ctx, buffer.getShort(2));
                 break;
             case NETISO_CMD_WRITE_FILE:
-                command = new WriteFileCommand(ctx);
+                command = new WriteFileCommand(ctx, buffer.getInt(4));
                 break;
             case NETISO_CMD_MKDIR:
-                command = new MakeDirCommand(ctx);
+                command = new MakeDirCommand(ctx, buffer.getShort(2));
                 break;
             case NETISO_CMD_RMDIR:
             case NETISO_CMD_DELETE_FILE:
-                command = new DeleteFileCommand(ctx);
+                command = new DeleteFileCommand(ctx, buffer.getShort(2));
                 break;
             case NETISO_CMD_GET_DIR_SIZE:
-                command = new GetDirSizeCommand(ctx);
+                command = new GetDirSizeCommand(ctx, buffer.getShort(2));
                 break;
             case NETISO_CMD_READ_DIR_ENTRY:
                 command = new ReadDirEntryCommand(ctx);

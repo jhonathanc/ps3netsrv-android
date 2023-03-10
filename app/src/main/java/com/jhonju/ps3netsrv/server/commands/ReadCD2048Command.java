@@ -4,7 +4,6 @@ import com.jhonju.ps3netsrv.server.Context;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 
 public class ReadCD2048Command extends AbstractCommand {
 
@@ -13,11 +12,10 @@ public class ReadCD2048Command extends AbstractCommand {
     private final int startSector;
     private final int sectorCount;
 
-    public ReadCD2048Command(Context ctx) {
+    public ReadCD2048Command(Context ctx, int startSector, int sectorCount) {
         super(ctx);
-        ByteBuffer buffer = ByteBuffer.wrap(ctx.getCommandData().getData());
-        this.startSector = buffer.getInt(2);
-        this.sectorCount = buffer.getInt(6);
+        this.startSector = startSector;
+        this.sectorCount = sectorCount;
     }
 
     @Override
@@ -29,9 +27,7 @@ public class ReadCD2048Command extends AbstractCommand {
         if (ctx.getFile() == null) {
             throw new IllegalArgumentException("File shouldn't be null");
         }
-        for (byte[] buffer : readSectors(ctx.getReadOnlyFile(), startSector * ctx.getCdSectorSize().cdSectorSize, sectorCount)) {
-            send(buffer);
-        }
+        send(readSectors(ctx.getReadOnlyFile(), startSector * ctx.getCdSectorSize().cdSectorSize, sectorCount));
     }
 
     private byte[][] readSectors(RandomAccessFile file, long offset, int count) throws IOException {

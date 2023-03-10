@@ -7,7 +7,7 @@ import java.io.File;
 
 public class OpenDirCommand  extends FileCommand {
 
-    public OpenDirCommand(Context ctx) { super(ctx); }
+    public OpenDirCommand(Context ctx, short filePathLength) { super(ctx, filePathLength); }
 
     @Override
     public void executeTask() throws Exception {

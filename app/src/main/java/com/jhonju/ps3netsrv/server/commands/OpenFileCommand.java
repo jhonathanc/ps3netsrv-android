@@ -13,8 +13,8 @@ public class OpenFileCommand extends FileCommand {
     private static final long CD_MINIMUM_SIZE = 0x200000L;
     private static final long CD_MAXIMUM_SIZE = 0x35000000L;
 
-    public OpenFileCommand(Context ctx) {
-        super(ctx);
+    public OpenFileCommand(Context ctx, short filePathLength) {
+        super(ctx, filePathLength);
     }
 
     private static class OpenFileResult {
@@ -41,6 +41,7 @@ public class OpenFileCommand extends FileCommand {
             determineCdSectorSize(file);
             send(Utils.toByteArray(new OpenFileResult(file.length(), file.lastModified())));
         } catch (IOException e) {
+            System.err.println("Error: on OpenFileCommand" + e.getMessage());
             send(Utils.toByteArray(new OpenFileResult()));
             throw e;
         }

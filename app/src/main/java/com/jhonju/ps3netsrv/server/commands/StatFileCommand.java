@@ -1,13 +1,14 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import java.io.File;
+
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 public class StatFileCommand extends FileCommand {
 
-    public StatFileCommand(Context ctx) {
-        super(ctx);
+    public StatFileCommand(Context ctx, short filePathLength) {
+        super(ctx, filePathLength);
     }
 
     private static class StatFileResult {

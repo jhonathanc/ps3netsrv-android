@@ -1,13 +1,12 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import java.io.RandomAccessFile;
-
 import com.jhonju.ps3netsrv.server.Context;
 
 public class ReadFileCriticalCommand extends ReadFileCommand {
 
-    public ReadFileCriticalCommand(Context ctx) {
-        super(ctx);
+    public ReadFileCriticalCommand(Context ctx, int numBytes, long offset) {
+        super(ctx, numBytes, offset);
     }
 
     @Override

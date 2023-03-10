@@ -1,7 +1,6 @@
 package com.jhonju.ps3netsrv.server;
 
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
-import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -11,15 +10,10 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 public class Context implements AutoCloseable {
-    private static final byte OP_CODE_SIZE = 2;
-
     private final String rootDirectory;
     private Socket socket;
-    private CommandData commandData;
     private File file;
     private RandomAccessFile readOnlyFile;
     private File writeOnlyFile;
@@ -81,14 +75,6 @@ public class Context implements AutoCloseable {
 
     public RandomAccessFile getReadOnlyFile() {
         return readOnlyFile;
-    }
-
-    public CommandData getCommandData() {
-        return commandData;
-    }
-
-    public void setCommandData(byte[] data) {
-        this.commandData = new CommandData(ENetIsoCommand.valueOf(ByteBuffer.wrap(Arrays.copyOfRange(data, 0, OP_CODE_SIZE)).getShort()), Arrays.copyOfRange(data, OP_CODE_SIZE, data.length));
     }
 
     @Override

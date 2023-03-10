@@ -5,8 +5,8 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 public class DeleteFileCommand extends FileCommand {
 
-    public DeleteFileCommand(Context ctx) {
-        super(ctx);
+    public DeleteFileCommand(Context ctx, short filePathLength) {
+        super(ctx, filePathLength);
     }
 
     @Override

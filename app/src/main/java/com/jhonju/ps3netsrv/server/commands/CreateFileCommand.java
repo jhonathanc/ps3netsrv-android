@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public class CreateFileCommand extends FileCommand {
 
-    public CreateFileCommand(Context ctx) { super(ctx); }
+    public CreateFileCommand(Context ctx, short filePathLength) { super(ctx, filePathLength); }
 
     @Override
     public void executeTask() throws Exception {

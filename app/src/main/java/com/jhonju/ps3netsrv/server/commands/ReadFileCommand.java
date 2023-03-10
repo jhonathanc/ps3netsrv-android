@@ -25,7 +25,6 @@ public class ReadFileCommand extends AbstractCommand {
             throw new Exception("Error on read file");
         }
 
-        byte[][] result = { Utils.toByteArray(Utils.intToBytes(bytesRead)), readFileResult };
-        send(result);
+        send(Utils.toByteArray(Utils.intToBytes(bytesRead)), readFileResult);
     }
 }

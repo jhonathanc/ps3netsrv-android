@@ -6,6 +6,7 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 
 public class OpenFileCommand extends FileCommand {
@@ -34,12 +35,14 @@ public class OpenFileCommand extends FileCommand {
         try {
             File file = getFile();
             if (!file.exists()) {
+                ctx.setFile(null);
+                System.err.println("Error: on OpenFileCommand - file not exists");
                 send(Utils.toByteArray(new OpenFileResult()));
                 return;
             }
             ctx.setFile(file);
-            determineCdSectorSize(file);
-            send(Utils.toByteArray(new OpenFileResult(file.length(), file.lastModified())));
+            determineCdSectorSize(ctx.getReadOnlyFile());
+            send(Utils.toByteArray(new OpenFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND)));
         } catch (IOException e) {
             System.err.println("Error: on OpenFileCommand" + e.getMessage());
             send(Utils.toByteArray(new OpenFileResult()));
@@ -47,16 +50,16 @@ public class OpenFileCommand extends FileCommand {
         }
     }
 
-    private void determineCdSectorSize(File file) throws IOException {
+    private void determineCdSectorSize(RandomAccessFile file) throws IOException {
         if (file.length() < CD_MINIMUM_SIZE || file.length() > CD_MAXIMUM_SIZE) {
+            ctx.setCdSectorSize(null);
             return;
         }
-
         for (CDSectorSize cdSec : CDSectorSize.values()) {
             long position = (cdSec.cdSectorSize << 4) + BYTES_TO_SKIP;
             byte[] buffer = new byte[20];
-            ctx.getReadOnlyFile().seek(position);
-            ctx.getReadOnlyFile().read(buffer);
+            file.seek(position);
+            file.read(buffer);
             String strBuffer = new String(buffer, StandardCharsets.US_ASCII);
             if (strBuffer.contains("PLAYSTATION ") || strBuffer.contains("CD001")) {
                 ctx.setCdSectorSize(cdSec);

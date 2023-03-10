@@ -62,8 +62,6 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
         entryResult.dAccessedTime = fileTimes[1] / MILLISECONDS_IN_SECOND;
         entryResult.fIsDirectory = fileAux.isDirectory();
         entryResult.eFileNameLength = (short) fileAux.getName().length();
-
-        byte[][] result = { Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()) };
-        send(result);
+        send(Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()));
     }
 }

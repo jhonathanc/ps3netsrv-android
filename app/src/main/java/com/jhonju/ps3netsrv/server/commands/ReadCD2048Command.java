@@ -8,6 +8,7 @@ import java.io.RandomAccessFile;
 public class ReadCD2048Command extends AbstractCommand {
 
     private static final short MAX_RESULT_SIZE = 2048;
+    private static final int MAX_SECTORS = BUFFER_SIZE / MAX_RESULT_SIZE;
 
     private final int startSector;
     private final int sectorCount;
@@ -20,7 +21,6 @@ public class ReadCD2048Command extends AbstractCommand {
 
     @Override
     public void executeTask() throws Exception {
-        final int MAX_SECTORS = BUFFER_SIZE / MAX_RESULT_SIZE;
         if (sectorCount > MAX_SECTORS) {
             throw new IllegalArgumentException("Too many sectors read!");
         }

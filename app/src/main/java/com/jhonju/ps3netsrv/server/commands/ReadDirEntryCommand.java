@@ -52,8 +52,6 @@ public class ReadDirEntryCommand extends AbstractCommand {
         entryResult.cIsDirectory = fileAux.isDirectory();
         entryResult.aFileSize = fileAux.isDirectory() ? EMPTY_SIZE : file.length();
         entryResult.bFileNameLength = (short) fileAux.getName().length();
-
-        byte[][] result = { Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()) };
-        send(result);
+        send(Utils.toByteArray(entryResult), Utils.toByteArray(fileAux.getName()));
     }
 }

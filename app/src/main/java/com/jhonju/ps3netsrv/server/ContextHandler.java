@@ -23,7 +23,10 @@ import java.nio.ByteBuffer;
 
 public class ContextHandler extends Thread {
     private static final byte CMD_DATA_SIZE = 16;
-    private static final byte OP_CODE_SIZE = 2;
+    private static final byte IDX_OP_CODE = 0;
+    private static final byte IDX_CMD_DATA_1 = 2;
+    private static final byte IDX_CMD_DATA_2 = 4;
+    private static final byte IDX_CMD_DATA_3 = 8;
     private final Context context;
 
     public ContextHandler(Context context, ThreadExceptionHandler exceptionHandler) {
@@ -53,47 +56,47 @@ public class ContextHandler extends Thread {
     private void handleContext(Context ctx, byte[] packet) throws Exception {
         final ICommand command;
         ByteBuffer buffer = ByteBuffer.wrap(packet);
-        ENetIsoCommand opCode = ENetIsoCommand.valueOf(buffer.getShort());
+        ENetIsoCommand opCode = ENetIsoCommand.valueOf(buffer.getShort(IDX_OP_CODE));
         if (opCode == null) {
-            throw new PS3NetSrvException("invalid opCode: " + buffer.getShort());
+            throw new PS3NetSrvException("invalid opCode: " + buffer.getShort(IDX_OP_CODE));
         }
         switch (opCode) {
             case NETISO_CMD_OPEN_DIR:
-                command = new OpenDirCommand(ctx, buffer.getShort(2));
+                command = new OpenDirCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));
                 break;
             case NETISO_CMD_READ_DIR:
                 command = new ReadDirCommand(ctx);
                 break;
             case NETISO_CMD_STAT_FILE:
-                command = new StatFileCommand(ctx, buffer.getShort(2));
+                command = new StatFileCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));
                 break;
             case NETISO_CMD_OPEN_FILE:
-                command = new OpenFileCommand(ctx, buffer.getShort(2));
+                command = new OpenFileCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));
                 break;
             case NETISO_CMD_READ_FILE:
-                command = new ReadFileCommand(ctx, buffer.getInt(4), buffer.getLong(8));
+                command = new ReadFileCommand(ctx, buffer.getInt(IDX_CMD_DATA_2), buffer.getLong(IDX_CMD_DATA_3));
                 break;
             case NETISO_CMD_READ_FILE_CRITICAL:
-                command = new ReadFileCriticalCommand(ctx, buffer.getInt(4), buffer.getLong(8));
+                command = new ReadFileCriticalCommand(ctx, buffer.getInt(IDX_CMD_DATA_2), buffer.getLong(IDX_CMD_DATA_3));
                 break;
             case NETISO_CMD_READ_CD_2048_CRITICAL:
-                command = new ReadCD2048Command(ctx, buffer.getInt(4), buffer.getInt(8));
+                command = new ReadCD2048Command(ctx, buffer.getInt(IDX_CMD_DATA_2), buffer.getInt(IDX_CMD_DATA_3));
                 break;
             case NETISO_CMD_CREATE_FILE:
-                command = new CreateFileCommand(ctx, buffer.getShort(2));
+                command = new CreateFileCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));
                 break;
             case NETISO_CMD_WRITE_FILE:
-                command = new WriteFileCommand(ctx, buffer.getInt(4));
+                command = new WriteFileCommand(ctx, buffer.getInt(IDX_CMD_DATA_2));
                 break;
             case NETISO_CMD_MKDIR:
-                command = new MakeDirCommand(ctx, buffer.getShort(2));
+                command = new MakeDirCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));
                 break;
             case NETISO_CMD_RMDIR:
             case NETISO_CMD_DELETE_FILE:
-                command = new DeleteFileCommand(ctx, buffer.getShort(2));
+                command = new DeleteFileCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));
                 break;
             case NETISO_CMD_GET_DIR_SIZE:
-                command = new GetDirSizeCommand(ctx, buffer.getShort(2));
+                command = new GetDirSizeCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));
                 break;
             case NETISO_CMD_READ_DIR_ENTRY:
                 command = new ReadDirEntryCommand(ctx);

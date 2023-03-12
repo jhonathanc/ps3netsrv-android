@@ -34,3 +34,20 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
 }
+
+task generateGitProperties {
+    doLast {
+        println("Executando script para gerar git.properties...")
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            exec {
+                commandLine 'cmd', '/c', 'generateGitProperties.bat'
+            }
+        } else {
+            exec {
+                commandLine './generateGitProperties.sh'
+            }
+        }
+    }
+}
+
+preBuild.dependsOn generateGitProperties

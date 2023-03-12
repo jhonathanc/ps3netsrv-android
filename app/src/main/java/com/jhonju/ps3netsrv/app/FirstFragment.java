@@ -16,6 +16,10 @@ import com.google.android.material.snackbar.Snackbar;
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.utils.Utils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 public class FirstFragment extends Fragment {
 
     private boolean isServerRunning = false;
@@ -29,6 +33,17 @@ public class FirstFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_first, container, false);
     }
 
+    private void showVersion(View view) {
+        Properties properties = new Properties();
+        try (InputStream inputStream = requireActivity().getAssets().open("git.properties")) {
+            properties.load(inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String commitCode = properties.getProperty("git.commit.id");
+        Snackbar.make(view, "Version: " + commitCode.substring(0, 8).replaceAll("'", ""), Snackbar.LENGTH_LONG).setAction("Action", null).show();
+    }
+
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -37,6 +52,7 @@ public class FirstFragment extends Fragment {
         view.findViewById(R.id.button_start_stop_server).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                showVersion(view);
                 try {
                     if (isServerRunning) {
                         requireActivity().stopService(new Intent(getActivity(), PS3NetService.class));

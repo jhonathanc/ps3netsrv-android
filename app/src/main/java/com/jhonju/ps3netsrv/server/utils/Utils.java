@@ -118,7 +118,7 @@ public class Utils {
                     try {
                         return sdf.parse(dateStr[5] + " " + dateStr[6] + " " + dateStr[7] + " " + dateStr[8]);
                     } catch (Exception e) {
-                        System.err.println("Could not parse date " + Arrays.toString(dateStr));
+                        System.err.printf("/nCould not parse date %s", Arrays.toString(dateStr));
                     }
                 }
             }
@@ -144,6 +144,7 @@ public class Utils {
                 try {
                     return sdf.parse(date);
                 } catch (ParseException ignored) {
+                    System.err.printf("/nCould not parse date %s", date);
                 }
             }
         }

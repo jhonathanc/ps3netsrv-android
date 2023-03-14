@@ -164,6 +164,19 @@ public class Utils {
         }
     }
 
+    private static long tryParseDate(String pattern, String value) {
+        if (value != null) {
+            try {
+                return new SimpleDateFormat(pattern).parse(value).getTime();
+            } catch (ParseException e) {
+                System.err.printf("/nCould not parse date %s", value);
+                return 0;
+            }
+        }
+        System.err.println("Could not parse a null value");
+        return 0;
+    }
+
     public static long[] getFileStats(File file) throws Exception {
         long[] stats = { 0, 0 };
         String filePath = file.getCanonicalPath();
@@ -196,7 +209,7 @@ public class Utils {
             if (line == null) {
                 System.err.println("Could not determine creation date for file: " + file.getName());
             } else {
-                stats[0] = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(line).getTime();
+                stats[0] = tryParseDate("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", line);
             }
 
             process = Runtime.getRuntime().exec(new String[] { "ls", "-lauE", filePath });
@@ -219,8 +232,7 @@ public class Utils {
                     cal.setTime(new SimpleDateFormat("MMM").parse(month));
                     if (cal.get(Calendar.MONTH) > actualMonth) year--;
 
-                    String dateString = month + " " + parts[6] + " " + year + " " + parts[7];
-                    stats[1] = new SimpleDateFormat("MMM dd yyyy HH:mm").parse(dateString).getTime();
+                    stats[1] = tryParseDate("MMM dd yyyy HH:mm", month + " " + parts[6] + " " + year + " " + parts[7]);
                 }
             }
         } else {
@@ -231,7 +243,8 @@ public class Utils {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line = reader.readLine();
                 if (line != null) {
-                    stats[1] = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z").parse(line).getTime();
+                    if (!line.contains("+")) line = line.trim() + " +0000";
+                    stats[1] = tryParseDate("yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z", line);
                 }
             }
         }

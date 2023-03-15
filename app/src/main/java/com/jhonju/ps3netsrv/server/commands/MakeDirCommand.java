@@ -11,6 +11,6 @@ public class MakeDirCommand extends FileCommand {
 
     @Override
     public void executeTask() throws Exception {
-        send(Utils.intToBytes(getFile().mkdir() ? SUCCESS_CODE : ERROR_CODE));
+        send(Utils.intToBytesBE(getFile().mkdir() ? SUCCESS_CODE : ERROR_CODE));
     }
 }

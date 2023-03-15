@@ -32,7 +32,19 @@ public class Utils {
     public static final boolean isOSX = osName.toLowerCase().contains("os x");
     public static final boolean isSolaris = osName.toLowerCase().contains("sunos");
 
-    public static byte[] toByteArray(Object obj) throws Exception {
+    /**
+     * Convert an object to a ps3netsrv response byte array.
+     * The main difference here is that PS3 is Big Endian.
+     * If you intend to use this method to convert objects
+     * in other projects, take a look on intToBytesBE and longToBytesBE
+     * to avoid mistakes
+     *
+     * @param obj object to be converted
+     * @return a converted object to byte array
+     * @throws IllegalAccessException if some Field object is enforcing Java language access control and the underlying field is inaccessible.
+     * @throws IOException if an I/O error occurs.
+     */
+    public static byte[] toByteArray(Object obj) throws IllegalAccessException, IOException {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             if (obj instanceof List<?>) {
                 listObjectToByteArray((List<?>) obj, out);
@@ -43,13 +55,13 @@ public class Utils {
         }
     }
 
-    private static void listObjectToByteArray(List<?> list, ByteArrayOutputStream out) throws Exception {
+    private static void listObjectToByteArray(List<?> list, ByteArrayOutputStream out) throws IllegalAccessException, IOException {
         for (Object o : list) {
             singleObjectToByteArray(o, out);
         }
     }
 
-    private static void singleObjectToByteArray(Object obj, ByteArrayOutputStream out) throws Exception {
+    private static void singleObjectToByteArray(Object obj, ByteArrayOutputStream out) throws IllegalAccessException, IOException {
         Field[] fields = obj.getClass().getDeclaredFields();
         Arrays.sort(fields, new Comparator<Field>() {
             @Override
@@ -65,9 +77,9 @@ public class Utils {
                 if (value instanceof Boolean) {
                     out.write(((Boolean) value) ? 1 : 0);
                 } else if (value instanceof Long) {
-                    out.write(longToBytes((long) value));
+                    out.write(longToBytesBE((long) value));
                 } else if (value instanceof Integer) {
-                    out.write(intToBytes((int) value));
+                    out.write(intToBytesBE((int) value));
                 } else if (value instanceof String) {
                     out.write(((String) value).getBytes(StandardCharsets.UTF_8));
                 } else if (value instanceof char[]) {
@@ -86,16 +98,20 @@ public class Utils {
         return bytes;
     }
 
-    public static byte[] longToBytes(final long value) {
-        ByteBuffer bb = ByteBuffer.allocate(8);
+    public static byte[] longToBytesBE(final long value) {
+        ByteOrder byteOrder = ByteOrder.nativeOrder();
+        if (byteOrder != ByteOrder.BIG_ENDIAN) byteOrder = ByteOrder.BIG_ENDIAN;
+        ByteBuffer bb = ByteBuffer.allocate(8).order(byteOrder);
         bb.putLong(value);
-        return bb.order(ByteOrder.LITTLE_ENDIAN).array();
+        return bb.array();
     }
 
-    public static byte[] intToBytes(final int value) {
-        ByteBuffer bb = ByteBuffer.allocate(4);
+    public static byte[] intToBytesBE(final int value) {
+        ByteOrder byteOrder = ByteOrder.nativeOrder();
+        if (byteOrder != ByteOrder.BIG_ENDIAN) byteOrder = ByteOrder.BIG_ENDIAN;
+        ByteBuffer bb = ByteBuffer.allocate(8).order(byteOrder);
         bb.putInt(value);
-        return bb.order(ByteOrder.LITTLE_ENDIAN).array();
+        return bb.array();
     }
 
     public static boolean isByteArrayEmpty(byte[] byteArray) {

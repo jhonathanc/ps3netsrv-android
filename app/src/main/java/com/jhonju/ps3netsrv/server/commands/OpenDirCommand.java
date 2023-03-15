@@ -14,10 +14,10 @@ public class OpenDirCommand  extends FileCommand {
         File file = getFile();
         if (file.exists()) {
             ctx.setFile(file);
-            send(Utils.intToBytes(file.isDirectory() ? SUCCESS_CODE : ERROR_CODE));
+            send(Utils.intToBytesBE(file.isDirectory() ? SUCCESS_CODE : ERROR_CODE));
         } else {
             ctx.setFile(null);
-            send(Utils.intToBytes(ERROR_CODE));
+            send(Utils.intToBytesBE(ERROR_CODE));
         }
     }
 }

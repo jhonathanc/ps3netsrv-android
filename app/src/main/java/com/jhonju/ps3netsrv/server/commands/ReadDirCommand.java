@@ -37,7 +37,7 @@ public class ReadDirCommand extends AbstractCommand {
     public void executeTask() throws Exception {
         File file = ctx.getFile();
         if (file == null || !(file.exists() && file.isDirectory())) {
-            send(Utils.longToBytes(EMPTY_SIZE));
+            send(Utils.longToBytesBE(EMPTY_SIZE));
         } else {
             List<ReadDirResultData> entries = new ArrayList<>();
             File[] files = file.listFiles();
@@ -47,7 +47,7 @@ public class ReadDirCommand extends AbstractCommand {
                     entries.add(new ReadDirResultData(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName()));
                 }
             }
-            send(Utils.longToBytes(entries.size()), entries.size() > EMPTY_SIZE ? Utils.toByteArray(entries) : null);
+            send(Utils.longToBytesBE(entries.size()), entries.size() > EMPTY_SIZE ? Utils.toByteArray(entries) : null);
         }
         ctx.setFile(null);
     }

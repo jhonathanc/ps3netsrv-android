@@ -20,29 +20,29 @@ public class WriteFileCommand extends AbstractCommand {
     public void executeTask() throws Exception {
         if (ctx.getReadOnlyFile() == null) {
             System.err.println("ERROR: file is null");
-            send(Utils.intToBytes(ERROR_CODE));
+            send(Utils.intToBytesBE(ERROR_CODE));
             return;
         }
 
         if (numBytes > BUFFER_SIZE) {
             System.err.printf("ERROR: data to write (%d) is larger than buffer size (%d)/n", numBytes, BUFFER_SIZE);
-            send(Utils.intToBytes(ERROR_CODE));
+            send(Utils.intToBytesBE(ERROR_CODE));
             return;
         }
 
         ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), numBytes);
         if (buffer == null) {
             System.err.println("ERROR: on write file - content is null/n");
-            send(Utils.intToBytes(ERROR_CODE));
+            send(Utils.intToBytesBE(ERROR_CODE));
             return;
         }
         try (FileOutputStream fos = new FileOutputStream(ctx.getWriteOnlyFile())) {
             try {
                 byte[] content = buffer.array();
                 fos.write(content);
-                send(Utils.intToBytes(content.length));
+                send(Utils.intToBytesBE(content.length));
             } catch (IOException ex) {
-                send(Utils.intToBytes(ERROR_CODE));
+                send(Utils.intToBytesBE(ERROR_CODE));
                 throw ex;
             }
         }

@@ -1,6 +1,8 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import java.io.RandomAccessFile;
+import java.util.Arrays;
+
 import com.jhonju.ps3netsrv.server.Context;
 
 public class ReadFileCriticalCommand extends ReadFileCommand {
@@ -14,8 +16,10 @@ public class ReadFileCriticalCommand extends ReadFileCommand {
         byte[] result = new byte[numBytes];
         RandomAccessFile file = ctx.getReadOnlyFile();
         file.seek(offset);
-        if (file.read(result) < EMPTY_SIZE)
+        int bytesRead = file.read(result);
+        if (bytesRead < EMPTY_SIZE) {
             throw new Exception("Error reading file.");
-        send(result);
+        }
+        send(Arrays.copyOfRange(result, 0, bytesRead));
     }
 }

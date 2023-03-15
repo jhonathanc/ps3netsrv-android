@@ -1,17 +1,21 @@
 package com.jhonju.ps3netsrv.server.commands;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 public class StatFileCommand extends FileCommand {
 
+    private static final int RESULT_LENGTH = 33;
+
     public StatFileCommand(Context ctx, short filePathLength) {
         super(ctx, filePathLength);
     }
 
-    private static class StatFileResult {
+    private static class StatFileResult implements Result {
         public final long aFileSize;
         public final long bModifiedTime;
         public final long cCreationTime;
@@ -33,6 +37,17 @@ public class StatFileCommand extends FileCommand {
             this.dLastAccessTime = 0L;
             this.eIsDirectory = false;
         }
+
+        public byte[] toByteArray() throws IOException {
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH)) {
+                out.write(Utils.longToBytesBE(this.aFileSize));
+                out.write(Utils.longToBytesBE(this.bModifiedTime));
+                out.write(Utils.longToBytesBE(this.cCreationTime));
+                out.write(Utils.longToBytesBE(this.dLastAccessTime));
+                out.write(eIsDirectory ? 1 : 0);
+                return out.toByteArray();
+            }
+        }
     }
 
     @Override
@@ -48,9 +63,9 @@ public class StatFileCommand extends FileCommand {
                 long[] fileStats = Utils.getFileStats(file);
                 statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0] / MILLISECONDS_IN_SECOND, fileStats[1] / MILLISECONDS_IN_SECOND, false);
             }
-            send(Utils.toByteArray(statResult));
+            send(statResult);
         } else {
-            send(Utils.toByteArray(new StatFileResult()));
+            send(new StatFileResult());
         }
     }
 }

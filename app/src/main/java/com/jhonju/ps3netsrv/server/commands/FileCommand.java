@@ -5,6 +5,7 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public abstract class FileCommand extends AbstractCommand {
@@ -17,10 +18,10 @@ public abstract class FileCommand extends AbstractCommand {
     }
 
     protected File getFile() throws IOException {
-        byte[] bfilePath = Utils.readCommandData(ctx.getInputStream(), this.filePathLength);
-        if (bfilePath == null) {
+        ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), this.filePathLength);
+        if (buffer == null) {
             throw new IOException("ERROR: command failed receiving filename.");
         }
-        return new File(ctx.getRootDirectory(), new String(bfilePath, StandardCharsets.UTF_8).replaceAll("\\x00+$", ""));
+        return new File(ctx.getRootDirectory(), new String(buffer.array(), StandardCharsets.UTF_8).replaceAll("\\x00+$", ""));
     }
 }

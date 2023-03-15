@@ -29,14 +29,15 @@ public class WriteFileCommand extends AbstractCommand {
             return;
         }
 
-        byte[] content = Utils.readCommandData(ctx.getInputStream(), numBytes);
-        if (content == null) {
+        ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), numBytes);
+        if (buffer == null) {
             System.err.println("ERROR: on write file - content is null/n");
             send(Utils.intToBytes(ERROR_CODE));
             return;
         }
         try (FileOutputStream fos = new FileOutputStream(ctx.getWriteOnlyFile())) {
             try {
+                byte[] content = buffer.array();
                 fos.write(content);
                 send(Utils.intToBytes(content.length));
             } catch (IOException ex) {

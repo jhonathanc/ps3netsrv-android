@@ -102,10 +102,10 @@ public class Utils {
         return (byteArray.length == 0 || Arrays.equals(byteArray, new byte[byteArray.length]));
     }
 
-    public static byte[] readCommandData(InputStream in, int size) throws IOException {
+    public static ByteBuffer readCommandData(InputStream in, int size) throws IOException {
         byte[] data = new byte[size];
         if (in.read(data) < 0) return null;
-        return data;
+        return ByteBuffer.wrap(data);
     }
 
     private static Date parseOSXDate(Iterator<String> it) {

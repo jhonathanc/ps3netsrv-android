@@ -39,9 +39,9 @@ public class ContextHandler extends Thread {
     public void run() {
         try (Context ctx = context) {
             while (ctx.isSocketConnected()) {
-                byte[] packet = Utils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
+                ByteBuffer packet = Utils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
                 if (packet == null) break;
-                if (Utils.isByteArrayEmpty(packet))
+                if (Utils.isByteArrayEmpty(packet.array()))
                     continue;
                 handleContext(ctx, packet);
             }
@@ -53,9 +53,8 @@ public class ContextHandler extends Thread {
         }
     }
 
-    private void handleContext(Context ctx, byte[] packet) throws Exception {
+    private void handleContext(Context ctx, ByteBuffer buffer) throws Exception {
         final ICommand command;
-        ByteBuffer buffer = ByteBuffer.wrap(packet);
         ENetIsoCommand opCode = ENetIsoCommand.valueOf(buffer.getShort(IDX_OP_CODE));
         if (opCode == null) {
             throw new PS3NetSrvException("invalid opCode: " + buffer.getShort(IDX_OP_CODE));

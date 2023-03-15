@@ -58,7 +58,7 @@ public class Utils {
 
     public static byte[] shortToBytesBE(final short value) {
         ByteBuffer bb = ByteBuffer.allocate(SHORT_CAPACITY).order(ByteOrder.BIG_ENDIAN);
-        bb.putInt(value);
+        bb.putShort(value);
         return bb.array();
     }
 

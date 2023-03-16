@@ -20,7 +20,7 @@ public class ReadDirCommand extends AbstractCommand {
         super(ctx);
     }
 
-    private static class ReadDirResult implements Result {
+    private static class ReadDirResult implements IResult {
         private final List<ReadDirEntry> entries;
 
         public ReadDirResult(List<ReadDirEntry> entries) {

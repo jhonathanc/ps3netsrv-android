@@ -18,7 +18,7 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
         super(ctx);
     }
 
-    private static class ReadDirEntryResultV2 implements Result {
+    private static class ReadDirEntryResultV2 implements IResult {
         private final long aFileSize;
         private final long bModifiedTime;
         private final long cCreationTime;

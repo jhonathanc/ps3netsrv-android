@@ -23,7 +23,7 @@ public class OpenFileCommand extends FileCommand {
         super(ctx, filePathLength);
     }
 
-    private static class OpenFileResult implements Result {
+    private static class OpenFileResult implements IResult {
         private long aFileSize = ERROR_CODE;
         private long bModifiedTime = ERROR_CODE;
 

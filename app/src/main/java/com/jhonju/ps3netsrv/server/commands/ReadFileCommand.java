@@ -8,7 +8,6 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Arrays;
 
 public class ReadFileCommand extends AbstractCommand {
     protected int numBytes;
@@ -20,7 +19,7 @@ public class ReadFileCommand extends AbstractCommand {
         this.offset = offset;
     }
 
-    private static class ReadFileResult implements Result {
+    private static class ReadFileResult implements IResult {
         private final int bytesReadLength;
         private final byte[] bytesRead;
 

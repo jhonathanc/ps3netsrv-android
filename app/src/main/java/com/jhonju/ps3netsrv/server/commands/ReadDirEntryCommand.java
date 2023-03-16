@@ -18,7 +18,7 @@ public class ReadDirEntryCommand extends AbstractCommand {
         super(ctx);
     }
 
-    private static class ReadDirEntryResult implements Result {
+    private static class ReadDirEntryResult implements IResult {
         public final long aFileSize;
         public final short bFileNameLength;
         public final boolean cIsDirectory;

@@ -17,7 +17,7 @@ public abstract class AbstractCommand implements ICommand {
         this.ctx = ctx;
     }
 
-    protected void send(Result result) throws IOException {
+    protected void send(IResult result) throws IOException {
         send(result.toByteArray());
     }
 

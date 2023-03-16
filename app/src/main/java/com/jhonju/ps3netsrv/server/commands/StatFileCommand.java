@@ -15,7 +15,7 @@ public class StatFileCommand extends FileCommand {
         super(ctx, filePathLength);
     }
 
-    private static class StatFileResult implements Result {
+    private static class StatFileResult implements IResult {
         public final long aFileSize;
         public final long bModifiedTime;
         public final long cCreationTime;

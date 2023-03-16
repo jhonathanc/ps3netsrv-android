@@ -33,7 +33,7 @@ public class ReadFileCommand extends AbstractCommand {
         public byte[] toByteArray() throws IOException {
             try (ByteArrayOutputStream out = new ByteArrayOutputStream(INT_CAPACITY + bytesReadLength)) {
                 out.write(Utils.intToBytesBE(bytesReadLength));
-                out.write(bytesRead, 0, bytesReadLength);
+                out.write(bytesRead);
                 return out.toByteArray();
             }
         }
@@ -48,6 +48,6 @@ public class ReadFileCommand extends AbstractCommand {
         if (bytesRead < EMPTY_SIZE) {
             throw new Exception("Error reading file.");
         }
-        send(new ReadFileResult(bytesRead, Arrays.copyOfRange(readFileResult, 0, bytesRead)));
+        send(new ReadFileResult(bytesRead, readFileResult));
     }
 }

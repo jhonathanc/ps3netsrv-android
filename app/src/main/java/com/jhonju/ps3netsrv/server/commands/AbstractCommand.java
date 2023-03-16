@@ -17,27 +17,13 @@ public abstract class AbstractCommand implements ICommand {
         this.ctx = ctx;
     }
 
-    protected void send(byte[]... results) throws IOException {
-        int size = EMPTY_SIZE;
-        if (results != null && results.length > EMPTY_SIZE) {
-            for (byte[] aux : results) {
-                if (aux != null && aux.length > EMPTY_SIZE) {
-                    size += aux.length;
-                }
-            }
-        }
-        if (size == EMPTY_SIZE) {
+    protected void send(Result result) throws IOException {
+        send(result.toByteArray());
+    }
+
+    protected void send(byte[] result) throws IOException {
+        if (result.length == EMPTY_SIZE) {
             throw new IllegalArgumentException("Error: send data is empty");
-        }
-
-        byte[] result = new byte[size];
-
-        int destPos = 0;
-        for (int i = 0; i < results.length; i++) {
-            if (results[i] != null && results[i].length > EMPTY_SIZE) {
-                System.arraycopy(results[i], 0, result, destPos, results[i].length);
-                destPos += results[i].length;
-            }
         }
         ctx.getOutputStream().write(result);
         ctx.getOutputStream().flush();

@@ -2,6 +2,7 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -30,16 +31,18 @@ public class ReadCD2048Command extends AbstractCommand {
         send(readSectors(ctx.getReadOnlyFile(), startSector * ctx.getCdSectorSize().cdSectorSize, sectorCount));
     }
 
-    private byte[][] readSectors(RandomAccessFile file, long offset, int count) throws IOException {
+    private byte[] readSectors(RandomAccessFile file, long offset, int count) throws IOException {
         final int SECTOR_SIZE = ctx.getCdSectorSize().cdSectorSize;
 
-        byte[][] result = new byte[count][MAX_RESULT_SIZE];
-        for (int i = 0; i < count; i++) {
-            file.seek(offset + BYTES_TO_SKIP);
-            file.read(result[i]);
-            offset += SECTOR_SIZE;
+        try(ByteArrayOutputStream out = new ByteArrayOutputStream(count * MAX_RESULT_SIZE)) {
+            for (int i = 0; i < count; i++) {
+                file.seek(offset + BYTES_TO_SKIP);
+                byte[] sectorRead = new byte[MAX_RESULT_SIZE];
+                int bytesLength = file.read(sectorRead);
+                out.write(sectorRead, 0, bytesLength);
+                offset += SECTOR_SIZE;
+            }
+            return out.toByteArray();
         }
-        return result;
     }
-
 }

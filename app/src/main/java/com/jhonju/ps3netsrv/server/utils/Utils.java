@@ -27,69 +27,15 @@ import java.util.Locale;
 @SuppressLint("SimpleDateFormat")
 public class Utils {
 
+    public static final int SHORT_CAPACITY = 2;
+    public static final int INT_CAPACITY = 4;
+    public static final int LONG_CAPACITY = 8;
     private static final String osName = System.getProperty("os.name");
     public static final boolean isWindows = osName.toLowerCase().startsWith("windows");
     public static final boolean isOSX = osName.toLowerCase().contains("os x");
     public static final boolean isSolaris = osName.toLowerCase().contains("sunos");
 
-    /**
-     * Convert an object to a ps3netsrv response byte array.
-     * The main difference here is that PS3 is Big Endian.
-     * If you intend to use this method to convert objects
-     * in other projects, take a look on intToBytesBE and longToBytesBE
-     * to avoid mistakes
-     *
-     * @param obj object to be converted
-     * @return a converted object to byte array
-     * @throws IllegalAccessException if some Field object is enforcing Java language access control and the underlying field is inaccessible.
-     * @throws IOException if an I/O error occurs.
-     */
-    public static byte[] toByteArray(Object obj) throws IllegalAccessException, IOException {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            if (obj instanceof List<?>) {
-                listObjectToByteArray((List<?>) obj, out);
-            } else {
-                singleObjectToByteArray(obj, out);
-            }
-            return out.toByteArray();
-        }
-    }
-
-    private static void listObjectToByteArray(List<?> list, ByteArrayOutputStream out) throws IllegalAccessException, IOException {
-        for (Object o : list) {
-            singleObjectToByteArray(o, out);
-        }
-    }
-
-    private static void singleObjectToByteArray(Object obj, ByteArrayOutputStream out) throws IllegalAccessException, IOException {
-        Field[] fields = obj.getClass().getDeclaredFields();
-        Arrays.sort(fields, new Comparator<Field>() {
-            @Override
-            public int compare(Field field1, Field field2) {
-                return field1.getName().compareTo(field2.getName());
-            }
-        });
-
-        for (Field field : fields) {
-            field.setAccessible(true);
-            Object value = field.get(obj);
-            if (value != null) {
-                if (value instanceof Boolean) {
-                    out.write(((Boolean) value) ? 1 : 0);
-                } else if (value instanceof Long) {
-                    out.write(longToBytesBE((long) value));
-                } else if (value instanceof Integer) {
-                    out.write(intToBytesBE((int) value));
-                } else if (value instanceof String) {
-                    out.write(((String) value).getBytes(StandardCharsets.UTF_8));
-                } else if (value instanceof char[]) {
-                    out.write(charArrayToByteArray((char[]) value));
-                }
-            }
-        }
-    }
-
-    private static byte[] charArrayToByteArray(char[] chars) {
+    public static byte[] charArrayToByteArray(char[] chars) {
         CharBuffer charBuffer = CharBuffer.wrap(chars);
         ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(charBuffer);
         byte[] bytes = new byte[byteBuffer.remaining()];
@@ -99,18 +45,20 @@ public class Utils {
     }
 
     public static byte[] longToBytesBE(final long value) {
-        ByteOrder byteOrder = ByteOrder.nativeOrder();
-        if (byteOrder != ByteOrder.BIG_ENDIAN) byteOrder = ByteOrder.BIG_ENDIAN;
-        ByteBuffer bb = ByteBuffer.allocate(8).order(byteOrder);
+        ByteBuffer bb = ByteBuffer.allocate(LONG_CAPACITY).order(ByteOrder.BIG_ENDIAN);
         bb.putLong(value);
         return bb.array();
     }
 
     public static byte[] intToBytesBE(final int value) {
-        ByteOrder byteOrder = ByteOrder.nativeOrder();
-        if (byteOrder != ByteOrder.BIG_ENDIAN) byteOrder = ByteOrder.BIG_ENDIAN;
-        ByteBuffer bb = ByteBuffer.allocate(8).order(byteOrder);
+        ByteBuffer bb = ByteBuffer.allocate(INT_CAPACITY).order(ByteOrder.BIG_ENDIAN);
         bb.putInt(value);
+        return bb.array();
+    }
+
+    public static byte[] shortToBytesBE(final short value) {
+        ByteBuffer bb = ByteBuffer.allocate(SHORT_CAPACITY).order(ByteOrder.BIG_ENDIAN);
+        bb.putShort(value);
         return bb.array();
     }
 

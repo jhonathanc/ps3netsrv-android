@@ -16,8 +16,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    #- name: Install Git
-    #  run: sudo apt-get update && sudo apt-get install -y git
+    - name: Check commit message
+      run: |
+        MESSAGE=$(git log --format=%B -n 1 $GITHUB_SHA)
+        if [[ $MESSAGE == "docs:"* ]]; then
+          echo "Commit message starts with 'docs:', skipping job"
+          exit 0
+        fi
     - name: Set up JDK 11
       uses: actions/setup-java@v2
       with:

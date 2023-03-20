@@ -46,20 +46,22 @@ public class OpenFileCommand extends FileCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
+        File file = getFile();
+        if (!file.exists()) {
+            ctx.setFile(null);
+            send(new OpenFileResult());
+            throw new PS3NetSrvException("Error: on OpenFileCommand - file not exists");
+        }
+        ctx.setFile(file);
+
         try {
-            File file = getFile();
-            if (!file.exists()) {
-                ctx.setFile(null);
-                send(new OpenFileResult());
-                throw new PS3NetSrvException("Error: on OpenFileCommand - file not exists");
-            }
-            ctx.setFile(file);
             determineCdSectorSize(ctx.getReadOnlyFile());
-            send(new OpenFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND));
-        } catch (IOException | PS3NetSrvException e) {
+        } catch (IOException e) {
+            ctx.setFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: not possible to determine CD Sector size");
         }
+        send(new OpenFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND));
     }
 
     private void determineCdSectorSize(RandomAccessFile file) throws IOException {

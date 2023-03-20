@@ -33,13 +33,15 @@ public abstract class AbstractCommand implements ICommand {
 
     protected void send(byte[] result) throws IOException, PS3NetSrvException {
         OutputStream os = ctx.getOutputStream();
-        if (result.length == EMPTY_SIZE) {
-            os.write(ERROR_CODE_BYTEARRAY);
-            throw new PS3NetSrvException("Empty byte array to send to response");
-        } else {
+        try {
+            if (result.length == EMPTY_SIZE) {
+                os.write(ERROR_CODE_BYTEARRAY);
+                throw new PS3NetSrvException("Empty byte array to send to response");
+            }
             os.write(result);
+        } finally {
+            os.flush();
         }
-        os.flush();
     }
 
 }

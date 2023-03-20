@@ -21,7 +21,7 @@ public abstract class FileCommand extends AbstractCommand {
     protected File getFile() throws IOException, PS3NetSrvException {
         ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), this.filePathLength);
         if (buffer == null) {
-            ctx.getOutputStream().write(ERROR_CODE_BYTEARRAY);
+            send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: command failed receiving filename.");
         }
         return new File(ctx.getRootDirectory(), new String(buffer.array(), StandardCharsets.UTF_8).replaceAll("\\x00+$", ""));

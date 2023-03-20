@@ -19,6 +19,7 @@ import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class ContextHandler extends Thread {
@@ -29,7 +30,7 @@ public class ContextHandler extends Thread {
     private static final byte IDX_CMD_DATA_3 = 8;
     private final Context context;
 
-    public ContextHandler(Context context, ThreadExceptionHandler exceptionHandler) {
+    public ContextHandler(Context context, Thread.UncaughtExceptionHandler exceptionHandler) {
         super();
         setUncaughtExceptionHandler(exceptionHandler);
         this.context = context;
@@ -39,21 +40,22 @@ public class ContextHandler extends Thread {
     public void run() {
         try (Context ctx = context) {
             while (ctx.isSocketConnected()) {
-                ByteBuffer packet = Utils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
-                if (packet == null) break;
-                if (Utils.isByteArrayEmpty(packet.array()))
-                    continue;
-                handleContext(ctx, packet);
+                try {
+                    ByteBuffer packet = Utils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
+                    if (packet == null) break;
+                    if (Utils.isByteArrayEmpty(packet.array()))
+                        continue;
+                    handleContext(ctx, packet);
+                } catch (PS3NetSrvException e) {
+                    getUncaughtExceptionHandler().uncaughtException(this, e);
+                }
             }
-        } catch (PS3NetSrvException e) {
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            getUncaughtExceptionHandler().uncaughtException(this, e);
         }
     }
 
-    private void handleContext(Context ctx, ByteBuffer buffer) throws Exception {
+    private void handleContext(Context ctx, ByteBuffer buffer) throws PS3NetSrvException, IOException {
         final ICommand command;
         ENetIsoCommand opCode = ENetIsoCommand.valueOf(buffer.getShort(IDX_OP_CODE));
         if (opCode == null) {
@@ -104,7 +106,7 @@ public class ContextHandler extends Thread {
                 command = new ReadDirEntryCommandV2(ctx);
                 break;
             default:
-                throw new Exception("OpCode not implemented: " + opCode.name());
+                throw new PS3NetSrvException("OpCode not implemented: " + opCode.name());
         }
         command.executeTask();
     }

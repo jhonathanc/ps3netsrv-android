@@ -1,6 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
+import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.File;
@@ -13,14 +14,8 @@ public class GetDirSizeCommand extends FileCommand {
     }
 
     @Override
-    public void executeTask() throws Exception {
-        try {
-            send(Utils.longToBytesBE(calculateFileSize(getFile())));
-        } catch (IOException ex) {
-            System.err.println("Error: command GetDirSizeCommand failed");
-            send(Utils.longToBytesBE(ERROR_CODE));
-            throw ex;
-        }
+    public void executeTask() throws IOException, PS3NetSrvException {
+        send(Utils.longToBytesBE(calculateFileSize(getFile())));
     }
 
     private static long calculateFileSize(File file) {

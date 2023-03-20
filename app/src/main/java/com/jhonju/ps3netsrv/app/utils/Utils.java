@@ -55,10 +55,7 @@ public class Utils {
     }
 
     public static Intent getErrorIntent(String message) {
-        Intent intent = new Intent();
-        intent.setAction(ACTION_ERROR);
-        intent.putExtra(ACTION_ERROR_PARAMETER_NAME, message);
-        return intent;
+        return new Intent().setAction(ACTION_ERROR).putExtra(ACTION_ERROR_PARAMETER_NAME, message);
     }
 
 }

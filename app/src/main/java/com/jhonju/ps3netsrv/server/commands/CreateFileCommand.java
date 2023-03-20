@@ -1,7 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
-import com.jhonju.ps3netsrv.server.utils.Utils;
+import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +11,7 @@ public class CreateFileCommand extends FileCommand {
     public CreateFileCommand(Context ctx, short filePathLength) { super(ctx, filePathLength); }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask() throws PS3NetSrvException, IOException {
         try {
             File file = getFile();
             ctx.setWriteOnlyFile(null);
@@ -23,10 +23,10 @@ public class CreateFileCommand extends FileCommand {
                 throw new IOException("ERROR: create error on " + file.getCanonicalPath());
             }
             ctx.setWriteOnlyFile(file);
-            send(Utils.intToBytesBE(SUCCESS_CODE));
+            send(SUCCESS_CODE_BYTEARRAY);
         } catch (IOException ex) {
-            send(Utils.intToBytesBE(ERROR_CODE));
-            throw ex;
+            send(ERROR_CODE_BYTEARRAY);
+            throw new PS3NetSrvException(ex.getMessage());
         }
     }
 }

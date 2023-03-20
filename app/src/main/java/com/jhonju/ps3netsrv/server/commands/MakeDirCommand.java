@@ -1,7 +1,9 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
-import com.jhonju.ps3netsrv.server.utils.Utils;
+import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+
+import java.io.IOException;
 
 public class MakeDirCommand extends FileCommand {
 
@@ -10,7 +12,7 @@ public class MakeDirCommand extends FileCommand {
     }
 
     @Override
-    public void executeTask() throws Exception {
-        send(Utils.intToBytesBE(getFile().mkdir() ? SUCCESS_CODE : ERROR_CODE));
+    public void executeTask() throws PS3NetSrvException, IOException {
+        send(getFile().mkdir() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
     }
 }

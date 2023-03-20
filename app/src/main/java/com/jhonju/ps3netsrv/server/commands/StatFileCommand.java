@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 
 import com.jhonju.ps3netsrv.server.Context;
+import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 public class StatFileCommand extends FileCommand {
@@ -51,7 +52,7 @@ public class StatFileCommand extends FileCommand {
     }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask() throws IOException, PS3NetSrvException {
         ctx.setFile(null);
         File file = getFile();
         if (file.exists()) {

@@ -95,38 +95,43 @@ public class Utils {
         , ACCESS_DATE
     }
 
-    private static Date getFileStatsWindows(String filePath, FileStat fileStat) throws Exception {
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy hh:mm");
-        String command = (fileStat == FileStat.CREATION_DATE ? "/TC" : "/TA");
-        Process process = Runtime.getRuntime().exec(new String[] {"dir", command, filePath });
-        process.waitFor();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] arr = line.split("\\s+");
-                String date = arr[0] + " " + arr[1];
-                try {
-                    return sdf.parse(date);
-                } catch (ParseException ignored) {
-                    System.err.printf("/nCould not parse date %s", date);
+    private static Date getFileStatsWindows(String filePath, FileStat fileStat) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy hh:mm");
+            String command = (fileStat == FileStat.CREATION_DATE ? "/TC" : "/TA");
+            Process process = Runtime.getRuntime().exec(new String[]{"dir", command, filePath});
+            process.waitFor();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] arr = line.split("\\s+");
+                    String date = arr[0] + " " + arr[1];
+                    try {
+                        return sdf.parse(date);
+                    } catch (ParseException ignored) {
+                        System.err.printf("/nCould not parse date %s", date);
+                    }
                 }
             }
-        }
+        } catch (Exception ignored) {}
         return null;
     }
 
-    private static Date getFileStatsOSX(String filePath, FileStat fileStat) throws Exception {
-        String command = (fileStat == FileStat.CREATION_DATE ? "-laUT" : "-lauT");
-        Process process = Runtime.getRuntime().exec(new String[] { "ls", command, filePath });
-        process.waitFor();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            List<String> lines = new ArrayList<>();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
+    private static Date getFileStatsOSX(String filePath, FileStat fileStat) {
+        try {
+            String command = (fileStat == FileStat.CREATION_DATE ? "-laUT" : "-lauT");
+            Process process = Runtime.getRuntime().exec(new String[]{"ls", command, filePath});
+            process.waitFor();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                List<String> lines = new ArrayList<>();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    lines.add(line);
+                }
+                return parseOSXDate(lines.iterator());
             }
-            return parseOSXDate(lines.iterator());
-        }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     private static long tryParseDate(String pattern, String value) {
@@ -142,9 +147,16 @@ public class Utils {
         return 0;
     }
 
-    public static long[] getFileStats(File file) throws Exception {
+    public static long[] getFileStats(File file) {
         long[] stats = { 0, 0 };
-        String filePath = file.getCanonicalPath();
+
+        String filePath;
+        try {
+            filePath = file.getCanonicalPath();
+        } catch (IOException e) {
+            return stats;
+        }
+
         if (isWindows) {
             Date creationDate = getFileStatsWindows(filePath, FileStat.CREATION_DATE);
             if (creationDate != null) {
@@ -166,52 +178,58 @@ public class Utils {
                 stats[1] = accessDate.getTime();
             }
         } else if (isSolaris) {
-            Process process = Runtime.getRuntime().exec(new String[] { "ls", "-E", filePath, "| grep 'crtime=' | sed 's/^.*crtime=//'" });
-            process.waitFor();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line = reader.readLine();
-            reader.close();
-            if (line == null) {
-                System.err.println("Could not determine creation date for file: " + file.getName());
-            } else {
-                stats[0] = tryParseDate("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", line);
-            }
-
-            process = Runtime.getRuntime().exec(new String[] { "ls", "-lauE", filePath });
-            process.waitFor();
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            line = reader.readLine();
-            reader.close();
-            if (line == null) {
-                System.err.println("Could not determine last access date for file: " + file.getName());
-            } else {
-                String[] parts = line.trim().split("\\s+");
-                if (parts.length >= 8) {
-                    String month = parts[5];
-
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(new Date());
-                    int year = cal.get(Calendar.YEAR);
-                    int actualMonth = cal.get(Calendar.MONTH);
-
-                    cal.setTime(new SimpleDateFormat("MMM").parse(month));
-                    if (cal.get(Calendar.MONTH) > actualMonth) year--;
-
-                    stats[1] = tryParseDate("MMM dd yyyy HH:mm", month + " " + parts[6] + " " + year + " " + parts[7]);
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"ls", "-E", filePath, "| grep 'crtime=' | sed 's/^.*crtime=//'"});
+                process.waitFor();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line = reader.readLine();
+                reader.close();
+                if (line == null) {
+                    System.err.println("Could not determine creation date for file: " + file.getName());
+                } else {
+                    stats[0] = tryParseDate("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", line);
                 }
-            }
+            } catch (Exception ignored) {}
+
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"ls", "-lauE", filePath});
+                process.waitFor();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line = reader.readLine();
+                reader.close();
+                if (line == null) {
+                    System.err.println("Could not determine last access date for file: " + file.getName());
+                } else {
+                    String[] parts = line.trim().split("\\s+");
+                    if (parts.length >= 8) {
+                        String month = parts[5];
+
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(new Date());
+                        int year = cal.get(Calendar.YEAR);
+                        int actualMonth = cal.get(Calendar.MONTH);
+
+                        cal.setTime(new SimpleDateFormat("MMM").parse(month));
+                        if (cal.get(Calendar.MONTH) > actualMonth) year--;
+
+                        stats[1] = tryParseDate("MMM dd yyyy HH:mm", month + " " + parts[6] + " " + year + " " + parts[7]);
+                    }
+                }
+            } catch (Exception ignored) {}
         } else {
             stats[0] = file.lastModified();
 
-            Process process = Runtime.getRuntime().exec(new String[] {"stat", "-c", "%x", filePath});
-            process.waitFor();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line = reader.readLine();
-                if (line != null) {
-                    if (!line.contains("+")) line = line.trim() + " +0000";
-                    stats[1] = tryParseDate("yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z", line);
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"stat", "-c", "%x", filePath});
+                process.waitFor();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line = reader.readLine();
+                    if (line != null) {
+                        if (!line.contains("+")) line = line.trim() + " +0000";
+                        stats[1] = tryParseDate("yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z", line);
+                    }
                 }
-            }
+            } catch (Exception ignored) {}
         }
         return stats;
     }

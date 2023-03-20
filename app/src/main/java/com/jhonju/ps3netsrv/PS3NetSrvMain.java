@@ -1,7 +1,8 @@
 package com.jhonju.ps3netsrv;
 
+import androidx.annotation.NonNull;
+
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
-import com.jhonju.ps3netsrv.server.ThreadExceptionHandler;
 
 public class PS3NetSrvMain {
     private static PS3NetSrvTask server;
@@ -21,7 +22,13 @@ public class PS3NetSrvMain {
         }
         System.out.println("Server is running at " + port);
         System.out.println("Server is running at " + folderPath);
-        server = new PS3NetSrvTask(port, folderPath, new ThreadExceptionHandler());
+        server = new PS3NetSrvTask(port, folderPath, new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {
+                System.err.println(thread.getId() + " " + throwable.getMessage());
+            }
+        });
+
         server.run();
         System.out.println("Server end");
     }

@@ -10,13 +10,13 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.IBinder;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.utils.Utils;
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
-import com.jhonju.ps3netsrv.server.ThreadExceptionHandler;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,18 +25,16 @@ public class PS3NetService extends Service {
     private static ExecutorService executorService;
     private static PS3NetSrvTask task;
 
-    private class AndroidThreadExceptionHandler extends ThreadExceptionHandler {
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-            sendBroadcast(Utils.getErrorIntent(e.getMessage()));
-        }
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
         executorService = Executors.newSingleThreadExecutor();
-        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), new AndroidThreadExceptionHandler());
+        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+                sendBroadcast(Utils.getErrorIntent(e.getMessage()));
+            }
+        });
     }
 
     @Override

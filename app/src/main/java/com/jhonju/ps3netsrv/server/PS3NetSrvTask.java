@@ -8,13 +8,13 @@ import java.util.concurrent.Executors;
 
 public class PS3NetSrvTask implements Runnable {
 	private final ExecutorService pool;
-    private final ThreadExceptionHandler exceptionHandler;
+    private final Thread.UncaughtExceptionHandler exceptionHandler;
     private final String folderPath;
     private final int port;
     private ServerSocket serverSocket;
     private boolean isRunning = true;
 
-    public PS3NetSrvTask(int port, String folderPath, ThreadExceptionHandler exceptionHandler) {
+    public PS3NetSrvTask(int port, String folderPath, Thread.UncaughtExceptionHandler exceptionHandler) {
         this.folderPath = folderPath;
         this.port = port;
         this.exceptionHandler = exceptionHandler;

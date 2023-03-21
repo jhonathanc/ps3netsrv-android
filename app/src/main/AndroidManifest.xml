@@ -33,12 +33,6 @@
         </activity>
         <service android:name=".app.PS3NetService"
             android:enabled="true" />
-        <receiver android:name=".app.components.ExceptionBroadcastReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.jhonju.ps3netsrv.ERROR" />
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>

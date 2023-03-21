@@ -1,7 +1,6 @@
 package com.jhonju.ps3netsrv.app.utils;
 
 import android.content.Context;
-import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
@@ -15,9 +14,6 @@ import java.net.NetworkInterface;
 import java.util.Enumeration;
 
 public class Utils {
-
-    private static final String ACTION_ERROR = "com.jhonju.ps3netsrv.ERROR";
-    private static final String ACTION_ERROR_PARAMETER_NAME = "error_message";
 
     public static String getIPAddress(boolean useIPv4) throws Exception {
         ConnectivityManager connManager = (ConnectivityManager) PS3NetSrvApp.getAppContext().getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -53,9 +49,4 @@ public class Utils {
             return (wifiInfo != null && wifiInfo.isConnected());
         }
     }
-
-    public static Intent getErrorIntent(String message) {
-        return new Intent().setAction(ACTION_ERROR).putExtra(ACTION_ERROR_PARAMETER_NAME, message);
-    }
-
 }

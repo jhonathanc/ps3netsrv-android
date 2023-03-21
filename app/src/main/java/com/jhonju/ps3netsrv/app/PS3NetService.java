@@ -8,14 +8,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.jhonju.ps3netsrv.R;
-import com.jhonju.ps3netsrv.app.utils.Utils;
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
 
 import java.util.concurrent.ExecutorService;
@@ -25,16 +27,27 @@ public class PS3NetService extends Service {
     private static ExecutorService executorService;
     private static PS3NetSrvTask task;
 
+    private Thread.UncaughtExceptionHandler exceptionHandler = new Thread.UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread thread, Throwable throwable) {
+            final String message = throwable.getMessage();
+            HandlerThread handlerThread = new HandlerThread("ToastThread");
+            handlerThread.start();
+            Looper looper = handlerThread.getLooper();
+            Handler handler = new Handler(looper);
+            handler.post(new Runnable() {
+                public void run() {
+                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    };
+
     @Override
     public void onCreate() {
         super.onCreate();
         executorService = Executors.newSingleThreadExecutor();
-        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
-                sendBroadcast(Utils.getErrorIntent(e.getMessage()));
-            }
-        });
+        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), exceptionHandler);
     }
 
     @Override
@@ -43,7 +56,6 @@ public class PS3NetService extends Service {
             startTask();
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            sendBroadcast(Utils.getErrorIntent(e.getMessage()));
             stopTask();
         }
         return super.onStartCommand(intent, flags, startId);
@@ -54,7 +66,6 @@ public class PS3NetService extends Service {
             if (task != null) task.shutdown();
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            sendBroadcast(Utils.getErrorIntent(e.getMessage()));
         } finally {
             if (!executorService.isShutdown()) executorService.shutdownNow();
         }

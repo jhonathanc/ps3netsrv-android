@@ -47,7 +47,6 @@ public class ReadFileCommand extends AbstractCommand {
             file.seek(offset);
             int bytesRead = file.read(readFileResult);
             if (bytesRead < EMPTY_SIZE) {
-                send(ERROR_CODE_BYTEARRAY);
                 throw new PS3NetSrvException("Error reading file: EOF.");
             }
             send(new ReadFileResult(bytesRead, readFileResult));

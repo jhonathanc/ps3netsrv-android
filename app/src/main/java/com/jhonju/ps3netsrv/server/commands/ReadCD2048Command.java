@@ -1,6 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
+import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,12 +22,14 @@ public class ReadCD2048Command extends AbstractCommand {
     }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask() throws IOException, PS3NetSrvException {
         if (sectorCount > MAX_SECTORS) {
             throw new IllegalArgumentException("Too many sectors read!");
+            //TODO: VERIFICAR O QUE PODE SER DEVOLVIDO COMO RESPOSTA
         }
         if (ctx.getFile() == null) {
             throw new IllegalArgumentException("File shouldn't be null");
+            //TODO: VERIFICAR O QUE PODE SER DEVOLVIDO COMO RESPOSTA
         }
         send(readSectors(ctx.getReadOnlyFile(), startSector * ctx.getCdSectorSize().cdSectorSize, sectorCount));
     }

@@ -1,6 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
+import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -64,7 +65,7 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
     }
 
     @Override
-    public void executeTask() throws Exception {
+    public void executeTask() throws IOException, PS3NetSrvException {
         File file = ctx.getFile();
         if (file == null || !file.isDirectory()) {
             send(new ReadDirEntryResultV2());

@@ -10,8 +10,8 @@ import java.io.OutputStream;
 public abstract class AbstractCommand implements ICommand {
     protected Context ctx;
     protected static final int ERROR_CODE = -1;
-    protected static final byte[] ERROR_CODE_BYTEARRAY = Utils.intToBytesBE(ERROR_CODE);
-    protected static final byte[] SUCCESS_CODE_BYTEARRAY = Utils.intToBytesBE(0);
+    protected byte[] ERROR_CODE_BYTEARRAY = Utils.intToBytesBE(ERROR_CODE);
+    protected byte[] SUCCESS_CODE_BYTEARRAY = Utils.intToBytesBE(0);
     protected static final int EMPTY_SIZE = 0;
     protected static final int BUFFER_SIZE = 4 * 1048576; //4MB
     protected static final int BYTES_TO_SKIP = 24;

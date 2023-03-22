@@ -28,20 +28,20 @@ public abstract class AbstractCommand implements ICommand {
         } catch (IOException e) {
             throw new PS3NetSrvException("ERROR on byte array conversion");
         }
+        /* the "send" is out from try-catch because toByteArray also throws IOException, so
+           it's possible to handle it. The IOException on "send" must end the
+           thread and close the connection on ContextHandler
+         */
         send(byteArray);
     }
 
     protected void send(byte[] result) throws IOException, PS3NetSrvException {
         OutputStream os = ctx.getOutputStream();
-        try {
-            if (result.length == EMPTY_SIZE) {
-                os.write(ERROR_CODE_BYTEARRAY);
-                throw new PS3NetSrvException("Empty byte array to send to response");
-            }
-            os.write(result);
-        } finally {
-            os.flush();
+        if (result.length == EMPTY_SIZE) {
+            throw new PS3NetSrvException("Empty byte array to send to response");
         }
+        os.write(result);
+        os.flush();
     }
 
 }

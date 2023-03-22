@@ -52,11 +52,11 @@ public class FirstFragment extends Fragment {
         view.findViewById(R.id.button_start_stop_server).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                showVersion(view);
                 try {
                     if (isServerRunning) {
                         requireActivity().stopService(new Intent(getActivity(), PS3NetService.class));
                     } else {
+                        showVersion(view);
                         if (!Utils.isConnectedToLocal()) {
                             Snackbar.make(view, "The ethernet/wifi connection is disabled", Snackbar.LENGTH_LONG).setAction("Action", null).show();
                             return;

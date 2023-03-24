@@ -66,8 +66,11 @@ public class PS3NetSrvTask implements Runnable {
     }
 
     private boolean allowIncomingConnection(String hostAddress) {
-        if (filterAddresses == null || listType == EListType.LIST_TYPE_NONE) {
+        if (listType == EListType.LIST_TYPE_NONE) {
             return true;
+        }
+        if (filterAddresses == null) {
+            return (listType == EListType.LIST_TYPE_BLOCKED);
         }
         boolean addressExists = filterAddresses.contains(hostAddress);
         if (listType == EListType.LIST_TYPE_ALLOWED) {

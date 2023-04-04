@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,9 +22,9 @@ public class PS3NetSrvTask implements Runnable {
 
     private final EListType listType;
 
-    private final List<String> filterAddresses;
+    private final Set<String> filterAddresses;
 
-    public PS3NetSrvTask(int port, String folderPath, List<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
+    public PS3NetSrvTask(int port, String folderPath, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
         this.folderPath = folderPath;
         this.port = port;
         this.exceptionHandler = exceptionHandler;

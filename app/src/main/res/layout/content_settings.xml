@@ -40,6 +40,71 @@
             android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <RadioGroup
+        android:id="@+id/rgIpListType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/tilFolder">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/listType" />
+            <RadioButton
+                android:id="@+id/rbNone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rbNone" />
+
+            <RadioButton
+                android:id="@+id/rbAllowed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rbAllowed" />
+
+            <RadioButton
+                android:id="@+id/rbBlocked"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rbBlocked" />
+        </LinearLayout>
+    </RadioGroup>
+
+    <LinearLayout
+        android:id="@+id/llIp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/rgIpListType"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/etIp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/ipAddress"/>
+
+        <Button
+            android:id="@+id/btnAddIp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="4dp"
+            android:text="@string/add"
+            app:layout_constraintLeft_toRightOf="@id/etIp"
+            app:layout_constraintTop_toBottomOf="@+id/rgIpListType" />
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/lvIps"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/llIp" />
+
+
     <Button
         android:id="@+id/btnSave"
         android:layout_width="wrap_content"
@@ -48,6 +113,6 @@
         android:text="@string/save"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tilFolder" />
+        app:layout_constraintTop_toBottomOf="@+id/lvIps" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

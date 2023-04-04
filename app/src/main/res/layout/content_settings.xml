@@ -19,26 +19,120 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPort"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:hint="@string/port"
             android:inputType="number" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilFolder"
+    <LinearLayout
+        android:id="@+id/llFolder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tilPort">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etFolder"
-            android:layout_width="match_parent"
+        app:layout_constraintTop_toBottomOf="@+id/tilPort"
+        android:orientation="horizontal">
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilFolder"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="@string/folder"
-            android:inputType="text" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_weight="1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tilPort">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etFolder"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:enabled="false"
+                android:hint="@string/folder"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnSelectFolder"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:text="@string/select"
+            app:layout_constraintTop_toBottomOf="@+id/tilFolder" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/llRadioListType"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/llFolder">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:text="@string/listType" />
+
+        <RadioGroup
+            android:id="@+id/rgIpListType"
+            android:checkedButton="@+id/rbNone"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toBottomOf="@+id/llFolder">
+
+                <RadioButton
+                    android:id="@+id/rbNone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:text="@string/rbNone" />
+
+                <RadioButton
+                    android:id="@+id/rbAllowed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:text="@string/rbAllowed" />
+
+                <RadioButton
+                    android:id="@+id/rbBlocked"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:text="@string/rbBlocked" />
+        </RadioGroup>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/llIp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/llRadioListType"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/etIp"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:inputType="number|numberDecimal"
+            android:digits="0123456789."
+            android:hint="@string/ipAddress"/>
+
+        <Button
+            android:id="@+id/btnAddIp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:text="@string/add"
+            app:layout_constraintLeft_toRightOf="@id/etIp"
+            app:layout_constraintTop_toBottomOf="@+id/rgIpListType" />
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/lvIps"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/llIp" />
+
 
     <Button
         android:id="@+id/btnSave"
@@ -48,6 +142,6 @@
         android:text="@string/save"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tilFolder" />
+        app:layout_constraintTop_toBottomOf="@+id/lvIps" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat;
 
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
+import com.jhonju.ps3netsrv.server.enums.EListType;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,7 +48,9 @@ public class PS3NetService extends Service {
     public void onCreate() {
         super.onCreate();
         executorService = Executors.newSingleThreadExecutor();
-        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), exceptionHandler);
+        int idListType = SettingsService.getListType();
+        EListType eListType = idListType == R.id.rbNone ? EListType.LIST_TYPE_NONE : idListType == R.id.rbAllowed ? EListType.LIST_TYPE_ALLOWED : EListType.LIST_TYPE_BLOCKED;
+        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), SettingsService.getIps(), eListType, exceptionHandler);
     }
 
     @Override

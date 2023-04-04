@@ -1,21 +1,23 @@
 package com.jhonju.ps3netsrv.app;
 
 import android.Manifest;
-import android.content.DialogInterface;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.components.SimpleFileChooser;
+import com.jhonju.ps3netsrv.server.utils.Utils;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
 import android.os.Environment;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.Selection;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -95,12 +97,11 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        final TextInputEditText etFolder = findViewById(R.id.etFolder);
-
-        etFolder.setOnClickListener(new View.OnClickListener() {
+        final Button btnSelectFolder = findViewById(R.id.btnSelectFolder);
+        btnSelectFolder.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ContextCompat.checkSelfPermission(PS3NetSrvApp.getAppContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PERMISSION_GRANTED)
+               if (ContextCompat.checkSelfPermission(PS3NetSrvApp.getAppContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PERMISSION_GRANTED)
                     fileDialog.showDialog();
                 else
                     showMessage(view, getResources().getString(R.string.read_external_permission_error));
@@ -112,6 +113,36 @@ public class SettingsActivity extends AppCompatActivity {
         listView.setAdapter(adapter);
 
         final EditText editTextIp = findViewById(R.id.etIp);
+
+        InputFilter[] filters = new InputFilter[1];
+        filters[0] = new InputFilter() {
+            @Override
+            public CharSequence filter(CharSequence source, int start, int end,
+                                       android.text.Spanned dest, int dstart, int dend) {
+                if (end > start) {
+                    String destTxt = dest.toString();
+                    String resultingTxt = destTxt.substring(0, dstart)
+                            + source.subSequence(start, end)
+                            + destTxt.substring(dend);
+                    if (!resultingTxt
+                            .matches("^\\d{1,3}(\\.(\\d{1,3}(\\.(\\d{1,3}(\\.(\\d{1,3})?)?)?)?)?)?")) {
+                        return "";
+                    } else {
+                        String[] splits = resultingTxt.split("\\.");
+                        for (int i = 0; i < splits.length; i++) {
+                            if (Integer.valueOf(splits[i]) > 255) {
+                                return "";
+                            }
+                        }
+                    }
+                }
+                return null;
+            }
+
+        };
+        editTextIp.setFilters(filters);
+
+
         final Button btnAddIp = findViewById(R.id.btnAddIp);
         btnAddIp.setOnClickListener(new View.OnClickListener() {
             @Override

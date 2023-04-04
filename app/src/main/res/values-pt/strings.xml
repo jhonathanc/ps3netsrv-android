@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">ps3netsrv</string>
+    <string name="action_settings">Configurações</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Próximo</string>
+    <string name="previous">Anterior</string>
+    <string name="hello_first_fragment">Olá first fragment</string>
+    <string name="hello_second_fragment">Olá second fragment. Arg: %1$s</string>
+    <string name="port">Porta:</string>
+    <string name="folder">Pasta:</string>
+    <string name="negativePortValue">A porta não pode ter valor negativo.</string>
+    <string name="invalidPortValue">Porta inválida</string>
+    <string name="invalidFolder">Pasta inválida</string>
+    <string name="saveSuccess">As configurações foram salvas</string>
+    <string name="save">Salvar</string>
+    <string name="title_activity_settings">Configurações</string>
+    <string name="start_server">Iniciar servidor</string>
+    <string name="stop_server">Parar servidor</string>
+    <string name="server_stopped">Servidor parado</string>
+    <string name="server_running">O servidor está rodando na %s\nport %d\nfolder %s</string>
+    <string name="read_external_permission_error">Você precisa conceder permissões de leitura de armazenamento primeiro</string>
+    <string name="listType">Tipo de lista:</string>
+    <string name="rbNone">Nenhum</string>
+    <string name="rbAllowed">Permitidos</string>
+    <string name="rbBlocked">Bloqueados</string>
+    <string name="ipAddress">Endereço IP</string>
+    <string name="add">Adicionar</string>
+    <string name="ipRemoved">"IP Removido: "</string>
+    <string name="undo">Desfazer</string>
+    <string name="select">Selecionar</string>
+    <string name="empty_response_error">Tentativa de enviar uma resposta vazia para %s (método %s)</string>
+</resources>

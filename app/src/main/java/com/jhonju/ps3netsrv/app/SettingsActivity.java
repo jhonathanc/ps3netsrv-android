@@ -7,27 +7,25 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.components.SimpleFileChooser;
-import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
 import android.os.Environment;
-import android.text.Editable;
 import android.text.InputFilter;
-import android.text.Selection;
-import android.text.TextWatcher;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -62,6 +60,9 @@ public class SettingsActivity extends AppCompatActivity {
     private void loadSettings() {
         Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).setText(SettingsService.getFolder());
         Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilPort)).getEditText()).setText(SettingsService.getPort() + "");
+        listIps.addAll(SettingsService.getIps());
+        int listType = SettingsService.getListType();
+        if (listType > 0) ((RadioButton)findViewById(listType)).setChecked(true);
     }
 
     private boolean showMessage(View view, String message) {
@@ -92,6 +93,8 @@ public class SettingsActivity extends AppCompatActivity {
                 boolean hasError = showMessage(view, message);
                 message = saveFolderPath();
                 hasError = showMessage(view, message) || hasError;
+                SettingsService.setIps(new HashSet<>(listIps));
+                SettingsService.setListType(((RadioGroup)findViewById(R.id.rgIpListType)).getCheckedRadioButtonId());
                 if (!hasError)
                     showMessage(view, getResources().getString(R.string.saveSuccess));
             }
@@ -176,7 +179,6 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         RadioGroup rgIpListType = findViewById(R.id.rgIpListType);
-        //rgIpListType.getCheckedRadioButtonId();
         rgIpListType.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -185,6 +187,8 @@ public class SettingsActivity extends AppCompatActivity {
                 btnAddIp.setEnabled(checkedId != R.id.rbNone);
             }
         });
+        editTextIp.setEnabled(rgIpListType.getCheckedRadioButtonId() != R.id.rbNone);
+        btnAddIp.setEnabled(rgIpListType.getCheckedRadioButtonId() != R.id.rbNone);
     }
 
     // Event when a file is selected on file dialog.

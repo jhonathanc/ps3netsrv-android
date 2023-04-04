@@ -6,19 +6,25 @@ import android.os.Environment;
 import com.jhonju.ps3netsrv.R;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SettingsService {
     private static final String settings = "settings";
     private static SharedPreferences spPort = PS3NetSrvApp.getAppContext().getSharedPreferences("PORT",0);
     private static SharedPreferences spFolder = PS3NetSrvApp.getAppContext().getSharedPreferences("FOLDER",0);
+    private static SharedPreferences spIps = PS3NetSrvApp.getAppContext().getSharedPreferences("IPS",0);
+    private static SharedPreferences spListType = PS3NetSrvApp.getAppContext().getSharedPreferences("LIST_TYPE",0);
 
-    public static int getPort() {
-        return spPort.getInt(settings, PS3NetSrvApp.getAppContext().getResources().getInteger(R.integer.defaultPort));
-    }
+    public static int getPort() { return spPort.getInt(settings, PS3NetSrvApp.getAppContext().getResources().getInteger(R.integer.defaultPort)); }
+
+    public static Set<String> getIps() { return spIps.getStringSet(settings, new HashSet<String>()); }
 
     public static String getFolder() {
         return spFolder.getString(settings, getDefaultFolder());
     }
+
+    public static int getListType() { return spListType.getInt(settings, 0); }
 
     private static String getDefaultFolder() {
         String state = Environment.getExternalStorageState();
@@ -43,6 +49,18 @@ public class SettingsService {
     public static void setFolder(String folder) {
         SharedPreferences.Editor editor = spFolder.edit();
         editor.putString(settings, folder);
+        editor.apply();
+    }
+
+    public static void setIps(Set<String> ips) {
+        SharedPreferences.Editor editor = spIps.edit();
+        editor.putStringSet(settings, ips);
+        editor.apply();
+    }
+
+    public static void setListType(int listType) {
+        SharedPreferences.Editor editor = spListType.edit();
+        editor.putInt(settings, listType);
         editor.apply();
     }
 }

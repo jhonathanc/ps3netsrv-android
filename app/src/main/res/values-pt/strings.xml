@@ -3,8 +3,8 @@
     <string name="action_settings">Configurações</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
-
     <string name="second_fragment_label">Second Fragment</string>
+
     <string name="next">Próximo</string>
     <string name="previous">Anterior</string>
     <string name="hello_first_fragment">Olá first fragment</string>
@@ -20,7 +20,7 @@
     <string name="start_server">Iniciar servidor</string>
     <string name="stop_server">Parar servidor</string>
     <string name="server_stopped">Servidor parado</string>
-    <string name="server_running">O servidor está rodando na %s\nport %d\nfolder %s</string>
+    <string name="server_running">Servidor em execução na %s\nporta %d\npasta %s</string>
     <string name="read_external_permission_error">Você precisa conceder permissões de leitura de armazenamento primeiro</string>
     <string name="listType">Tipo de lista:</string>
     <string name="rbNone">Nenhum</string>

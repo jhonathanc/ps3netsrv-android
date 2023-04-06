@@ -15,31 +15,37 @@ import java.util.concurrent.Executors;
 public class PS3NetSrvTask implements Runnable {
 	private final ExecutorService pool;
     private final Thread.UncaughtExceptionHandler exceptionHandler;
-    private final String folderPath;
     private final int port;
+    private final String folderPath;
+    private final int maxConnections;
+    private final boolean readOnly;
+    private final EListType listType;
+    private final Set<String> filterAddresses;
     private ServerSocket serverSocket;
     private boolean isRunning = true;
 
-    private final EListType listType;
-
-    private final Set<String> filterAddresses;
-
-    public PS3NetSrvTask(int port, String folderPath, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
-        this.folderPath = folderPath;
+    public PS3NetSrvTask(int port, String folderPath, int maxConnections, boolean readOnly, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
         this.port = port;
-        this.exceptionHandler = exceptionHandler;
-        this.pool = Executors.newFixedThreadPool(5);
+        this.folderPath = folderPath;
+        this.maxConnections = maxConnections;
+        this.readOnly = readOnly;
         this.filterAddresses = filterAddresses;
         this.listType = listType;
+
+        this.exceptionHandler = exceptionHandler;
+        this.pool = Executors.newFixedThreadPool(maxConnections > 0 ? maxConnections : 5);
     }
 
     public PS3NetSrvTask(int port, String folderPath, Thread.UncaughtExceptionHandler exceptionHandler) {
-        this.folderPath = folderPath;
         this.port = port;
-        this.exceptionHandler = exceptionHandler;
-        this.pool = Executors.newFixedThreadPool(5);
+        this.folderPath = folderPath;
+        this.maxConnections = 0;
+        this.readOnly = false;
         this.filterAddresses = null;
         this.listType = EListType.LIST_TYPE_NONE;
+
+        this.exceptionHandler = exceptionHandler;
+        this.pool = Executors.newFixedThreadPool(5);
     }
 
     public void run() {
@@ -57,7 +63,7 @@ public class PS3NetSrvTask implements Runnable {
                     }
                     continue;
                 }
-                pool.execute(new ContextHandler(new Context(clientSocket, folderPath), exceptionHandler));
+                pool.execute(new ContextHandler(new Context(clientSocket, folderPath, readOnly), maxConnections, exceptionHandler));
             }
         } catch (IOException e) {
             exceptionHandler.uncaughtException(null, e);

@@ -50,7 +50,7 @@ public class PS3NetService extends Service {
         executorService = Executors.newSingleThreadExecutor();
         int idListType = SettingsService.getListType();
         EListType eListType = idListType == R.id.rbNone ? EListType.LIST_TYPE_NONE : idListType == R.id.rbAllowed ? EListType.LIST_TYPE_ALLOWED : EListType.LIST_TYPE_BLOCKED;
-        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), SettingsService.getIps(), eListType, exceptionHandler);
+        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), SettingsService.getMaxConnections(), SettingsService.isReadOnly(), SettingsService.getIps(), eListType, exceptionHandler);
     }
 
     @Override

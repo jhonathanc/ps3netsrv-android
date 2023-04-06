@@ -23,24 +23,33 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class ContextHandler extends Thread {
-    private static final byte CMD_DATA_SIZE = 16;
     private static final byte IDX_OP_CODE = 0;
     private static final byte IDX_CMD_DATA_1 = 2;
     private static final byte IDX_CMD_DATA_2 = 4;
     private static final byte IDX_CMD_DATA_3 = 8;
+    private static final byte CMD_DATA_SIZE = 16;
+    private final int maxConnections;
     private final Context context;
 
-    public ContextHandler(Context context, Thread.UncaughtExceptionHandler exceptionHandler) {
+    private volatile int simultaneousConnections;
+
+    public ContextHandler(Context context, int maxConnections, Thread.UncaughtExceptionHandler exceptionHandler) {
         super();
         setUncaughtExceptionHandler(exceptionHandler);
         this.context = context;
+        this.maxConnections = maxConnections;
     }
 
     @Override
     public void run() {
         try (Context ctx = context) {
+            simultaneousConnections++;
             while (ctx.isSocketConnected()) {
                 try {
+                    if (maxConnections > 0 && simultaneousConnections > maxConnections) {
+                        getUncaughtExceptionHandler().uncaughtException(this, new PS3NetSrvException("Connection limit is reached"));
+                        break;
+                    }
                     ByteBuffer packet = Utils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
                     if (packet == null) break;
                     if (Utils.isByteArrayEmpty(packet.array()))
@@ -52,6 +61,8 @@ public class ContextHandler extends Thread {
             }
         } catch (IOException e) {
             getUncaughtExceptionHandler().uncaughtException(this, e);
+        } finally {
+            simultaneousConnections--;
         }
     }
 

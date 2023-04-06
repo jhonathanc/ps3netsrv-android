@@ -21,6 +21,7 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class ContextHandler extends Thread {
     private static final byte IDX_OP_CODE = 0;
@@ -30,8 +31,17 @@ public class ContextHandler extends Thread {
     private static final byte CMD_DATA_SIZE = 16;
     private final int maxConnections;
     private final Context context;
-
     private volatile int simultaneousConnections;
+
+    public synchronized void incrementSimultaneousConnections()
+    {
+        simultaneousConnections++;
+    }
+
+    public synchronized void decrementSimultaneousConnections()
+    {
+        simultaneousConnections--;
+    }
 
     public ContextHandler(Context context, int maxConnections, Thread.UncaughtExceptionHandler exceptionHandler) {
         super();
@@ -42,8 +52,8 @@ public class ContextHandler extends Thread {
 
     @Override
     public void run() {
+        incrementSimultaneousConnections();
         try (Context ctx = context) {
-            simultaneousConnections++;
             while (ctx.isSocketConnected()) {
                 try {
                     if (maxConnections > 0 && simultaneousConnections > maxConnections) {
@@ -60,9 +70,9 @@ public class ContextHandler extends Thread {
                 }
             }
         } catch (IOException e) {
-            getUncaughtExceptionHandler().uncaughtException(this, e);
+            Objects.requireNonNull(getUncaughtExceptionHandler()).uncaughtException(this, e);
         } finally {
-            simultaneousConnections--;
+            decrementSimultaneousConnections();
         }
     }
 

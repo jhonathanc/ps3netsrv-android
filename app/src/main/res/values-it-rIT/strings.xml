@@ -30,4 +30,9 @@
     <string name="undo">Disfare</string>
     <string name="select">Selezionare</string>
     <string name="empty_response_error">Tentativo di inviare una risposta vuota a %s (metodo %s)</string>
+    <string name="readOnly">Sola lettura</string>
+    <string name="maxConnectedClients">Max connessioni (0 significa illimitato):</string>
+    <string name="readOnlyDescription">Seleziona questa opzione per impedire ai client di creare o eliminare file sul server</string>
+    <string name="negativeMaxConnectedClients">Max connessioni non può essere negativa.</string>
+    <string name="invalidMaxConnectedClients">Max connessioni non valida</string>
 </resources>

@@ -34,4 +34,9 @@
     <string name="undo">Undo</string>
     <string name="select">Select</string>
     <string name="empty_response_error">Tried to send an empty response to %s (method %s)</string>
+    <string name="readOnly">Read only</string>
+    <string name="maxConnectedClients">Max connections (0 means unlimited):</string>
+    <string name="negativeMaxConnectedClients">Max connections can\'t be negative.</string>
+    <string name="invalidMaxConnectedClients">Invalid max connections</string>
+    <string name="readOnlyDescription">Check this to prevent clients from creating or deleting files on the server</string>
 </resources>

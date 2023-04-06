@@ -4,16 +4,11 @@ import com.jhonju.ps3netsrv.server.enums.EListType;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PS3NetSrvTask implements Runnable {
-	private final ExecutorService pool;
     private final Thread.UncaughtExceptionHandler exceptionHandler;
     private final int port;
     private final String folderPath;
@@ -33,7 +28,6 @@ public class PS3NetSrvTask implements Runnable {
         this.listType = listType;
 
         this.exceptionHandler = exceptionHandler;
-        this.pool = Executors.newFixedThreadPool(maxConnections > 0 ? maxConnections : 5);
     }
 
     public PS3NetSrvTask(int port, String folderPath, Thread.UncaughtExceptionHandler exceptionHandler) {
@@ -45,7 +39,6 @@ public class PS3NetSrvTask implements Runnable {
         this.listType = EListType.LIST_TYPE_NONE;
 
         this.exceptionHandler = exceptionHandler;
-        this.pool = Executors.newFixedThreadPool(5);
     }
 
     public void run() {
@@ -63,7 +56,7 @@ public class PS3NetSrvTask implements Runnable {
                     }
                     continue;
                 }
-                pool.execute(new ContextHandler(new Context(clientSocket, folderPath, readOnly), maxConnections, exceptionHandler));
+                new ContextHandler(new Context(clientSocket, folderPath, readOnly), maxConnections, exceptionHandler).start();
             }
         } catch (IOException e) {
             exceptionHandler.uncaughtException(null, e);
@@ -88,7 +81,6 @@ public class PS3NetSrvTask implements Runnable {
 
     public void shutdown() {
         isRunning = false;
-        pool.shutdownNow();
         try {
             if (serverSocket != null) serverSocket.close();
         } catch (IOException e) {

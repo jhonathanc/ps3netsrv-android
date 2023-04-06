@@ -13,7 +13,7 @@
     <string name="port">Port:</string>
     <string name="folder">Folder:</string>
     <integer name="defaultPort">38008</integer>
-    <string name="negativePortValue">Port can\'t be negative.</string>
+    <string name="negativePortValue">Port must be greater than 1024.</string>
     <string name="invalidPortValue">Invalid port</string>
     <string name="invalidFolder">Invalid folder</string>
     <string name="saveSuccess">The settings have been saved</string>

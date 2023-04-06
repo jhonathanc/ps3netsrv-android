@@ -40,7 +40,7 @@ public class SettingsActivity extends AppCompatActivity {
         TextInputLayout tilPort = findViewById(R.id.tilPort);
         try {
             int port = Integer.parseInt(Objects.requireNonNull(tilPort.getEditText()).getText().toString().trim());
-            if (port < 0)
+            if (port <= 1024)
                 return getResources().getString(R.string.negativePortValue);
             SettingsService.setPort(port);
             return "";

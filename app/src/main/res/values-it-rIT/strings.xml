@@ -9,7 +9,7 @@
     <string name="hello_second_fragment">Ciao secondo fragmento. Arg: %1$s</string>
     <string name="port">Porta:</string>
     <string name="folder">Cartella:</string>
-    <string name="negativePortValue">La porta non può essere negativa.</string>
+    <string name="negativePortValue">La porta deve essere maggiore di 1024.</string>
     <string name="invalidPortValue">Porta non valida</string>
     <string name="invalidFolder">Cartella non valida</string>
     <string name="saveSuccess">Le impostazioni sono state salvate</string>

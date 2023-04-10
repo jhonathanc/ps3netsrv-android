@@ -2,34 +2,39 @@
     <string name="app_name">ps3netsrv</string>
     <string name="action_settings">Configuraciones</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">Primer Fragmento</string>
-    <string name="second_fragment_label">Segundo Fragmento</string>
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
 
-    <string name="next">Pr�ximo</string>
+    <string name="next">Próximo</string>
     <string name="previous">Anterior</string>
     <string name="hello_first_fragment">Hola first fragmento</string>
     <string name="hello_second_fragment">Hola segundo fragmento. Arg: %1$s</string>
     <string name="port">Puerto:</string>
     <string name="folder">Ruta:</string>
     <string name="negativePortValue">El puerto no puede tener un valor negativo.</string>
-    <string name="invalidPortValue">Puerto inv�lido</string>
-    <string name="invalidFolder">Ruta inv�lida</string>
+    <string name="invalidPortValue">Puerto inválido</string>
+    <string name="invalidFolder">Ruta inválida</string>
     <string name="saveSuccess">Las configuraciones fueron guardadas</string>
     <string name="save">Guardar</string>
     <string name="title_activity_settings">Configuraciones</string>
     <string name="start_server">Iniciar servidor</string>
     <string name="stop_server">Detener servidor</string>
     <string name="server_stopped">Servidor detenido</string>
-    <string name="server_running">Servidor en ejecuci�n en %s\npuerto %d\nRuta: %s</string>
+    <string name="server_running">Servidor en ejecución en %s\npuerto %d\nRuta: %s</string>
     <string name="read_external_permission_error">Primero debe dar los permisos de lectura de almacenamiento</string>
     <string name="listType">Tipo de lista:</string>
     <string name="rbNone">Ninguna</string>
     <string name="rbAllowed">Permitidos</string>
     <string name="rbBlocked">Bloqueados</string>
-    <string name="ipAddress">Direcci�n IP</string>
+    <string name="ipAddress">Dirección IP</string>
     <string name="add">Adicionar</string>
     <string name="ipRemoved">"IP Removido: "</string>
     <string name="undo">Deshacer</string>
     <string name="select">Selecionar</string>
-    <string name="empty_response_error">Intentando enviar una respuesta vac�a para %s (m�todo %s)</string>
+    <string name="empty_response_error">Intentando enviar una respuesta vacía para %s (método %s)</string>
+    <string name="readOnly">Solo lectura</string>
+    <string name="maxConnectedClients">Límite de conexión (0 es ilimitado)</string>
+    <string name="negativeMaxConnectedClients">Límite de conexión no puede tener un valor negativo.</string>
+    <string name="invalidMaxConnectedClients">Límite de conexión inválido</string>
+    <string name="readOnlyDescription">Marque esta opción para evitar que los clientes creen o eliminen archivos en el servidor</string>
 </resources>

@@ -54,12 +54,12 @@ public class ContextHandler extends Thread {
     public void run() {
         incrementSimultaneousConnections();
         try (Context ctx = context) {
+            if (maxConnections > 0 && simultaneousConnections > maxConnections) {
+                getUncaughtExceptionHandler().uncaughtException(this, new PS3NetSrvException("Connection limit is reached"));
+                return;
+            }
             while (ctx.isSocketConnected()) {
                 try {
-                    if (maxConnections > 0 && simultaneousConnections > maxConnections) {
-                        getUncaughtExceptionHandler().uncaughtException(this, new PS3NetSrvException("Connection limit is reached"));
-                        break;
-                    }
                     ByteBuffer packet = Utils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
                     if (packet == null) break;
                     if (Utils.isByteArrayEmpty(packet.array()))

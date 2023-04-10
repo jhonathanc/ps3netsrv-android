@@ -11,7 +11,7 @@
     <string name="hello_second_fragment">Hola segundo fragmento. Arg: %1$s</string>
     <string name="port">Puerto:</string>
     <string name="folder">Ruta:</string>
-    <string name="negativePortValue">El puerto no puede tener un valor negativo.</string>
+    <string name="negativePortValue">El puerto debe ser mayor que 1024.</string>
     <string name="invalidPortValue">Puerto inválido</string>
     <string name="invalidFolder">Ruta inválida</string>
     <string name="saveSuccess">Las configuraciones fueron guardadas</string>

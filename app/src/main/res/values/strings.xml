@@ -1,4 +1,10 @@
 <resources>
+    <string-array name="languages">
+        <item>Italiano</item>
+        <item>English</item>
+        <item>Español</item>
+        <item>Português</item>
+    </string-array>
     <string name="app_name">ps3netsrv</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
@@ -39,4 +45,5 @@
     <string name="negativeMaxConnectedClients">Max connections can\'t be negative.</string>
     <string name="invalidMaxConnectedClients">Invalid max connections</string>
     <string name="readOnlyDescription">Check this to prevent clients from creating or deleting files on the server</string>
+    <string name="select_language">App language:</string>
 </resources>

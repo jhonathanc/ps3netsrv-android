@@ -35,4 +35,5 @@
     <string name="readOnlyDescription">Seleziona questa opzione per impedire ai client di creare o eliminare file sul server</string>
     <string name="negativeMaxConnectedClients">Max connessioni non può essere negativa.</string>
     <string name="invalidMaxConnectedClients">Max connessioni non valida</string>
+    <string name="select_language">Lingua app:</string>
 </resources>

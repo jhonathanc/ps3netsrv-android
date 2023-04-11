@@ -78,7 +78,10 @@ public class SettingsActivity extends AppCompatActivity {
         Objects.requireNonNull(((CheckBox) findViewById(R.id.cbReadOnly))).setChecked(SettingsService.isReadOnly());
         listIps.addAll(SettingsService.getIps());
         int listType = SettingsService.getListType();
-        if (listType > 0) ((RadioButton)findViewById(listType)).setChecked(true);
+        if (listType > 0) {
+            RadioButton radio = ((RadioButton)findViewById(listType));
+            if (radio != null) radio.setChecked(true);
+        }
     }
 
     private boolean showMessage(View view, String message) {

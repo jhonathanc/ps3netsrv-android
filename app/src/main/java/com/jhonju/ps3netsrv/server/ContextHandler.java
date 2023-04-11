@@ -31,7 +31,7 @@ public class ContextHandler extends Thread {
     private static final byte CMD_DATA_SIZE = 16;
     private final int maxConnections;
     private final Context context;
-    private volatile int simultaneousConnections;
+    private static volatile int simultaneousConnections;
 
     public synchronized void incrementSimultaneousConnections()
     {

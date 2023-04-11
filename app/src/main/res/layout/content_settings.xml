@@ -7,34 +7,14 @@
     android:layout_height="match_parent"
     tools:context=".app.SettingsActivity">
 
-    <TextView
-        android:id="@+id/tvAppLanguage"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:text="@string/select_language"
-        android:gravity="center_vertical"
-        android:layout_marginTop="?attr/actionBarSize"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Spinner
-        android:id="@+id/language_spinner"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:entries="@array/languages"
-        android:prompt="@string/select_language"
-        app:layout_constraintStart_toEndOf="@id/tvAppLanguage"
-        app:layout_constraintTop_toTopOf="@+id/tvAppLanguage"
-        app:layout_constraintBottom_toBottomOf="@+id/tvAppLanguage"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilPort"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="?attr/actionBarSize"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvAppLanguage">
+        app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPort"

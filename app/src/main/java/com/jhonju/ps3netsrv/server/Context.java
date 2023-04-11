@@ -12,17 +12,19 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 public class Context implements AutoCloseable {
-    private final String rootDirectory;
     private Socket socket;
+    private final String rootDirectory;
+    private final boolean readOnly;
     private File file;
     private RandomAccessFile readOnlyFile;
     private File writeOnlyFile;
     private CDSectorSize cdSectorSize;
 
-    public Context(Socket socket, String rootDirectory) {
+    public Context(Socket socket, String rootDirectory, boolean readOnly) {
         this.rootDirectory = rootDirectory;
         this.socket = socket;
         this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
+        this.readOnly = readOnly;
     }
 
     public String getRootDirectory() { return rootDirectory; }
@@ -76,6 +78,8 @@ public class Context implements AutoCloseable {
     public RandomAccessFile getReadOnlyFile() {
         return readOnlyFile;
     }
+
+    public boolean isReadOnly() { return readOnly; }
 
     @Override
     public void close() {

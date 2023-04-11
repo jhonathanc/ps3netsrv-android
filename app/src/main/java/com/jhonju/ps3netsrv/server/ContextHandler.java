@@ -21,24 +21,43 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class ContextHandler extends Thread {
-    private static final byte CMD_DATA_SIZE = 16;
     private static final byte IDX_OP_CODE = 0;
     private static final byte IDX_CMD_DATA_1 = 2;
     private static final byte IDX_CMD_DATA_2 = 4;
     private static final byte IDX_CMD_DATA_3 = 8;
+    private static final byte CMD_DATA_SIZE = 16;
+    private final int maxConnections;
     private final Context context;
+    private static volatile int simultaneousConnections;
 
-    public ContextHandler(Context context, Thread.UncaughtExceptionHandler exceptionHandler) {
+    public synchronized void incrementSimultaneousConnections()
+    {
+        simultaneousConnections++;
+    }
+
+    public synchronized void decrementSimultaneousConnections()
+    {
+        simultaneousConnections--;
+    }
+
+    public ContextHandler(Context context, int maxConnections, Thread.UncaughtExceptionHandler exceptionHandler) {
         super();
         setUncaughtExceptionHandler(exceptionHandler);
         this.context = context;
+        this.maxConnections = maxConnections;
     }
 
     @Override
     public void run() {
+        incrementSimultaneousConnections();
         try (Context ctx = context) {
+            if (maxConnections > 0 && simultaneousConnections > maxConnections) {
+                getUncaughtExceptionHandler().uncaughtException(this, new PS3NetSrvException("Connection limit is reached"));
+                return;
+            }
             while (ctx.isSocketConnected()) {
                 try {
                     ByteBuffer packet = Utils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
@@ -51,7 +70,9 @@ public class ContextHandler extends Thread {
                 }
             }
         } catch (IOException e) {
-            getUncaughtExceptionHandler().uncaughtException(this, e);
+            Objects.requireNonNull(getUncaughtExceptionHandler()).uncaughtException(this, e);
+        } finally {
+            decrementSimultaneousConnections();
         }
     }
 

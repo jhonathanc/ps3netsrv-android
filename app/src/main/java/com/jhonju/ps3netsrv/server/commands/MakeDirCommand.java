@@ -13,6 +13,10 @@ public class MakeDirCommand extends FileCommand {
 
     @Override
     public void executeTask() throws PS3NetSrvException, IOException {
+        if (ctx.isReadOnly()) {
+            send(ERROR_CODE_BYTEARRAY);
+            throw new PS3NetSrvException("Failed to make dir: server is executing as read only");
+        }
         send(getFile().mkdir() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
     }
 }

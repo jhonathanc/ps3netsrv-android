@@ -1,4 +1,10 @@
 <resources>
+    <string-array name="languages">
+        <item>Italiano</item>
+        <item>English</item>
+        <item>Español</item>
+        <item>Português</item>
+    </string-array>
     <string name="app_name">ps3netsrv</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
@@ -13,7 +19,7 @@
     <string name="port">Port:</string>
     <string name="folder">Folder:</string>
     <integer name="defaultPort">38008</integer>
-    <string name="negativePortValue">Port can\'t be negative.</string>
+    <string name="negativePortValue">Port must be greater than 1024.</string>
     <string name="invalidPortValue">Invalid port</string>
     <string name="invalidFolder">Invalid folder</string>
     <string name="saveSuccess">The settings have been saved</string>
@@ -30,8 +36,14 @@
     <string name="rbBlocked">Blocked</string>
     <string name="ipAddress">IP address:</string>
     <string name="add">Add</string>
-    <string name="ipRemoved">"Deleted IP: "</string>
+    <string name="ipRemoved">Deleted IP: </string>
     <string name="undo">Undo</string>
     <string name="select">Select</string>
     <string name="empty_response_error">Tried to send an empty response to %s (method %s)</string>
+    <string name="readOnly">Read only</string>
+    <string name="maxConnectedClients">Max connections (0 means unlimited):</string>
+    <string name="negativeMaxConnectedClients">Max connections can\'t be negative.</string>
+    <string name="invalidMaxConnectedClients">Invalid max connections</string>
+    <string name="readOnlyDescription">Check this to prevent clients from creating or deleting files on the server</string>
+    <string name="select_language">App language:</string>
 </resources>

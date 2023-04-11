@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioButton;
@@ -39,12 +40,25 @@ public class SettingsActivity extends AppCompatActivity {
         TextInputLayout tilPort = findViewById(R.id.tilPort);
         try {
             int port = Integer.parseInt(Objects.requireNonNull(tilPort.getEditText()).getText().toString().trim());
-            if (port < 0)
+            if (port <= 1024)
                 return getResources().getString(R.string.negativePortValue);
             SettingsService.setPort(port);
             return "";
         } catch(NumberFormatException nfe) {
             return getResources().getString(R.string.invalidPortValue);
+        }
+    }
+
+    private String saveMaxConnection() {
+        TextInputLayout tilMaximumClientsNumber = findViewById(R.id.tilMaximumClientsNumber);
+        try {
+            int maxConn = Integer.parseInt(Objects.requireNonNull(tilMaximumClientsNumber.getEditText()).getText().toString().trim());
+            if (maxConn < 0)
+                return getResources().getString(R.string.negativeMaxConnectedClients);
+            SettingsService.setMaxConnections(maxConn);
+            return "";
+        } catch(NumberFormatException nfe) {
+            return getResources().getString(R.string.invalidMaxConnectedClients);
         }
     }
 
@@ -60,9 +74,14 @@ public class SettingsActivity extends AppCompatActivity {
     private void loadSettings() {
         Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).setText(SettingsService.getFolder());
         Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilPort)).getEditText()).setText(SettingsService.getPort() + "");
+        Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber)).getEditText()).setText(SettingsService.getMaxConnections() + "");
+        Objects.requireNonNull(((CheckBox) findViewById(R.id.cbReadOnly))).setChecked(SettingsService.isReadOnly());
         listIps.addAll(SettingsService.getIps());
         int listType = SettingsService.getListType();
-        if (listType > 0) ((RadioButton)findViewById(listType)).setChecked(true);
+        if (listType > 0) {
+            RadioButton radio = ((RadioButton)findViewById(listType));
+            if (radio != null) radio.setChecked(true);
+        }
     }
 
     private boolean showMessage(View view, String message) {
@@ -93,10 +112,14 @@ public class SettingsActivity extends AppCompatActivity {
                 boolean hasError = showMessage(view, message);
                 message = saveFolderPath();
                 hasError = showMessage(view, message) || hasError;
-                SettingsService.setIps(new HashSet<>(listIps));
-                SettingsService.setListType(((RadioGroup)findViewById(R.id.rgIpListType)).getCheckedRadioButtonId());
-                if (!hasError)
+                message = saveMaxConnection();
+                hasError = showMessage(view, message) || hasError;
+                if (!hasError) {
+                    SettingsService.setIps(new HashSet<>(listIps));
+                    SettingsService.setListType(((RadioGroup)findViewById(R.id.rgIpListType)).getCheckedRadioButtonId());
+                    SettingsService.setReadOnly(((CheckBox)findViewById(R.id.cbReadOnly)).isChecked());
                     showMessage(view, getResources().getString(R.string.saveSuccess));
+                }
             }
         });
 

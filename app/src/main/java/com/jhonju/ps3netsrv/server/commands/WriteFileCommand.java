@@ -19,6 +19,11 @@ public class WriteFileCommand extends AbstractCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
+        if (ctx.isReadOnly()) {
+            send(ERROR_CODE_BYTEARRAY);
+            throw new PS3NetSrvException("Failed to write file: server is executing as read only");
+        }
+
         if (ctx.getReadOnlyFile() == null) {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: file is null");

@@ -11,7 +11,7 @@
     <string name="hello_second_fragment">Olá second fragment. Arg: %1$s</string>
     <string name="port">Porta:</string>
     <string name="folder">Pasta:</string>
-    <string name="negativePortValue">A porta não pode ter valor negativo.</string>
+    <string name="negativePortValue">A porta deve ser maior do que 1024.</string>
     <string name="invalidPortValue">Porta inválida</string>
     <string name="invalidFolder">Pasta inválida</string>
     <string name="saveSuccess">As configurações foram salvas</string>
@@ -28,8 +28,14 @@
     <string name="rbBlocked">Bloqueados</string>
     <string name="ipAddress">Endereço IP</string>
     <string name="add">Adicionar</string>
-    <string name="ipRemoved">"IP Removido: "</string>
+    <string name="ipRemoved">IP Removido: </string>
     <string name="undo">Desfazer</string>
     <string name="select">Selecionar</string>
     <string name="empty_response_error">Tentativa de enviar uma resposta vazia para %s (método %s)</string>
+    <string name="readOnly">Somente leitura</string>
+    <string name="maxConnectedClients">Limite de conexões (0 significa ilimitado):</string>
+    <string name="readOnlyDescription">Marque esta opção para evitar que os clientes criem ou excluam arquivos no servidor</string>
+    <string name="negativeMaxConnectedClients">Limite de conexões não pode ser negativo.</string>
+    <string name="invalidMaxConnectedClients">Limite de conexões inválido</string>
+    <string name="select_language">Idioma da aplicação:</string>
 </resources>

@@ -4,42 +4,41 @@ import com.jhonju.ps3netsrv.server.enums.EListType;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PS3NetSrvTask implements Runnable {
-	private final ExecutorService pool;
     private final Thread.UncaughtExceptionHandler exceptionHandler;
-    private final String folderPath;
     private final int port;
+    private final String folderPath;
+    private final int maxConnections;
+    private final boolean readOnly;
+    private final EListType listType;
+    private final Set<String> filterAddresses;
     private ServerSocket serverSocket;
     private boolean isRunning = true;
 
-    private final EListType listType;
-
-    private final Set<String> filterAddresses;
-
-    public PS3NetSrvTask(int port, String folderPath, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
-        this.folderPath = folderPath;
+    public PS3NetSrvTask(int port, String folderPath, int maxConnections, boolean readOnly, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
         this.port = port;
-        this.exceptionHandler = exceptionHandler;
-        this.pool = Executors.newFixedThreadPool(5);
+        this.folderPath = folderPath;
+        this.maxConnections = maxConnections;
+        this.readOnly = readOnly;
         this.filterAddresses = filterAddresses;
         this.listType = listType;
+
+        this.exceptionHandler = exceptionHandler;
     }
 
     public PS3NetSrvTask(int port, String folderPath, Thread.UncaughtExceptionHandler exceptionHandler) {
-        this.folderPath = folderPath;
         this.port = port;
-        this.exceptionHandler = exceptionHandler;
-        this.pool = Executors.newFixedThreadPool(5);
+        this.folderPath = folderPath;
+        this.maxConnections = 0;
+        this.readOnly = false;
         this.filterAddresses = null;
         this.listType = EListType.LIST_TYPE_NONE;
+
+        this.exceptionHandler = exceptionHandler;
     }
 
     public void run() {
@@ -57,7 +56,7 @@ public class PS3NetSrvTask implements Runnable {
                     }
                     continue;
                 }
-                pool.execute(new ContextHandler(new Context(clientSocket, folderPath), exceptionHandler));
+                new ContextHandler(new Context(clientSocket, folderPath, readOnly), maxConnections, exceptionHandler).start();
             }
         } catch (IOException e) {
             exceptionHandler.uncaughtException(null, e);
@@ -82,7 +81,6 @@ public class PS3NetSrvTask implements Runnable {
 
     public void shutdown() {
         isRunning = false;
-        pool.shutdownNow();
         try {
             if (serverSocket != null) serverSocket.close();
         } catch (IOException e) {

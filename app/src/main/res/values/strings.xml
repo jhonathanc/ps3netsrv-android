@@ -36,7 +36,7 @@
     <string name="rbBlocked">Blocked</string>
     <string name="ipAddress">IP address:</string>
     <string name="add">Add</string>
-    <string name="ipRemoved">"Deleted IP: "</string>
+    <string name="ipRemoved">Deleted IP: </string>
     <string name="undo">Undo</string>
     <string name="select">Select</string>
     <string name="empty_response_error">Tried to send an empty response to %s (method %s)</string>

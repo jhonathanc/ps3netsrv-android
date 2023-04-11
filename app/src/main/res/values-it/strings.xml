@@ -26,7 +26,7 @@
     <string name="rbBlocked">Bloccati</string>
     <string name="ipAddress">Indirizzo IP</string>
     <string name="add">Aggiungi</string>
-    <string name="ipRemoved">"Indirizzo IP rimosso: "</string>
+    <string name="ipRemoved">Indirizzo IP rimosso: </string>
     <string name="undo">Disfare</string>
     <string name="select">Selezionare</string>
     <string name="empty_response_error">Tentativo di inviare una risposta vuota a %s (metodo %s)</string>

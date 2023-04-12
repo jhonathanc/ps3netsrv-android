@@ -22,7 +22,7 @@ jobs:
 
     - name: Convert code to Objective-C
       run: |
-        $PWD/j2objc-2.8/j2objc -sourcepath /app/src/main/java --no-package-directories `find /app/src/main/java -name '*.java'` -d /app/src/main/objc
+        $PWD/j2objc-2.8/j2objc -sourcepath ./app/src/main/java --no-package-directories `find ./app/src/main/java -name '*.java'` -d ./app/src/main/objc
         rm -rf j2objc-2.8
         ls
         

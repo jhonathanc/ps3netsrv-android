@@ -2,8 +2,9 @@ name: Convert Java Android code to iOS using J2ObjC
 
 on:
   push:
-    branches:
-      - master
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:

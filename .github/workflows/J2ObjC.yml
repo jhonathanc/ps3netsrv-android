@@ -22,7 +22,7 @@ jobs:
 
     - name: Convert code to Objective-C
       run: |
-        $PWD/j2objc-2.8/j2objc -sourcepath ./app/src/main/java --no-package-directories `find ./app/src/main/java -name '*.java'` -d ./app/src/main/objc
+        $PWD/j2objc-2.8/j2objc -sourcepath ./app/src/main/java/com/jhonju/ps3netsrv/server --no-package-directories `find ./app/src/main/java/com/jhonju/ps3netsrv/server -name '*.java'` -d ./app/src/main/objc
         rm -rf j2objc-2.8
         ls
         
@@ -33,8 +33,8 @@ jobs:
 #        git add -A
 #        git commit -m "Converted Java code to Objective-C using J2ObjC"
     
-    - name: Push changes to remote repository
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ObjC
+#    - name: Push changes to remote repository
+#      uses: ad-m/github-push-action@master
+#      with:
+#        github_token: ${{ secrets.GITHUB_TOKEN }}
+#        branch: ObjC

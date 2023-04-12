@@ -21,7 +21,7 @@ jobs:
 
     - name: Add J2ObjC to PATH
       run: |
-        export PATH=$PWD/j2objc-2.8
+        export PATH=$PWD/j2objc-2.8/j2objc-2.8
       
     - name: Convert code to Objective-C
       run: |

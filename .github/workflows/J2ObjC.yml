@@ -20,17 +20,9 @@ jobs:
         unzip j2objc-2.8.zip
         rm j2objc-2.8.zip
 
-    - name: Add J2ObjC to PATH
-      run: |
-        export PATH=$PWD/j2objc-2.8:$PATH
-
-    - name: Print PATH variable
-      run: |
-        echo $PATH
-
     - name: Convert code to Objective-C
       run: |
-        j2objc --prefix com.jhonju.ps3netsrv --no-package-directories src/*.java -d src/main/objc
+        $PWD/j2objc-2.8/j2objc --prefix com.jhonju.ps3netsrv --no-package-directories src/*.java -d src/main/objc
         
     - name: Commit converted code
       run: |

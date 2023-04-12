@@ -22,11 +22,11 @@ jobs:
     - name: Add J2ObjC to PATH
       run: |
         export J2OBJC_HOME=$PWD/j2objc-2.8
-        export PATH=$J2OBJC_HOME/bin:$PATH
+#        export PATH=$J2OBJC_HOME/bin:$PATH
       
     - name: Convert code to Objective-C
       run: |
-        $J2OBJC_HOME/bin/j2objc --prefix com.jhonju.ps3netsrv --no-package-directories src/*.java -d src/main/objc
+        $J2OBJC_HOME/j2objc --prefix com.jhonju.ps3netsrv --no-package-directories src/*.java -d src/main/objc
         
     - name: Commit converted code
       run: |

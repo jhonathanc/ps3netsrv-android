@@ -14,10 +14,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     
-    - name: Install J2ObjC
+    - name: Download J2ObjC
       run: |
-        brew update
-        brew install j2objc
+        curl -L -O https://github.com/google/j2objc/releases/download/2.8/j2objc-2.8.zip
+        unzip j2objc-2.8.zip
+
+    - name: Add J2ObjC to PATH
+      run: |
+        export J2OBJC_HOME=$PWD/j2objc-2.8
+        export PATH=$J2OBJC_HOME/bin:$PATH
       
     - name: Convert code to Objective-C
       run: |

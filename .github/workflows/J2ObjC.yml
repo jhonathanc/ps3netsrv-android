@@ -26,7 +26,7 @@ jobs:
       
     - name: Convert code to Objective-C
       run: |
-        j2objc --prefix com.jhonju.ps3netsrv --no-package-directories src/*.java -d src/main/objc
+        $J2OBJC_HOME/bin/j2objc --prefix com.jhonju.ps3netsrv --no-package-directories src/*.java -d src/main/objc
         
     - name: Commit converted code
       run: |

@@ -22,7 +22,7 @@ jobs:
 
     - name: Convert code to Objective-C
       run: |
-        $PWD/j2objc-2.8/j2objc --prefix com.jhonju.ps3netsrv --no-package-directories src/*.java -d src/main/objc
+        $PWD/j2objc-2.8/j2objc -sourcepath $PWD/app/src --prefix com.jhonju.ps3netsrv --no-package-directories src/*.java -d src/main/objc
         
     - name: Commit converted code
       run: |

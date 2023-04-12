@@ -1,0 +1,36 @@
+name: Convert Java Android code to iOS using J2ObjC
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: macOS-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    
+    - name: Install J2ObjC
+      run: |
+        brew update
+        brew install j2objc
+      
+    - name: Convert code to Objective-C
+      run: |
+        j2objc --prefix com.jhonju.ps3netsrv --no-package-directories src/*.java -d src/main/objc
+        
+    - name: Commit converted code
+      run: |
+        git config --global user.email "jhonathan.correa@outlook.com"
+        git config --global user.name "Jhonathan Corrêa"
+        git add -A
+        git commit -m "Converted Java code to Objective-C using J2ObjC"
+    
+    - name: Push changes to remote repository
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: master

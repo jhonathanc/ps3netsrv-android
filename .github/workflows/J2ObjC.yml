@@ -26,15 +26,15 @@ jobs:
         rm -rf j2objc-2.8
         ls
         
-#    - name: Commit converted code
-#      run: |
-#        git config --global user.email "jhonathan.correa@outlook.com"
-#        git config --global user.name "Jhonathan Corrêa"
-#        git add -A
-#        git commit -m "Converted Java code to Objective-C using J2ObjC"
+    - name: Commit converted code
+      run: |
+        git config --global user.email "jhonathan.correa@outlook.com"
+        git config --global user.name "Jhonathan Corrêa"
+        git add -A
+        git commit -m "Converted Java code to Objective-C using J2ObjC"
     
-#    - name: Push changes to remote repository
-#      uses: ad-m/github-push-action@master
-#      with:
-#        github_token: ${{ secrets.GITHUB_TOKEN }}
-#        branch: ObjC
+    - name: Push changes to remote repository
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ObjC

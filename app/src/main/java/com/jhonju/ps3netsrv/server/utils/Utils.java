@@ -1,7 +1,5 @@
 package com.jhonju.ps3netsrv.server.utils;
 
-import android.annotation.SuppressLint;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -24,7 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-@SuppressLint("SimpleDateFormat")
 public class Utils {
 
     public static final int SHORT_CAPACITY = 2;

@@ -18,16 +18,16 @@ jobs:
       run: |
         curl -L -O https://github.com/google/j2objc/releases/download/2.8/j2objc-2.8.zip
         unzip j2objc-2.8.zip
+        rm j2objc-2.8.zip
 
     - name: Add J2ObjC to PATH
       run: |
-        export PATH=$PWD/j2objc-2.8/j2objc-2.8:$PATH
+        export PATH=$PWD/j2objc-2.8:$PATH
 
     - name: Verify directory structure
       run: |
         ls -la $PWD
         ls -la $PWD/j2objc-2.8
-        ls -la $PWD/j2objc-2.8/j2objc-2.8
 
     - name: Convert code to Objective-C
       run: |

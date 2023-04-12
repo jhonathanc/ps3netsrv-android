@@ -24,10 +24,9 @@ jobs:
       run: |
         export PATH=$PWD/j2objc-2.8:$PATH
 
-    - name: Verify directory structure
+    - name: Print PATH variable
       run: |
-        ls -la $PWD
-        ls -la $PWD/j2objc-2.8
+        echo $PATH
 
     - name: Convert code to Objective-C
       run: |

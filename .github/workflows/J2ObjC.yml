@@ -22,14 +22,16 @@ jobs:
 
     - name: Convert code to Objective-C
       run: |
-        $PWD/j2objc-2.8/j2objc -sourcepath $PWD/app/src/main/java --no-package-directories `find src/main/java -name '*.java'` -d $PWD/app/src/main/objc
+        $PWD/j2objc-2.8/j2objc -sourcepath /app/src/main/java --no-package-directories `find /app/src/main/java -name '*.java'` -d /app/src/main/objc
+        rm -rf j2objc-2.8
+        ls
         
-    - name: Commit converted code
-      run: |
-        git config --global user.email "jhonathan.correa@outlook.com"
-        git config --global user.name "Jhonathan Corrêa"
-        git add -A
-        git commit -m "Converted Java code to Objective-C using J2ObjC"
+#    - name: Commit converted code
+#      run: |
+#        git config --global user.email "jhonathan.correa@outlook.com"
+#        git config --global user.name "Jhonathan Corrêa"
+#        git add -A
+#        git commit -m "Converted Java code to Objective-C using J2ObjC"
     
     - name: Push changes to remote repository
       uses: ad-m/github-push-action@master

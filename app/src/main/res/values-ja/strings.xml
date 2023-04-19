@@ -1,0 +1,49 @@
+<resources>
+    <string-array name="languages">
+        <item>Italiano</item>
+        <item>English</item>
+        <item>Español</item>
+        <item>Português</item>
+    </string-array>
+    <string name="app_name">ps3netsrv</string>
+    <string name="action_settings">設定</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label" translatable="false">First Fragment</string>
+    <string name="second_fragment_label" translatable="false">Second Fragment</string>
+    <string name="next">次</string>
+    <string name="previous">前</string>
+
+    <string name="hello_first_fragment">こんにちは、最初のフラグメント</string>
+    <string name="hello_second_fragment">こんにちは、２番目のフラグメントです。 引数： %1$s</string>
+
+    <string name="port">ポート:</string>
+    <string name="folder">フォルダー：</string>
+    <integer name="defaultPort">38008</integer>
+    <string name="negativePortValue">ポートは1024以上でなければなりません。</string>
+    <string name="invalidPortValue">無効なポート</string>
+    <string name="invalidFolder">無効なフォルダー</string>
+    <string name="saveSuccess">設定が保存されました</string>
+    <string name="save">保存</string>
+    <string name="title_activity_settings">設定</string>
+    <string name="start_server">サーバーを起動r</string>
+    <string name="stop_server">サーバーを停止</string>
+    <string name="server_stopped">サーバーが停止しています</string>
+    <string name="server_running">サーバーは %s\nポート %d\nフォルダー %sで実行中です</string>
+    <string name="read_external_permission_error">最初にストレージの読み取り権限を許可する必要があります</string>
+    <string name="listType">リストの種類：</string>
+    <string name="rbNone">無し</string>
+    <string name="rbAllowed">許可された</string>
+    <string name="rbBlocked">ブロックされた</string>
+    <string name="ipAddress">IPアドレス：</string>
+    <string name="add">追加</string>
+    <string name="ipRemoved">削除されたIP： </string>
+    <string name="undo">元に戻す</string>
+    <string name="select">選択</string>
+    <string name="empty_response_error">%sに空の応答を送信しようとしました（メソッド %s）</string>
+    <string name="readOnly">読み取り専用</string>
+    <string name="maxConnectedClients">最大接続数（0は無制限を意味します）：</string>
+    <string name="negativeMaxConnectedClients">最大接続数を負にすることは出来ません。</string>
+    <string name="invalidMaxConnectedClients">最大接続数が無効です</string>
+    <string name="readOnlyDescription">クライアントがサーバー上でファイルを作成または削除を出来ないようにするには、これをオンにします</string>
+    <string name="select_language">アプリの言語：</string>
+</resources>

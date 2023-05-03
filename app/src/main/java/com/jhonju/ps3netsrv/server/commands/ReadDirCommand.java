@@ -2,6 +2,8 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import static com.jhonju.ps3netsrv.server.utils.Utils.LONG_CAPACITY;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
@@ -73,20 +75,20 @@ public class ReadDirCommand extends AbstractCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        File file = ctx.getFile();
+        DocumentFile file = ctx.getDocumentFile();
         if (file == null || !(file.exists() && file.isDirectory())) {
             send(Utils.longToBytesBE(EMPTY_SIZE));
         } else {
             List<ReadDirEntry> entries = new ArrayList<>();
-            File[] files = file.listFiles();
+            DocumentFile[] files = file.listFiles();
             if (files != null) {
-                for (File f : files) {
+                for (DocumentFile f : files) {
                     if (entries.size() == MAX_ENTRIES) break;
                     entries.add(new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName()));
                 }
             }
             send(new ReadDirResult(entries));
         }
-        ctx.setFile(null);
+        ctx.setDocumentFile(null);
     }
 }

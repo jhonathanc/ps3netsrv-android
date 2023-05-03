@@ -4,11 +4,11 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.INT_CAPACITY;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 public class ReadFileCommand extends AbstractCommand {
     protected int numBytes;

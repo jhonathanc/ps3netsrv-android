@@ -2,14 +2,15 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import static com.jhonju.ps3netsrv.server.utils.Utils.longToBytesBE;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 
 public class OpenFileCommand extends FileCommand {
@@ -46,18 +47,18 @@ public class OpenFileCommand extends FileCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        File file = getFile();
+        DocumentFile file = getDocumentFile();
         if (!file.exists()) {
-            ctx.setFile(null);
+            ctx.setDocumentFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: on OpenFileCommand - file not exists");
         }
-        ctx.setFile(file);
+        ctx.setDocumentFile(file);
 
         try {
             determineCdSectorSize(ctx.getReadOnlyFile());
         } catch (IOException e) {
-            ctx.setFile(null);
+            ctx.setDocumentFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: not possible to determine CD Sector size");
         }

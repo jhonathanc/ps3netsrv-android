@@ -1,5 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 
@@ -18,16 +20,17 @@ public class CreateFileCommand extends FileCommand {
         }
 
         try {
-            File file = getFile();
+            DocumentFile file = getDocumentFile();
             ctx.setWriteOnlyFile(null);
             if (file.isDirectory()) {
-                throw new IOException("ERROR: file is a directory: " + file.getCanonicalPath());
+                throw new IOException("ERROR: file is a directory: " + file.getName());
             }
 
-            if (!file.createNewFile()) {
-                throw new IOException("ERROR: create error on " + file.getCanonicalPath());
+            if (file.getParentFile().createFile(file.getType(), file.getName()) == null) {
+                throw new IOException("ERROR: create error on " + file.getName());
             }
-            ctx.setWriteOnlyFile(file);
+            //ctx.setWriteOnlyFile(file);
+            //TODO: FIX the writeOnlyFile on ctx
             send(SUCCESS_CODE_BYTEARRAY);
         } catch (IOException ex) {
             send(ERROR_CODE_BYTEARRAY);

@@ -17,6 +17,6 @@ public class DeleteFileCommand extends FileCommand {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("Failed to delete file: server is executing as read only");
         }
-        send(getFile().delete() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
+        send(getDocumentFile().delete() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
     }
 }

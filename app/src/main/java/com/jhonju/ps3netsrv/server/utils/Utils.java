@@ -1,6 +1,14 @@
 package com.jhonju.ps3netsrv.server.utils;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.DocumentsContract;
+
+import androidx.documentfile.provider.DocumentFile;
+
+import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -145,92 +153,5 @@ public class Utils {
         }
         System.err.println("Could not parse a null value");
         return 0;
-    }
-
-    public static long[] getFileStats(File file) {
-        long[] stats = { 0, 0 };
-
-        String filePath;
-        try {
-            filePath = file.getCanonicalPath();
-        } catch (IOException e) {
-            return stats;
-        }
-
-        if (isWindows) {
-            Date creationDate = getFileStatsWindows(filePath, FileStat.CREATION_DATE);
-            if (creationDate != null) {
-                stats[0] = creationDate.getTime();
-            }
-
-            Date accessDate = getFileStatsWindows(filePath, FileStat.ACCESS_DATE);
-            if (accessDate != null) {
-                stats[1] = accessDate.getTime();
-            }
-        } else if (isOSX) {
-            Date creationDate = getFileStatsOSX(filePath, FileStat.CREATION_DATE);
-            if (creationDate != null) {
-                stats[0] = creationDate.getTime();
-            }
-
-            Date accessDate = getFileStatsOSX(filePath, FileStat.ACCESS_DATE);
-            if (accessDate != null) {
-                stats[1] = accessDate.getTime();
-            }
-        } else if (isSolaris) {
-            try {
-                Process process = Runtime.getRuntime().exec(new String[]{"ls", "-E", filePath, "| grep 'crtime=' | sed 's/^.*crtime=//'"});
-                process.waitFor();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                String line = reader.readLine();
-                reader.close();
-                if (line == null) {
-                    System.err.println("Could not determine creation date for file: " + file.getName());
-                } else {
-                    stats[0] = tryParseDate("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", line);
-                }
-            } catch (Exception ignored) {}
-
-            try {
-                Process process = Runtime.getRuntime().exec(new String[]{"ls", "-lauE", filePath});
-                process.waitFor();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                String line = reader.readLine();
-                reader.close();
-                if (line == null) {
-                    System.err.println("Could not determine last access date for file: " + file.getName());
-                } else {
-                    String[] parts = line.trim().split("\\s+");
-                    if (parts.length >= 8) {
-                        String month = parts[5];
-
-                        Calendar cal = Calendar.getInstance();
-                        cal.setTime(new Date());
-                        int year = cal.get(Calendar.YEAR);
-                        int actualMonth = cal.get(Calendar.MONTH);
-
-                        cal.setTime(new SimpleDateFormat("MMM").parse(month));
-                        if (cal.get(Calendar.MONTH) > actualMonth) year--;
-
-                        stats[1] = tryParseDate("MMM dd yyyy HH:mm", month + " " + parts[6] + " " + year + " " + parts[7]);
-                    }
-                }
-            } catch (Exception ignored) {}
-        } else {
-            stats[0] = file.lastModified();
-
-            try {
-                Process process = Runtime.getRuntime().exec(new String[]{"stat", "-c", "%x", filePath});
-                process.waitFor();
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                    String line = reader.readLine();
-                    if (line != null) {
-                        if (!line.contains("+")) line = line.trim() + " +0000";
-                        stats[1] = tryParseDate("yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z", line);
-                    }
-                }
-            } catch (Exception ignored) {}
-        }
-        return stats;
     }
 }

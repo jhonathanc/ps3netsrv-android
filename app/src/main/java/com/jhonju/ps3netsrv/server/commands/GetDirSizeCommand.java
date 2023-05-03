@@ -1,5 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
@@ -17,15 +19,15 @@ public class GetDirSizeCommand extends FileCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        send(Utils.longToBytesBE(calculateFileSize(getFile())));
+        send(Utils.longToBytesBE(calculateFileSize(getDocumentFile())));
     }
 
-    private static long calculateFileSize(File file) {
+    private static long calculateFileSize(DocumentFile file) {
         long fileSize = EMPTY_SIZE;
         if (file.isDirectory()) {
-            File[] files = file.listFiles();
+            DocumentFile[] files = file.listFiles();
             if (files != null) {
-                for (File subFile : files) {
+                for (DocumentFile subFile : files) {
                     fileSize += calculateFileSize(subFile);
                 }
             }

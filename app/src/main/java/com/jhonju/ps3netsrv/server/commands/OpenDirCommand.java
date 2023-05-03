@@ -1,5 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 
@@ -12,12 +14,12 @@ public class OpenDirCommand  extends FileCommand {
 
     @Override
     public void executeTask() throws PS3NetSrvException, IOException {
-        File file = getFile();
+        DocumentFile file = getDocumentFile();
         if (file.exists()) {
-            ctx.setFile(file);
+            ctx.setDocumentFile(file);
             send(file.isDirectory() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
         } else {
-            ctx.setFile(null);
+            ctx.setDocumentFile(null);
             send(ERROR_CODE_BYTEARRAY);
         }
     }

@@ -1,13 +1,15 @@
 package com.jhonju.ps3netsrv.server;
 
+import androidx.documentfile.provider.DocumentFile;
+
+import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
+import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -16,6 +18,8 @@ public class Context implements AutoCloseable {
     private final String rootDirectory;
     private final boolean readOnly;
     private File file;
+
+    private DocumentFile documentFile;
     private RandomAccessFile readOnlyFile;
     private File writeOnlyFile;
     private CDSectorSize cdSectorSize;
@@ -49,16 +53,17 @@ public class Context implements AutoCloseable {
         return socket.getOutputStream();
     }
 
-    public File getFile() {
-        return file;
+    public DocumentFile getDocumentFile() {
+        return documentFile;
     }
 
-    public void setFile(File file) {
-        this.file = file;
-        if (file != null && file.isFile()) {
+    public void setDocumentFile(DocumentFile documentFile) {
+        this.documentFile = documentFile;
+
+        if (documentFile != null && documentFile.isFile()) {
             try {
-                readOnlyFile = new RandomAccessFile(file, "r");
-            } catch (FileNotFoundException fe) {
+                readOnlyFile = new RandomAccessFile(PS3NetSrvApp.getAppContext(), documentFile.getUri(), "r");
+            } catch (IOException fe) {
                 readOnlyFile = null;
                 fe.printStackTrace();
             }
@@ -83,13 +88,6 @@ public class Context implements AutoCloseable {
 
     @Override
     public void close() {
-        try {
-            if (readOnlyFile != null) readOnlyFile.close();
-        } catch (IOException ignored) {
-        } finally {
-            readOnlyFile = null;
-        }
-
         if (socket != null && !socket.isClosed()) {
             try {
                 socket.close();

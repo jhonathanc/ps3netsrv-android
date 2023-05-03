@@ -16,10 +16,8 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
-import androidx.documentfile.provider.DocumentFile;
 
 import android.os.Environment;
-import android.provider.DocumentsContract;
 import android.text.InputFilter;
 import android.view.View;
 import android.widget.AdapterView;
@@ -32,8 +30,6 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -75,24 +71,19 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
-    private String saveFolderPath() {
-        String path = Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).getText().toString();
-        File file = new File(path);
-        if (!(file.exists() && file.isDirectory()))
-            return getResources().getString(R.string.invalidFolder);
-        SettingsService.setFolder(path);
-        return "";
-    }
-
     private void loadSettings() {
-        Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).setText(SettingsService.getFolder());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).setText(Uri.parse(SettingsService.getFolder()).getPath());
+        } else {
+            Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).setText(SettingsService.getFolder());
+        }
         Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilPort)).getEditText()).setText(SettingsService.getPort() + "");
         Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber)).getEditText()).setText(SettingsService.getMaxConnections() + "");
         Objects.requireNonNull(((CheckBox) findViewById(R.id.cbReadOnly))).setChecked(SettingsService.isReadOnly());
         listIps.addAll(SettingsService.getIps());
         int listType = SettingsService.getListType();
         if (listType > 0) {
-            RadioButton radio = ((RadioButton) findViewById(listType));
+            RadioButton radio = findViewById(listType);
             if (radio != null) radio.setChecked(true);
         }
     }
@@ -123,7 +114,6 @@ public class SettingsActivity extends AppCompatActivity {
             public void onClick(View view) {
                 String message = savePortValue();
                 boolean hasError = showMessage(view, message);
-                message = saveFolderPath();
                 hasError = showMessage(view, message) || hasError;
                 message = saveMaxConnection();
                 hasError = showMessage(view, message) || hasError;
@@ -140,19 +130,16 @@ public class SettingsActivity extends AppCompatActivity {
         btnSelectFolder.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (SettingsService.hasGrantPermissionExternal()) {
-                    fileDialog.showDialog();
-                } else {
-                    boolean hasPermissionOnExternal = ContextCompat.checkSelfPermission(PS3NetSrvApp.getAppContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PERMISSION_GRANTED;
-                    if (hasPermissionOnExternal) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                            startActivityForResult(intent, REQUEST_CODE_PICK_FOLDER);
-                        } else {
-                            SettingsService.setGrantPermissionExternal(true);
-                            fileDialog.showDialog();
-                        }
+                boolean hasPermissionOnExternal = ContextCompat.checkSelfPermission(PS3NetSrvApp.getAppContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PERMISSION_GRANTED;
+                if (hasPermissionOnExternal) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                        startActivityForResult(intent, REQUEST_CODE_PICK_FOLDER);
+                    } else {
+                        fileDialog.showDialog();
                     }
+                } else {
+                    showMessage(view, getResources().getString(R.string.read_external_permission_error));
                 }
             }
         });
@@ -178,8 +165,8 @@ public class SettingsActivity extends AppCompatActivity {
                         return "";
                     } else {
                         String[] splits = resultingTxt.split("\\.");
-                        for (int i = 0; i < splits.length; i++) {
-                            if (Integer.valueOf(splits[i]) > 255) {
+                        for (String split : splits) {
+                            if (Integer.parseInt(split) > 255) {
                                 return "";
                             }
                         }
@@ -241,7 +228,6 @@ public class SettingsActivity extends AppCompatActivity {
     private final SimpleFileChooser.FileSelectedListener onFileSelectedListener = new SimpleFileChooser.FileSelectedListener() {
         @Override
         public void onFileSelected(File file) {
-            // create shortcut using file path
             SettingsService.setFolder(file.getAbsolutePath());
             Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).setText(file.getAbsolutePath());
         }
@@ -252,11 +238,9 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_CODE_PICK_FOLDER) {
-            if (resultCode == RESULT_OK) {
-                SettingsService.setGrantPermissionExternal(true);
-                fileDialog.showDialog();
-            }
+        if (requestCode == REQUEST_CODE_PICK_FOLDER && resultCode == RESULT_OK && data != null) {
+            SettingsService.setFolder(data.getData().toString());
+            Objects.requireNonNull(((TextInputLayout) findViewById(R.id.tilFolder)).getEditText()).setText(data.getData().getPath());
         }
     }
 

@@ -2,10 +2,10 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 public class ReadCD2048Command extends AbstractCommand {
 
@@ -27,7 +27,7 @@ public class ReadCD2048Command extends AbstractCommand {
             throw new IllegalArgumentException("Too many sectors read!");
             //TODO: VERIFICAR O QUE PODE SER DEVOLVIDO COMO RESPOSTA
         }
-        if (ctx.getFile() == null) {
+        if (ctx.getDocumentFile() == null) {
             throw new IllegalArgumentException("File shouldn't be null");
             //TODO: VERIFICAR O QUE PODE SER DEVOLVIDO COMO RESPOSTA
         }

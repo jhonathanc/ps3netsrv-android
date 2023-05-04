@@ -31,7 +31,7 @@ public class ReadCD2048Command extends AbstractCommand {
             throw new IllegalArgumentException("File shouldn't be null");
             //TODO: VERIFICAR O QUE PODE SER DEVOLVIDO COMO RESPOSTA
         }
-        send(readSectors(ctx.getReadOnlyFile(), startSector * ctx.getCdSectorSize().cdSectorSize, sectorCount));
+        send(readSectors(ctx.getReadOnlyFile(), (long) startSector * ctx.getCdSectorSize().cdSectorSize, sectorCount));
     }
 
     private byte[] readSectors(RandomAccessFile file, long offset, int count) throws IOException {

@@ -48,7 +48,7 @@ public class OpenFileCommand extends FileCommand {
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
         DocumentFile file = getDocumentFile();
-        if (file == null || !file.exists()) {
+        if (file == null) {
             ctx.setDocumentFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: on OpenFileCommand - file not exists");
@@ -71,7 +71,7 @@ public class OpenFileCommand extends FileCommand {
             return;
         }
         for (CDSectorSize cdSec : CDSectorSize.values()) {
-            long position = (cdSec.cdSectorSize << 4) + BYTES_TO_SKIP;
+            long position = ((long) cdSec.cdSectorSize << 4) + BYTES_TO_SKIP;
             byte[] buffer = new byte[20];
             file.seek(position);
             file.read(buffer);

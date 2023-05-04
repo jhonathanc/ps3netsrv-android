@@ -9,7 +9,6 @@ import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,16 +75,14 @@ public class ReadDirCommand extends AbstractCommand {
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
         DocumentFile file = ctx.getDocumentFile();
-        if (file == null || !(file.exists() && file.isDirectory())) {
+        if (file == null || !file.isDirectory()) {
             send(Utils.longToBytesBE(EMPTY_SIZE));
         } else {
             List<ReadDirEntry> entries = new ArrayList<>();
             DocumentFile[] files = file.listFiles();
-            if (files != null) {
-                for (DocumentFile f : files) {
-                    if (entries.size() == MAX_ENTRIES) break;
-                    entries.add(new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName()));
-                }
+            for (DocumentFile f : files) {
+                if (entries.size() == MAX_ENTRIES) break;
+                entries.add(new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName() != null ? f.getName() : ""));
             }
             send(new ReadDirResult(entries));
         }

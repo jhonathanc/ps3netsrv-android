@@ -1,10 +1,5 @@
 package com.jhonju.ps3netsrv.server;
 
-import android.net.Uri;
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
 import com.jhonju.ps3netsrv.server.enums.EListType;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 
@@ -16,7 +11,7 @@ import java.util.Set;
 public class PS3NetSrvTask implements Runnable {
     private final Thread.UncaughtExceptionHandler exceptionHandler;
     private final int port;
-    private String folderPath;
+    private final String folderPath;
     private final int maxConnections;
     private final boolean readOnly;
     private final EListType listType;

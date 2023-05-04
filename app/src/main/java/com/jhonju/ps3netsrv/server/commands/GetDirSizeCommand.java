@@ -6,7 +6,6 @@ import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
-import java.io.File;
 import java.io.IOException;
 
 public class GetDirSizeCommand extends FileCommand {
@@ -26,10 +25,8 @@ public class GetDirSizeCommand extends FileCommand {
         long fileSize = EMPTY_SIZE;
         if (file.isDirectory()) {
             DocumentFile[] files = file.listFiles();
-            if (files != null) {
-                for (DocumentFile subFile : files) {
-                    fileSize += calculateFileSize(subFile);
-                }
+            for (DocumentFile subFile : files) {
+                fileSize += calculateFileSize(subFile);
             }
         } else {
             fileSize = file.length();

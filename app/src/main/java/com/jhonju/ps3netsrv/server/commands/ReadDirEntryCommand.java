@@ -7,7 +7,6 @@ import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -63,12 +62,10 @@ public class ReadDirEntryCommand extends AbstractCommand {
         }
         DocumentFile fileAux = null;
         DocumentFile[] fileList = file.listFiles();
-        if (fileList != null) {
-            for (DocumentFile doc : fileList) {
-                fileAux = doc;
-                if (doc.getUri().getPath().length() <= MAX_FILE_NAME_LENGTH) {
-                    break;
-                }
+        for (DocumentFile doc : fileList) {
+            fileAux = doc;
+            if (doc.getUri().getPath().length() <= MAX_FILE_NAME_LENGTH) {
+                break;
             }
         }
         if (fileAux == null) {
@@ -78,7 +75,7 @@ public class ReadDirEntryCommand extends AbstractCommand {
         }
         send(new ReadDirEntryResult(
                 fileAux.isDirectory() ? EMPTY_SIZE : file.length()
-                , (short) fileAux.getName().length()
+                , (short) (fileAux.getName() != null ? fileAux.getName().length() : 0)
                 , fileAux.isDirectory()
                 , fileAux.getName())
         );

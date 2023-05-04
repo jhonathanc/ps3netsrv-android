@@ -3,7 +3,6 @@ package com.jhonju.ps3netsrv.server.commands;
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 
 import com.jhonju.ps3netsrv.server.Context;
@@ -64,7 +63,10 @@ public class StatFileCommand extends FileCommand {
                 statResult = new StatFileResult(EMPTY_SIZE, file.lastModified() / MILLISECONDS_IN_SECOND, file.lastModified() / MILLISECONDS_IN_SECOND, 0, true);
             } else {
                 long[] fileStats = { 0, 0 };
-                statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0] / MILLISECONDS_IN_SECOND, fileStats[1] / MILLISECONDS_IN_SECOND, false);
+                //TODO: fix file stats
+                //statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0] / MILLISECONDS_IN_SECOND, fileStats[1] / MILLISECONDS_IN_SECOND, false);
+
+                statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0], fileStats[1], false);
             }
             send(statResult);
         } else {

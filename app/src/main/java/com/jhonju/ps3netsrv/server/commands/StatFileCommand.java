@@ -57,7 +57,7 @@ public class StatFileCommand extends FileCommand {
     public void executeTask() throws IOException, PS3NetSrvException {
         ctx.setDocumentFile(null);
         DocumentFile file = getDocumentFile();
-        if (file.exists()) {
+        if (file != null && file.exists()) {
             ctx.setDocumentFile(file);
             StatFileResult statResult;
             if (file.isDirectory()) {

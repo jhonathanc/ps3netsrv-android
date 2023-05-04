@@ -48,7 +48,7 @@ public class OpenFileCommand extends FileCommand {
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
         DocumentFile file = getDocumentFile();
-        if (!file.exists()) {
+        if (file == null || !file.exists()) {
             ctx.setDocumentFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: on OpenFileCommand - file not exists");

@@ -3,66 +3,69 @@ package com.jhonju.ps3netsrv.server.io;
 import android.content.Context;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
-import android.system.ErrnoException;
-import android.system.Os;
-import android.system.OsConstants;
 
-import java.io.FileDescriptor;
+import java.io.Closeable;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
-public class RandomAccessFile {
+public class RandomAccessFile implements Closeable {
 
-    private final FileDescriptor fd;
+    private FileChannel fileChannel;
+    private long position;
+    private ParcelFileDescriptor pfd;
+    private FileInputStream fis;
 
-    public RandomAccessFile(Context context, Uri uri, String mode) throws IOException
-    {
-        try (ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, mode)) {
-            fd = pfd.getFileDescriptor();
-        }
-    }
-
-    public int read(byte[] b, int off, int len) throws IOException {
+    public RandomAccessFile(Context context, Uri treeUri, String mode) throws IOException {
         try {
-            return android.system.Os.read(fd, b, off, len);
-        } catch (ErrnoException e) {
+            pfd = context.getContentResolver().openFileDescriptor(treeUri, mode);
+            fis = new FileInputStream(pfd.getFileDescriptor());
+            fileChannel = fis.getChannel();
+        } catch (FileNotFoundException e) {
             throw new IOException(e);
         }
     }
 
-    public int read(byte[] b) throws IOException {
-        return read(b, 0, b.length);
-    }
-
-    public void write(byte[] b) throws IOException {
-        writeBytes(b, 0, b.length);
-    }
-
-    public void write(byte[] b, int off, int len) throws IOException {
-        writeBytes(b, off, len);
+    public int read(byte[] buffer) {
+        try {
+            fileChannel.position(position);
+            int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
+            position = fileChannel.position();
+            return bytesRead;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 
     public void seek(long pos) throws IOException {
-        try {
-            android.system.Os.lseek(fd, pos, OsConstants.SEEK_SET);
-        } catch (ErrnoException e) {
-            throw new IOException(e);
-        }
+        position = pos;
     }
 
     public long length() throws IOException {
-        try {
-            return Os.fstat(fd).st_size;
-        } catch (ErrnoException e) {
-            throw new IOException(e);
-        }
+        return fileChannel.size();
     }
 
-    private void writeBytes(byte[] b, int off, int len) throws IOException {
+    @Override
+    public void close() throws IOException {
         try {
-            android.system.Os.write(fd, b, off, len);
-        } catch (Exception e) {
-            throw new IOException(e);
+            fileChannel.close();
+        } finally {
+            fileChannel = null;
+        }
+
+        try {
+            fis.close();
+        } finally {
+            fis = null;
+        }
+
+        try {
+            pfd.close();
+        } finally {
+            pfd = null;
         }
     }
-
 }

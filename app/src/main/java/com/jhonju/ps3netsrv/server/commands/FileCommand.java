@@ -27,6 +27,19 @@ public abstract class FileCommand extends AbstractCommand {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: command failed receiving filename.");
         }
-        return DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.withAppendedPath(Uri.parse(ctx.getRootDirectory()), new String(buffer.array(), StandardCharsets.UTF_8).replaceAll("\\x00+$", "")));
+        String path = new String(buffer.array(), StandardCharsets.UTF_8).replaceAll("\\x00+$", "");
+        if (path.equals("/.") || path.equals("/")) path = "";
+        if (path.startsWith("/")) path = path.replaceFirst("/", "");
+
+        DocumentFile docAux = DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(ctx.getRootDirectory()));
+        if (!path.isEmpty()) {
+            String[] paths = path.split("/");
+            if (paths.length > 0) {
+                for (int i = 0; i < paths.length; i++) {
+                    docAux = docAux.findFile(paths[i]);
+                }
+            }
+        }
+        return docAux;
     }
 }

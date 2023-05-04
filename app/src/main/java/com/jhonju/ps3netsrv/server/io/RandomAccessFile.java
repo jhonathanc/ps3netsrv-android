@@ -13,16 +13,16 @@ import java.nio.channels.FileChannel;
 
 public class RandomAccessFile implements Closeable {
 
-    private FileChannel fileChannel;
+    private final FileChannel fileChannel;
     private long position;
-    private ParcelFileDescriptor pfd;
-    private FileInputStream fis;
+    private final long fileSize;
 
     public RandomAccessFile(Context context, Uri treeUri, String mode) throws IOException {
         try {
-            pfd = context.getContentResolver().openFileDescriptor(treeUri, mode);
-            fis = new FileInputStream(pfd.getFileDescriptor());
+            ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(treeUri, mode);
+            FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
             fileChannel = fis.getChannel();
+            fileSize = fileChannel.size();
         } catch (FileNotFoundException e) {
             throw new IOException(e);
         }
@@ -45,27 +45,11 @@ public class RandomAccessFile implements Closeable {
     }
 
     public long length() throws IOException {
-        return fileChannel.size();
+        return fileSize;
     }
 
     @Override
     public void close() throws IOException {
-        try {
-            fileChannel.close();
-        } finally {
-            fileChannel = null;
-        }
-
-        try {
-            fis.close();
-        } finally {
-            fis = null;
-        }
-
-        try {
-            pfd.close();
-        } finally {
-            pfd = null;
-        }
+        fileChannel.close();
     }
 }

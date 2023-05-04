@@ -17,6 +17,6 @@ public class MakeDirCommand extends FileCommand {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("Failed to make dir: server is executing as read only");
         }
-        send(getDocumentFile().getParentFile().createDirectory(getDocumentFile().getName()) != null ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
+        send(currentDirectory.createDirectory(fileName) != null ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
     }
 }

@@ -10,15 +10,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.Socket;
 
 public class Context implements AutoCloseable {
     private Socket socket;
     private final String rootDirectory;
     private final boolean readOnly;
-    private File file;
-
     private DocumentFile documentFile;
     private RandomAccessFile readOnlyFile;
     private File writeOnlyFile;
@@ -41,10 +38,6 @@ public class Context implements AutoCloseable {
 
     public void setCdSectorSize(CDSectorSize cdSectorSize) {
         this.cdSectorSize = cdSectorSize;
-    }
-
-    public InetAddress getRemoteAddress() {
-        return socket.getInetAddress();
     }
 
     public InputStream getInputStream() throws IOException { return socket.getInputStream(); }
@@ -88,6 +81,14 @@ public class Context implements AutoCloseable {
 
     @Override
     public void close() {
+        if (readOnlyFile != null) {
+            try {
+                readOnlyFile.close();
+            } catch (IOException e) {
+                readOnlyFile = null;
+            }
+        }
+
         if (socket != null && !socket.isClosed()) {
             try {
                 socket.close();

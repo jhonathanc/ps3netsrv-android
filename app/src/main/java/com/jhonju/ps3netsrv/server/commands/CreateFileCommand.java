@@ -1,11 +1,8 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import androidx.documentfile.provider.DocumentFile;
-
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 
-import java.io.File;
 import java.io.IOException;
 
 public class CreateFileCommand extends FileCommand {
@@ -20,14 +17,14 @@ public class CreateFileCommand extends FileCommand {
         }
 
         try {
-            DocumentFile file = getDocumentFile();
-            ctx.setWriteOnlyFile(null);
-            if (file.isDirectory()) {
-                throw new IOException("ERROR: file is a directory: " + file.getName());
+            if (currentDirectory == null) {
+                send(ERROR_CODE_BYTEARRAY);
+                throw new PS3NetSrvException("ERROR: Current directory should not be null");
             }
+            ctx.setWriteOnlyFile(null);
 
-            if (file.getParentFile().createFile(file.getType(), file.getName()) == null) {
-                throw new IOException("ERROR: create error on " + file.getName());
+            if (currentDirectory.createFile("application/someType", fileName) == null) {
+                throw new IOException("ERROR: create error on " + fileName);
             }
             //ctx.setWriteOnlyFile(file);
             //TODO: FIX the writeOnlyFile on ctx

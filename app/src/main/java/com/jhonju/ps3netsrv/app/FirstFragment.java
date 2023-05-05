@@ -18,6 +18,8 @@ import com.jhonju.ps3netsrv.app.utils.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 public class FirstFragment extends Fragment {
@@ -66,7 +68,7 @@ public class FirstFragment extends Fragment {
                     isServerRunning = !isServerRunning;
                     btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);
 
-                    String folderPath = SettingsService.getFolder();
+                    String folderPath = URLDecoder.decode(SettingsService.getFolder(), StandardCharsets.UTF_8.displayName());
                     int port = SettingsService.getPort();
 
                     String serverRunningMsg = isServerRunning ? String.format(getResources().getString(R.string.server_running), Utils.getIPAddress(true), port, folderPath) :

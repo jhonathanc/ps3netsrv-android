@@ -1,11 +1,14 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import android.net.Uri;
-import androidx.documentfile.provider.DocumentFile;
+import android.os.Build;
 
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.DocumentFile;
+import com.jhonju.ps3netsrv.server.io.File;
+import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.IOException;
@@ -16,7 +19,7 @@ public abstract class FileCommand extends AbstractCommand {
 
     protected short filePathLength;
     protected String fileName;
-    protected DocumentFile currentDirectory;
+    protected androidx.documentfile.provider.DocumentFile currentDirectory;
 
     public FileCommand(Context ctx, short filePathLength) {
         super(ctx);
@@ -30,13 +33,18 @@ public abstract class FileCommand extends AbstractCommand {
         return path;
     }
 
-    protected DocumentFile getDocumentFile() throws IOException, PS3NetSrvException {
+    protected IFile getFile() throws IOException, PS3NetSrvException {
         ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), this.filePathLength);
         if (buffer == null) {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: command failed receiving filename.");
         }
-        DocumentFile documentFile = DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(ctx.getRootDirectory()));
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return new File(new java.io.File(ctx.getRootDirectory(), new String(buffer.array(), StandardCharsets.UTF_8).replaceAll("\\x00+$", "")));
+        }
+
+        androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(ctx.getRootDirectory()));
         if (documentFile == null || !documentFile.exists()) {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: wrong path configuration.");
@@ -56,6 +64,6 @@ public abstract class FileCommand extends AbstractCommand {
                 }
             }
         }
-        return documentFile;
+        return new DocumentFile(documentFile);
     }
 }

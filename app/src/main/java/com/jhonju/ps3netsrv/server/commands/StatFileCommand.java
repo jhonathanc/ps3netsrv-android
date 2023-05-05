@@ -1,12 +1,11 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import androidx.documentfile.provider.DocumentFile;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 public class StatFileCommand extends FileCommand {
@@ -54,10 +53,10 @@ public class StatFileCommand extends FileCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        ctx.setDocumentFile(null);
-        DocumentFile file = getDocumentFile();
+        ctx.setFile(null);
+        IFile file = getFile();
         if (file != null && file.exists()) {
-            ctx.setDocumentFile(file);
+            ctx.setFile(file);
             StatFileResult statResult;
             if (file.isDirectory()) {
                 statResult = new StatFileResult(EMPTY_SIZE, file.lastModified() / MILLISECONDS_IN_SECOND, file.lastModified() / MILLISECONDS_IN_SECOND, 0, true);

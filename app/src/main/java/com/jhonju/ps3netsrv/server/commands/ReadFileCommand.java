@@ -4,7 +4,7 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.INT_CAPACITY;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
+import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -42,7 +42,7 @@ public class ReadFileCommand extends AbstractCommand {
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
         byte[] readFileResult = new byte[numBytes];
-        RandomAccessFile file = ctx.getReadOnlyFile();
+        IRandomAccessFile file = ctx.getReadOnlyFile();
         try {
             file.seek(offset);
             int bytesRead = file.read(readFileResult);

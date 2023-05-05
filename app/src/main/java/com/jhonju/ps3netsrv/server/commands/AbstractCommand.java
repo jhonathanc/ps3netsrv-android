@@ -1,5 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
+import android.os.Build;
+
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
@@ -9,6 +11,8 @@ import java.io.OutputStream;
 
 public abstract class AbstractCommand implements ICommand {
     protected Context ctx;
+
+    protected static final boolean useSAF = Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP;
     protected static final int ERROR_CODE = -1;
     protected byte[] ERROR_CODE_BYTEARRAY = Utils.intToBytesBE(ERROR_CODE);
     protected byte[] SUCCESS_CODE_BYTEARRAY = Utils.intToBytesBE(0);

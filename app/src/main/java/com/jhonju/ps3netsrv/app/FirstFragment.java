@@ -68,7 +68,10 @@ public class FirstFragment extends Fragment {
                     isServerRunning = !isServerRunning;
                     btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);
 
-                    String folderPath = URLDecoder.decode(SettingsService.getFolder(), StandardCharsets.UTF_8.displayName());
+                    String folderPath = SettingsService.getFolder();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        folderPath = URLDecoder.decode(folderPath, StandardCharsets.UTF_8.displayName());
+                    }
                     int port = SettingsService.getPort();
 
                     String serverRunningMsg = isServerRunning ? String.format(getResources().getString(R.string.server_running), Utils.getIPAddress(true), port, folderPath) :

@@ -16,13 +16,8 @@ public class ReadFileCriticalCommand extends ReadFileCommand {
     public void executeTask() throws IOException, PS3NetSrvException {
         byte[] result = new byte[numBytes];
         RandomAccessFile file = ctx.getReadOnlyFile();
-        try {
-            file.seek(offset);
-            if (file.read(result) < EMPTY_SIZE) {
-                throw new PS3NetSrvException("Error reading file. EOF");
-            }
-        } catch (IOException e) {
-            throw new PS3NetSrvException("Error reading file.");
+        if (file.read(result, offset) < EMPTY_SIZE) {
+            throw new PS3NetSrvException("Error reading file. EOF");
         }
         send(result);
     }

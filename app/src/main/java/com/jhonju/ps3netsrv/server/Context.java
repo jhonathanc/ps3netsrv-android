@@ -55,7 +55,7 @@ public class Context implements AutoCloseable {
 
         if (documentFile != null && documentFile.isFile()) {
             try {
-                readOnlyFile = new RandomAccessFile(PS3NetSrvApp.getAppContext(), documentFile.getUri(), "r");
+                readOnlyFile = new RandomAccessFile(PS3NetSrvApp.getAppContext(), documentFile, "r");
             } catch (IOException fe) {
                 readOnlyFile = null;
                 fe.printStackTrace();
@@ -81,14 +81,6 @@ public class Context implements AutoCloseable {
 
     @Override
     public void close() {
-        if (readOnlyFile != null) {
-            try {
-                readOnlyFile.close();
-            } catch (IOException e) {
-                readOnlyFile = null;
-            }
-        }
-
         if (socket != null && !socket.isClosed()) {
             try {
                 socket.close();

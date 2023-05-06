@@ -31,10 +31,13 @@ public class ReadFileCommand extends AbstractCommand {
 
         @Override
         public byte[] toByteArray() throws IOException {
-            try (ByteArrayOutputStream out = new ByteArrayOutputStream(INT_CAPACITY + bytesReadLength)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(INT_CAPACITY + bytesReadLength);
+            try {
                 out.write(Utils.intToBytesBE(bytesReadLength));
                 out.write(bytesRead);
                 return out.toByteArray();
+            } finally {
+                out.close();
             }
         }
     }

@@ -13,10 +13,9 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
+import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 
 public abstract class FileCommand extends AbstractCommand {
-
     protected short filePathLength;
     protected String fileName;
     protected androidx.documentfile.provider.DocumentFile currentDirectory;

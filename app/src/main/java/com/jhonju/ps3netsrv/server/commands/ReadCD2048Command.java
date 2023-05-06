@@ -38,7 +38,8 @@ public class ReadCD2048Command extends AbstractCommand {
     private byte[] readSectors(IRandomAccessFile file, long offset, int count) throws IOException {
         final int SECTOR_SIZE = ctx.getCdSectorSize().cdSectorSize;
 
-        try(ByteArrayOutputStream out = new ByteArrayOutputStream(count * MAX_RESULT_SIZE)) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream(count * MAX_RESULT_SIZE);
+        try {
             for (int i = 0; i < count; i++) {
                 file.seek(offset + BYTES_TO_SKIP);
                 byte[] sectorRead = new byte[MAX_RESULT_SIZE];
@@ -47,6 +48,8 @@ public class ReadCD2048Command extends AbstractCommand {
                 offset += SECTOR_SIZE;
             }
             return out.toByteArray();
+        } finally {
+            out.close();
         }
     }
 }

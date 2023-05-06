@@ -3,6 +3,7 @@ package com.jhonju.ps3netsrv.server.commands;
 import static com.jhonju.ps3netsrv.server.utils.Utils.longToBytesBE;
 
 import com.jhonju.ps3netsrv.server.Context;
+import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
@@ -10,7 +11,6 @@ import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class OpenFileCommand extends FileCommand {
 
@@ -36,10 +36,13 @@ public class OpenFileCommand extends FileCommand {
         }
 
         public byte[] toByteArray() throws IOException {
-            try (ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
+            try {
                 out.write(longToBytesBE(this.aFileSize));
                 out.write(longToBytesBE(this.bModifiedTime));
                 return out.toByteArray();
+            } finally {
+                out.close();
             }
         }
     }

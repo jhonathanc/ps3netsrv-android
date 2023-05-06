@@ -1,15 +1,13 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import androidx.documentfile.provider.DocumentFile;
-
 import com.jhonju.ps3netsrv.server.Context;
+import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class ReadDirEntryCommand extends AbstractCommand {
 
@@ -42,7 +40,8 @@ public class ReadDirEntryCommand extends AbstractCommand {
         }
 
         public byte[] toByteArray() throws IOException {
-            try (ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
+            try {
                 out.write(Utils.longToBytesBE(this.aFileSize));
                 out.write(Utils.shortToBytesBE(this.bFileNameLength));
                 out.write(cIsDirectory ? 1 : 0);
@@ -50,6 +49,8 @@ public class ReadDirEntryCommand extends AbstractCommand {
                     out.write(dFileName.getBytes(StandardCharsets.UTF_8));
                 }
                 return out.toByteArray();
+            } finally {
+                out.close();
             }
         }
     }

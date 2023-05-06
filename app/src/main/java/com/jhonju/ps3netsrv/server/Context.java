@@ -16,7 +16,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class Context implements AutoCloseable {
+public class Context {
     private Socket socket;
     private final String rootDirectory;
     private final boolean readOnly;
@@ -78,7 +78,6 @@ public class Context implements AutoCloseable {
 
     public boolean isReadOnly() { return readOnly; }
 
-    @Override
     public void close() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             if (readOnlyFile != null) {

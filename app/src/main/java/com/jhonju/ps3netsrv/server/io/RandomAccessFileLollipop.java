@@ -27,14 +27,18 @@ public class RandomAccessFileLollipop implements IRandomAccessFile {
     }
 
     public int read(byte[] buffer) throws IOException {
-        try (ParcelFileDescriptor pfd = resolver.openFileDescriptor(documentFile.getUri(), mode);
-             FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
-             FileChannel fileChannel = fis.getChannel()
-        ) {
+        ParcelFileDescriptor pfd = resolver.openFileDescriptor(documentFile.getUri(), mode);
+        FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
+        FileChannel fileChannel = fis.getChannel();
+        try {
             fileChannel.position(position);
             int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
             position = fileChannel.position();
             return bytesRead;
+        } finally {
+            fileChannel.close();
+            fis.close();
+            pfd.close();
         }
     }
 

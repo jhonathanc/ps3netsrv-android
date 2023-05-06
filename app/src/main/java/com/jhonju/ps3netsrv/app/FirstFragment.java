@@ -37,9 +37,18 @@ public class FirstFragment extends Fragment {
 
     private void showVersion(View view) {
         Properties properties = new Properties();
-        try (InputStream inputStream = requireActivity().getAssets().open("git.properties")) {
+        InputStream inputStream = null;
+        try {
+            inputStream = requireActivity().getAssets().open("git.properties");
             properties.load(inputStream);
         } catch (IOException e) {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
             throw new RuntimeException(e);
         }
         String commitCode = properties.getProperty("git.commit.id");

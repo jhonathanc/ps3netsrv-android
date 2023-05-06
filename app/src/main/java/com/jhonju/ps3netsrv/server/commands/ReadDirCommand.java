@@ -2,8 +2,6 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import static com.jhonju.ps3netsrv.server.utils.Utils.LONG_CAPACITY;
 
-import androidx.documentfile.provider.DocumentFile;
-
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
@@ -32,12 +30,15 @@ public class ReadDirCommand extends AbstractCommand {
 
         public byte[] toByteArray() throws IOException {
             if (entries != null) {
-                try (ByteArrayOutputStream out = new ByteArrayOutputStream(entries.size() * READ_DIR_ENTRY_LENGTH + LONG_CAPACITY)) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream(entries.size() * READ_DIR_ENTRY_LENGTH + LONG_CAPACITY);
+                try {
                     out.write(Utils.longToBytesBE(entries.size()));
                     for (ReadDirEntry entry : entries) {
                         out.write(entry.toByteArray());
                     }
                     return out.toByteArray();
+                } finally {
+                    out.close();
                 }
             }
             return null;
@@ -63,12 +64,15 @@ public class ReadDirCommand extends AbstractCommand {
         }
 
         public byte[] toByteArray() throws IOException {
-            try (ByteArrayOutputStream out = new ByteArrayOutputStream(READ_DIR_ENTRY_LENGTH)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(READ_DIR_ENTRY_LENGTH);
+            try {
                 out.write(Utils.longToBytesBE(this.aFileSize));
                 out.write(Utils.longToBytesBE(this.bModifiedTime));
                 out.write(cIsDirectory ? 1 : 0);
                 out.write(Utils.charArrayToByteArray(dName));
                 return out.toByteArray();
+            } finally {
+                out.close();
             }
         }
     }

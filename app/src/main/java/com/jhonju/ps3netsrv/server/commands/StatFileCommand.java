@@ -40,13 +40,16 @@ public class StatFileCommand extends FileCommand {
         }
 
         public byte[] toByteArray() throws IOException {
-            try (ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
+            try {
                 out.write(Utils.longToBytesBE(this.aFileSize));
                 out.write(Utils.longToBytesBE(this.bModifiedTime));
                 out.write(Utils.longToBytesBE(this.cCreationTime));
                 out.write(Utils.longToBytesBE(this.dLastAccessTime));
                 out.write(eIsDirectory ? 1 : 0);
                 return out.toByteArray();
+            } finally {
+                out.close();
             }
         }
     }

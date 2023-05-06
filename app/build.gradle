@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.jhonju.ps3netsrv"
-        minSdkVersion 19
+        minSdkVersion 14
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"

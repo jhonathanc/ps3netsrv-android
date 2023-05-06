@@ -1,11 +1,12 @@
 package com.jhonju.ps3netsrv.server.utils;
 
+import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class Utils {

@@ -73,9 +73,10 @@ public class OpenFileCommand extends FileCommand {
             return;
         }
         for (CDSectorSize cdSec : CDSectorSize.values()) {
-            long position = ((long) cdSec.cdSectorSize << 4) + BYTES_TO_SKIP;
+            long position = (cdSec.cdSectorSize << 4) + BYTES_TO_SKIP;
             byte[] buffer = new byte[20];
-            file.read(buffer, position);
+            file.seek(position);
+            file.read(buffer);
             String strBuffer = new String(buffer, StandardCharsets.US_ASCII);
             if (strBuffer.contains(PLAYSTATION_IDENTIFIER) || strBuffer.contains(CD001_IDENTIFIER)) {
                 ctx.setCdSectorSize(cdSec);

@@ -1,24 +1,27 @@
 package com.jhonju.ps3netsrv.server;
 
-import androidx.documentfile.provider.DocumentFile;
+import android.os.Build;
 
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
+import com.jhonju.ps3netsrv.server.io.DocumentFile;
+import com.jhonju.ps3netsrv.server.io.File;
+import com.jhonju.ps3netsrv.server.io.IFile;
+import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
 import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
+import com.jhonju.ps3netsrv.server.io.RandomAccessFileLollipop;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class Context implements AutoCloseable {
+public class Context {
     private Socket socket;
     private final String rootDirectory;
     private final boolean readOnly;
-    private DocumentFile documentFile;
-    private RandomAccessFile readOnlyFile;
-    private File writeOnlyFile;
+    private IFile file;
+    private IRandomAccessFile readOnlyFile;
     private CDSectorSize cdSectorSize;
 
     public Context(Socket socket, String rootDirectory, boolean readOnly) {
@@ -46,16 +49,16 @@ public class Context implements AutoCloseable {
         return socket.getOutputStream();
     }
 
-    public DocumentFile getDocumentFile() {
-        return documentFile;
-    }
+    public void setFile(IFile file) {
+        this.file = file;
 
-    public void setDocumentFile(DocumentFile documentFile) {
-        this.documentFile = documentFile;
-
-        if (documentFile != null && documentFile.isFile()) {
+        if (file != null && file.isFile()) {
             try {
-                readOnlyFile = new RandomAccessFile(PS3NetSrvApp.getAppContext(), documentFile, "r");
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                    readOnlyFile = new RandomAccessFile(((File)file).getFile(), "r");
+                } else {
+                    readOnlyFile = new RandomAccessFileLollipop(PS3NetSrvApp.getAppContext(), ((DocumentFile)file).getDocumentFile(), "r");
+                }
             } catch (IOException fe) {
                 readOnlyFile = null;
                 fe.printStackTrace();
@@ -65,22 +68,27 @@ public class Context implements AutoCloseable {
         }
     }
 
-    public File getWriteOnlyFile() {
-        return writeOnlyFile;
+    public IFile getFile() {
+        return file;
     }
 
-    public void setWriteOnlyFile(File writeOnlyFile) {
-        this.writeOnlyFile = writeOnlyFile;
-    }
-
-    public RandomAccessFile getReadOnlyFile() {
+    public IRandomAccessFile getReadOnlyFile() {
         return readOnlyFile;
     }
 
     public boolean isReadOnly() { return readOnly; }
 
-    @Override
     public void close() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            if (readOnlyFile != null) {
+                try {
+                    readOnlyFile.close();
+                } catch (IOException e) {
+                    readOnlyFile = null;
+                }
+            }
+        }
+
         if (socket != null && !socket.isClosed()) {
             try {
                 socket.close();

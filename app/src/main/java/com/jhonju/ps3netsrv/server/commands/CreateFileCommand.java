@@ -21,7 +21,7 @@ public class CreateFileCommand extends FileCommand {
                 send(ERROR_CODE_BYTEARRAY);
                 throw new PS3NetSrvException("ERROR: Current directory should not be null");
             }
-            ctx.setWriteOnlyFile(null);
+            //ctx.setWriteOnlyFile(null);
 
             if (currentDirectory.createFile("application/someType", fileName) == null) {
                 throw new IOException("ERROR: create error on " + fileName);

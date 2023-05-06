@@ -39,16 +39,18 @@ public class WriteFileCommand extends AbstractCommand {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: on write file - content is null");
         }
-        try (FileOutputStream fos = new FileOutputStream(ctx.getWriteOnlyFile())) {
-            byte[] content;
-            try {
-                content = buffer.array();
-                fos.write(content);
-            } catch (IOException ex) {
-                send(ERROR_CODE_BYTEARRAY);
-                throw new PS3NetSrvException("ERROR: writing file " + ex.getMessage());
-            }
-            send(Utils.intToBytesBE(content.length));
-        }
+
+        send(ERROR_CODE_BYTEARRAY); //TODO: fix writeOnlyFile and remove this line
+//        try (FileOutputStream fos = new FileOutputStream(ctx.getWriteOnlyFile())) {
+//            byte[] content;
+//            try {
+//                content = buffer.array();
+//                fos.write(content);
+//            } catch (IOException ex) {
+//                send(ERROR_CODE_BYTEARRAY);
+//                throw new PS3NetSrvException("ERROR: writing file " + ex.getMessage());
+//            }
+//            send(Utils.intToBytesBE(content.length));
+//        }
     }
 }

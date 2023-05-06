@@ -2,7 +2,7 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
+import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,17 +27,19 @@ public class ReadCD2048Command extends AbstractCommand {
             throw new IllegalArgumentException("Too many sectors read!");
             //TODO: VERIFICAR O QUE PODE SER DEVOLVIDO COMO RESPOSTA
         }
-        if (ctx.getDocumentFile() == null) {
+        IRandomAccessFile file = ctx.getReadOnlyFile();
+        if (file == null) {
             throw new IllegalArgumentException("File shouldn't be null");
             //TODO: VERIFICAR O QUE PODE SER DEVOLVIDO COMO RESPOSTA
         }
-        send(readSectors(ctx.getReadOnlyFile(), (long) startSector * ctx.getCdSectorSize().cdSectorSize, sectorCount));
+        send(readSectors(file, (long) startSector * ctx.getCdSectorSize().cdSectorSize, sectorCount));
     }
 
-    private byte[] readSectors(RandomAccessFile file, long offset, int count) throws IOException {
+    private byte[] readSectors(IRandomAccessFile file, long offset, int count) throws IOException {
         final int SECTOR_SIZE = ctx.getCdSectorSize().cdSectorSize;
 
-        try(ByteArrayOutputStream out = new ByteArrayOutputStream(count * MAX_RESULT_SIZE)) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream(count * MAX_RESULT_SIZE);
+        try {
             for (int i = 0; i < count; i++) {
                 byte[] sectorRead = new byte[MAX_RESULT_SIZE];
                 int bytesLength = file.read(sectorRead, offset + BYTES_TO_SKIP);
@@ -45,6 +47,8 @@ public class ReadCD2048Command extends AbstractCommand {
                 offset += SECTOR_SIZE;
             }
             return out.toByteArray();
+        } finally {
+            out.close();
         }
     }
 }

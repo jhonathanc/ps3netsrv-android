@@ -1,12 +1,11 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import androidx.documentfile.provider.DocumentFile;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 public class StatFileCommand extends FileCommand {
@@ -41,23 +40,26 @@ public class StatFileCommand extends FileCommand {
         }
 
         public byte[] toByteArray() throws IOException {
-            try (ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
+            try {
                 out.write(Utils.longToBytesBE(this.aFileSize));
                 out.write(Utils.longToBytesBE(this.bModifiedTime));
                 out.write(Utils.longToBytesBE(this.cCreationTime));
                 out.write(Utils.longToBytesBE(this.dLastAccessTime));
                 out.write(eIsDirectory ? 1 : 0);
                 return out.toByteArray();
+            } finally {
+                out.close();
             }
         }
     }
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        ctx.setDocumentFile(null);
-        DocumentFile file = getDocumentFile();
+        ctx.setFile(null);
+        IFile file = getFile();
         if (file != null && file.exists()) {
-            ctx.setDocumentFile(file);
+            ctx.setFile(file);
             StatFileResult statResult;
             if (file.isDirectory()) {
                 statResult = new StatFileResult(EMPTY_SIZE, file.lastModified() / MILLISECONDS_IN_SECOND, file.lastModified() / MILLISECONDS_IN_SECOND, 0, true);

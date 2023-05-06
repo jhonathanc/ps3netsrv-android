@@ -2,16 +2,15 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import static com.jhonju.ps3netsrv.server.utils.Utils.longToBytesBE;
 
-import androidx.documentfile.provider.DocumentFile;
-
 import com.jhonju.ps3netsrv.server.Context;
+import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
+import com.jhonju.ps3netsrv.server.io.IFile;
+import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class OpenFileCommand extends FileCommand {
 
@@ -37,35 +36,38 @@ public class OpenFileCommand extends FileCommand {
         }
 
         public byte[] toByteArray() throws IOException {
-            try (ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
+            try {
                 out.write(longToBytesBE(this.aFileSize));
                 out.write(longToBytesBE(this.bModifiedTime));
                 return out.toByteArray();
+            } finally {
+                out.close();
             }
         }
     }
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        DocumentFile file = getDocumentFile();
+        IFile file = getFile();
         if (file == null) {
-            ctx.setDocumentFile(null);
+            ctx.setFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: on OpenFileCommand - file not exists");
         }
-        ctx.setDocumentFile(file);
+        ctx.setFile(file);
 
         try {
             determineCdSectorSize(ctx.getReadOnlyFile());
         } catch (IOException e) {
-            ctx.setDocumentFile(null);
+            ctx.setFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: not possible to determine CD Sector size");
         }
         send(new OpenFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND));
     }
 
-    private void determineCdSectorSize(RandomAccessFile file) throws IOException {
+    private void determineCdSectorSize(IRandomAccessFile file) throws IOException {
         if (file.length() < CD_MINIMUM_SIZE || file.length() > CD_MAXIMUM_SIZE) {
             ctx.setCdSectorSize(null);
             return;

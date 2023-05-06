@@ -41,9 +41,8 @@ public class ReadCD2048Command extends AbstractCommand {
         ByteArrayOutputStream out = new ByteArrayOutputStream(count * MAX_RESULT_SIZE);
         try {
             for (int i = 0; i < count; i++) {
-                file.seek(offset + BYTES_TO_SKIP);
                 byte[] sectorRead = new byte[MAX_RESULT_SIZE];
-                int bytesLength = file.read(sectorRead);
+                int bytesLength = file.read(sectorRead, offset + BYTES_TO_SKIP);
                 out.write(sectorRead, 0, bytesLength);
                 offset += SECTOR_SIZE;
             }

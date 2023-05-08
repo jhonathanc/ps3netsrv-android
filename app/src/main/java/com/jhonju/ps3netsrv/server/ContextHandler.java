@@ -53,7 +53,8 @@ public class ContextHandler extends Thread {
     @Override
     public void run() {
         incrementSimultaneousConnections();
-        try (Context ctx = context) {
+        Context ctx = context;
+        try {
             if (maxConnections > 0 && simultaneousConnections > maxConnections) {
                 getUncaughtExceptionHandler().uncaughtException(this, new PS3NetSrvException("Connection limit is reached"));
                 return;
@@ -72,6 +73,7 @@ public class ContextHandler extends Thread {
         } catch (IOException e) {
             Objects.requireNonNull(getUncaughtExceptionHandler()).uncaughtException(this, e);
         } finally {
+            context.close();
             decrementSimultaneousConnections();
         }
     }

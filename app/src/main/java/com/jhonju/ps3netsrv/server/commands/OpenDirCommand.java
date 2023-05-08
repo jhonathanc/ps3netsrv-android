@@ -2,8 +2,8 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.IFile;
 
-import java.io.File;
 import java.io.IOException;
 
 public class OpenDirCommand  extends FileCommand {
@@ -12,7 +12,7 @@ public class OpenDirCommand  extends FileCommand {
 
     @Override
     public void executeTask() throws PS3NetSrvException, IOException {
-        File file = getFile();
+        IFile file = getFile();
         if (file.exists()) {
             ctx.setFile(file);
             send(file.isDirectory() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);

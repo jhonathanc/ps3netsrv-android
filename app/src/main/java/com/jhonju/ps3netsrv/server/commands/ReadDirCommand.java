@@ -4,10 +4,10 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.LONG_CAPACITY;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +30,15 @@ public class ReadDirCommand extends AbstractCommand {
 
         public byte[] toByteArray() throws IOException {
             if (entries != null) {
-                try (ByteArrayOutputStream out = new ByteArrayOutputStream(entries.size() * READ_DIR_ENTRY_LENGTH + LONG_CAPACITY)) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream(entries.size() * READ_DIR_ENTRY_LENGTH + LONG_CAPACITY);
+                try {
                     out.write(Utils.longToBytesBE(entries.size()));
                     for (ReadDirEntry entry : entries) {
                         out.write(entry.toByteArray());
                     }
                     return out.toByteArray();
+                } finally {
+                    out.close();
                 }
             }
             return null;
@@ -61,29 +64,30 @@ public class ReadDirCommand extends AbstractCommand {
         }
 
         public byte[] toByteArray() throws IOException {
-            try (ByteArrayOutputStream out = new ByteArrayOutputStream(READ_DIR_ENTRY_LENGTH)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(READ_DIR_ENTRY_LENGTH);
+            try {
                 out.write(Utils.longToBytesBE(this.aFileSize));
                 out.write(Utils.longToBytesBE(this.bModifiedTime));
                 out.write(cIsDirectory ? 1 : 0);
                 out.write(Utils.charArrayToByteArray(dName));
                 return out.toByteArray();
+            } finally {
+                out.close();
             }
         }
     }
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        File file = ctx.getFile();
-        if (file == null || !(file.exists() && file.isDirectory())) {
+        IFile file = ctx.getFile();
+        if (file == null || !file.isDirectory()) {
             send(Utils.longToBytesBE(EMPTY_SIZE));
         } else {
             List<ReadDirEntry> entries = new ArrayList<>();
-            File[] files = file.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    if (entries.size() == MAX_ENTRIES) break;
-                    entries.add(new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName()));
-                }
+            IFile[] files = file.listFiles();
+            for (IFile f : files) {
+                if (entries.size() == MAX_ENTRIES) break;
+                entries.add(new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName() != null ? f.getName() : ""));
             }
             send(new ReadDirResult(entries));
         }

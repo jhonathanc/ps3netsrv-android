@@ -15,13 +15,4 @@ public enum CDSectorSize {
         this.cdSectorSize = cdSectorSize;
     }
 
-    public static CDSectorSize valueOf(int cdSectorSize) {
-        for (CDSectorSize cdSecSize : CDSectorSize.values()) {
-            if (cdSecSize.cdSectorSize == cdSectorSize) {
-                return cdSecSize;
-            }
-        }
-        return null;
-    }
-
 }

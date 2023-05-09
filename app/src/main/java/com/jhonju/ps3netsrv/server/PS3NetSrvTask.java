@@ -30,17 +30,6 @@ public class PS3NetSrvTask implements Runnable {
         this.exceptionHandler = exceptionHandler;
     }
 
-    public PS3NetSrvTask(int port, String folderPath, Thread.UncaughtExceptionHandler exceptionHandler) {
-        this.port = port;
-        this.folderPath = folderPath;
-        this.maxConnections = 0;
-        this.readOnly = false;
-        this.filterAddresses = null;
-        this.listType = EListType.LIST_TYPE_NONE;
-
-        this.exceptionHandler = exceptionHandler;
-    }
-
     public void run() {
         try {
             serverSocket = new ServerSocket(port);

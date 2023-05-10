@@ -14,6 +14,8 @@ public class Utils {
     public static final int SHORT_CAPACITY = 2;
     public static final int INT_CAPACITY = 4;
     public static final int LONG_CAPACITY = 8;
+    public static final String DOT_STR = ".";
+    public static final String DKEY_EXT = ".dkey";
 
     public static byte[] charArrayToByteArray(char[] chars) {
         CharBuffer charBuffer = CharBuffer.wrap(chars);

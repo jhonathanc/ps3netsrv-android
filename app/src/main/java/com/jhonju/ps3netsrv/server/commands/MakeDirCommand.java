@@ -4,7 +4,7 @@ import android.os.Build;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.io.File;
+import com.jhonju.ps3netsrv.server.io.FileCustom;
 
 import java.io.IOException;
 
@@ -22,7 +22,7 @@ public class MakeDirCommand extends FileCommand {
         }
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            send(((File)getFile()).mkdir() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
+            send(((FileCustom)getFile()).mkdir() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
         } else {
             send(currentDirectory.createDirectory(fileName) != null ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
         }

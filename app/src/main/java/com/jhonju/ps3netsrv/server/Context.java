@@ -4,8 +4,8 @@ import android.os.Build;
 
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
-import com.jhonju.ps3netsrv.server.io.DocumentFile;
-import com.jhonju.ps3netsrv.server.io.File;
+import com.jhonju.ps3netsrv.server.io.DocumentFileCustom;
+import com.jhonju.ps3netsrv.server.io.FileCustom;
 import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
 import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
@@ -55,9 +55,9 @@ public class Context {
         if (file != null && file.isFile()) {
             try {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                    readOnlyFile = new RandomAccessFile(((File)file).getFile(), "r");
+                    readOnlyFile = new RandomAccessFile(((FileCustom)file).getFile(), "r");
                 } else {
-                    readOnlyFile = new RandomAccessFileLollipop(PS3NetSrvApp.getAppContext(), ((DocumentFile)file).getDocumentFile(), "r");
+                    readOnlyFile = new RandomAccessFileLollipop(PS3NetSrvApp.getAppContext(), ((DocumentFileCustom)file).getDocumentFile(), "r");
                 }
             } catch (IOException fe) {
                 readOnlyFile = null;

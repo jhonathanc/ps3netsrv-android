@@ -13,4 +13,5 @@ public interface IFile {
     String getName();
     String[] list();
     IFile findFile(String fileName) throws IOException;
+    String getDecryptionKey();
 }

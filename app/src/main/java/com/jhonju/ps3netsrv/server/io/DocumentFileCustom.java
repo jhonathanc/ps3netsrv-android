@@ -2,10 +2,14 @@ package com.jhonju.ps3netsrv.server.io;
 
 import static com.jhonju.ps3netsrv.server.utils.Utils.DKEY_EXT;
 import static com.jhonju.ps3netsrv.server.utils.Utils.DOT_STR;
+import static com.jhonju.ps3netsrv.server.utils.Utils.ISO_EXTENSION;
+import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
+import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
 
 import androidx.documentfile.provider.DocumentFile;
 
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
+import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,33 +20,48 @@ public class DocumentFileCustom implements IFile {
 
     public final DocumentFile documentFile;
     private final String decryptionKey;
+    private final EEncryptionType encryptionType;
 
     public DocumentFileCustom(DocumentFile documentFile) {
-        String decryptionKeyAux = null;
         this.documentFile = documentFile;
+        String decryptionKey = null;
+        EEncryptionType encryptionType = EEncryptionType.NONE;
         if (documentFile != null && documentFile.isFile()) {
             DocumentFile parent = documentFile.getParentFile();
-
-            String fileName = documentFile.getName();
-            int pos = fileName.lastIndexOf(DOT_STR);
-            if (pos >= 0) {
-                DocumentFile decriptionKeyFile = parent.findFile(fileName.substring(0, pos) + DKEY_EXT);
-                if (decriptionKeyFile != null) {
-                    try {
-                        InputStream is = PS3NetSrvApp.getAppContext().getContentResolver().openInputStream(decriptionKeyFile.getUri());
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                        try {
-                            decryptionKeyAux = reader.readLine().trim();
-                        } finally {
-                            reader.close();
+            if (parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
+                String fileName = documentFile.getName();
+                int pos = fileName.lastIndexOf(DOT_STR);
+                if (pos >= 0 && fileName.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
+                    DocumentFile decryptionKeyFile = parent.findFile(fileName.substring(0, pos) + DKEY_EXT);
+                    if (decryptionKeyFile == null || decryptionKeyFile.isDirectory()) {
+                        DocumentFile redKeyFolder = parent.getParentFile().findFile(REDKEY_FOLDER_NAME);
+                        if (redKeyFolder != null && redKeyFolder.isDirectory()) {
+                            decryptionKeyFile = redKeyFolder.findFile(fileName.substring(0, fileName.lastIndexOf(DOT_STR)) + DKEY_EXT);
                         }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                    }
+                    if (decryptionKeyFile != null && decryptionKeyFile.isFile()) {
+                        decryptionKey = getStringFromDocumentFile(decryptionKeyFile);
+                        encryptionType = EEncryptionType.REDUMP;
                     }
                 }
             }
         }
-        decryptionKey = decryptionKeyAux;
+        this.decryptionKey = decryptionKey;
+        this.encryptionType = encryptionType;
+    }
+
+    private static String getStringFromDocumentFile(DocumentFile file) {
+        try {
+            InputStream is = PS3NetSrvApp.getAppContext().getContentResolver().openInputStream(file.getUri());
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            try {
+                return reader.readLine().trim();
+            } finally {
+                reader.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public DocumentFile getDocumentFile() {

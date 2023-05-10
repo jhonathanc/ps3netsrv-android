@@ -16,6 +16,9 @@ public class Utils {
     public static final int LONG_CAPACITY = 8;
     public static final String DOT_STR = ".";
     public static final String DKEY_EXT = ".dkey";
+    public static final String PS3ISO_FOLDER_NAME = "PS3ISO";
+    public static final String REDKEY_FOLDER_NAME = "REDKEY";
+    public static final String ISO_EXTENSION = ".iso";
 
     public static byte[] charArrayToByteArray(char[] chars) {
         CharBuffer charBuffer = CharBuffer.wrap(chars);

@@ -2,6 +2,12 @@ package com.jhonju.ps3netsrv.server.io;
 
 import static com.jhonju.ps3netsrv.server.utils.Utils.DKEY_EXT;
 import static com.jhonju.ps3netsrv.server.utils.Utils.DOT_STR;
+import static com.jhonju.ps3netsrv.server.utils.Utils.ISO_EXTENSION;
+import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
+import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
+
+import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
+import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,32 +19,48 @@ public class FileCustom implements IFile {
 
     private final File file;
     private final String decryptionKey;
+    private final EEncryptionType encryptionType;
 
     public FileCustom(File file) {
         this.file = file;
-        String decryptionKeyAux = null;
+        String decryptionKey = null;
+        EEncryptionType encryptionType = EEncryptionType.NONE;
         if (file != null && file.isFile()) {
-            String path = file.getAbsolutePath();
-            int pos = path.lastIndexOf(DOT_STR);
-            if (pos >= 0) {
-                File decriptionKeyFile = new File(path.substring(0, pos) + DKEY_EXT);
-                if (decriptionKeyFile.exists()) {
-                    if (decriptionKeyFile != null) {
-                        try {
-                            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(decriptionKeyFile)));
-                            try {
-                                decryptionKeyAux = reader.readLine().trim();
-                            } finally {
-                                reader.close();
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
+            File parent = file.getParentFile();
+            if (parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
+                String path = file.getAbsolutePath();
+                int pos = path.lastIndexOf(DOT_STR);
+                if (pos >= 0 && path.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
+                    File decryptionKeyFile = new File(path.substring(0, pos) + DKEY_EXT);
+                    if (!decryptionKeyFile.exists() || decryptionKeyFile.isDirectory()) {
+                        File redKeyFolder = new File(parent.getParentFile(), REDKEY_FOLDER_NAME);
+                        if (redKeyFolder.exists() && redKeyFolder.isDirectory()) {
+                            String fileName = file.getName();
+                            decryptionKeyFile = new File(redKeyFolder, fileName.substring(0, fileName.lastIndexOf(DOT_STR)) + DKEY_EXT);
                         }
+                    }
+                    if (decryptionKeyFile.exists() && decryptionKeyFile.isFile()) {
+                        decryptionKey = getStringFromFile(decryptionKeyFile);
+                        encryptionType = EEncryptionType.REDUMP;
                     }
                 }
             }
         }
-        decryptionKey = decryptionKeyAux;
+        this.decryptionKey = decryptionKey;
+        this.encryptionType = encryptionType;
+    }
+
+    private static String getStringFromFile(File file) {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            try {
+                return reader.readLine().trim();
+            } finally {
+                reader.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public File getFile() {

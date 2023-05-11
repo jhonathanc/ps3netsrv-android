@@ -20,7 +20,7 @@ public class GetDirSizeCommand extends FileCommand {
         send(Utils.longToBytesBE(calculateFileSize(getFile())));
     }
 
-    private static long calculateFileSize(IFile file) {
+    private static long calculateFileSize(IFile file) throws IOException {
         long fileSize = EMPTY_SIZE;
         if (file.isDirectory()) {
             IFile[] files = file.listFiles();

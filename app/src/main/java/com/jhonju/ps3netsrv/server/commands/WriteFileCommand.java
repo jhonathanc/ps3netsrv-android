@@ -23,7 +23,7 @@ public class WriteFileCommand extends AbstractCommand {
             throw new PS3NetSrvException("Failed to write file: server is executing as read only");
         }
 
-        if (ctx.getReadOnlyFile() == null) {
+        if (ctx.getFile() == null) {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: file is null");
         }

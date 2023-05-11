@@ -7,27 +7,30 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
 
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
-import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 
 public class FileCustom implements IFile {
 
     private final File file;
     private final String decryptionKey;
     private final EEncryptionType encryptionType;
+    private final RandomAccessFile randomAccessFile;
 
-    public FileCustom(File file) {
+    public FileCustom(File file) throws IOException {
         this.file = file;
         String decryptionKey = null;
+        RandomAccessFile randomAccessFile = null;
         EEncryptionType encryptionType = EEncryptionType.NONE;
         if (file != null && file.isFile()) {
+            randomAccessFile = new RandomAccessFile(file, "r");
             File parent = file.getParentFile();
-            if (parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
+            if (parent != null && parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
                 String path = file.getAbsolutePath();
                 int pos = path.lastIndexOf(DOT_STR);
                 if (pos >= 0 && path.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
@@ -46,6 +49,7 @@ public class FileCustom implements IFile {
                 }
             }
         }
+        this.randomAccessFile = randomAccessFile;
         this.decryptionKey = decryptionKey;
         this.encryptionType = encryptionType;
     }
@@ -97,13 +101,16 @@ public class FileCustom implements IFile {
     }
 
     @Override
-    public IFile[] listFiles() {
+    public IFile[] listFiles() throws IOException {
         File[] filesAux = file.listFiles();
-        IFile[] files = new IFile[filesAux.length];
-        int i = 0;
-        for (File fileAux : filesAux) {
-            files[i] = new FileCustom(fileAux);
-            i++;
+        IFile[] files = null;
+        if (filesAux != null) {
+            files = new IFile[filesAux.length];
+            int i = 0;
+            for (File fileAux : filesAux) {
+                files[i] = new FileCustom(fileAux);
+                i++;
+            }
         }
         return files;
     }
@@ -131,5 +138,16 @@ public class FileCustom implements IFile {
     @Override
     public String getDecryptionKey() {
         return decryptionKey;
+    }
+
+    @Override
+    public int read(byte[] buffer, long position) throws IOException {
+        randomAccessFile.seek(position);
+        return randomAccessFile.read(buffer);
+    }
+
+    @Override
+    public void close() throws IOException {
+        randomAccessFile.close();
     }
 }

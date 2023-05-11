@@ -6,15 +6,20 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.ISO_EXTENSION;
 import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
 
+import android.os.ParcelFileDescriptor;
+
 import androidx.documentfile.provider.DocumentFile;
 
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 public class DocumentFileCustom implements IFile {
 
@@ -135,5 +140,25 @@ public class DocumentFileCustom implements IFile {
     @Override
     public String getDecryptionKey() {
         return decryptionKey;
+    }
+
+    public int read(byte[] buffer, long position) throws IOException {
+        ParcelFileDescriptor pfd = PS3NetSrvApp.getAppContext().getContentResolver().openFileDescriptor(documentFile.getUri(), "r");
+        FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
+        FileChannel fileChannel = fis.getChannel();
+        try {
+            fileChannel.position(position);
+            int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
+            return bytesRead;
+        } finally {
+            fileChannel.close();
+            fis.close();
+            pfd.close();
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        //TODO: check what classes can be closed here
     }
 }

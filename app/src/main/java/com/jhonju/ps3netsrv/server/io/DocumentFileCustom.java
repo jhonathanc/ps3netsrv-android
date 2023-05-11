@@ -6,6 +6,7 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.ISO_EXTENSION;
 import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
 
+import android.content.ContentResolver;
 import android.os.ParcelFileDescriptor;
 
 import androidx.documentfile.provider.DocumentFile;
@@ -26,6 +27,7 @@ public class DocumentFileCustom implements IFile {
     public final DocumentFile documentFile;
     private final String decryptionKey;
     private final EEncryptionType encryptionType;
+    private static final ContentResolver contentResolver = PS3NetSrvApp.getAppContext().getContentResolver();
 
     public DocumentFileCustom(DocumentFile documentFile) {
         this.documentFile = documentFile;
@@ -33,9 +35,9 @@ public class DocumentFileCustom implements IFile {
         EEncryptionType encryptionType = EEncryptionType.NONE;
         if (documentFile != null && documentFile.isFile()) {
             DocumentFile parent = documentFile.getParentFile();
-            if (parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
+            if (parent != null && parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
                 String fileName = documentFile.getName();
-                int pos = fileName.lastIndexOf(DOT_STR);
+                int pos = fileName == null ? -1 : fileName.lastIndexOf(DOT_STR);
                 if (pos >= 0 && fileName.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
                     DocumentFile decryptionKeyFile = parent.findFile(fileName.substring(0, pos) + DKEY_EXT);
                     if (decryptionKeyFile == null || decryptionKeyFile.isDirectory()) {
@@ -57,7 +59,7 @@ public class DocumentFileCustom implements IFile {
 
     private static String getStringFromDocumentFile(DocumentFile file) {
         try {
-            InputStream is = PS3NetSrvApp.getAppContext().getContentResolver().openInputStream(file.getUri());
+            InputStream is = contentResolver.openInputStream(file.getUri());
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             try {
                 return reader.readLine().trim();
@@ -67,10 +69,6 @@ public class DocumentFileCustom implements IFile {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public DocumentFile getDocumentFile() {
-        return documentFile;
     }
 
     @Override
@@ -133,7 +131,7 @@ public class DocumentFileCustom implements IFile {
     }
 
     @Override
-    public IFile findFile(String fileName) throws IOException {
+    public IFile findFile(String fileName) {
         return new DocumentFileCustom(documentFile.findFile(fileName));
     }
 
@@ -143,13 +141,12 @@ public class DocumentFileCustom implements IFile {
     }
 
     public int read(byte[] buffer, long position) throws IOException {
-        ParcelFileDescriptor pfd = PS3NetSrvApp.getAppContext().getContentResolver().openFileDescriptor(documentFile.getUri(), "r");
+        ParcelFileDescriptor pfd = contentResolver.openFileDescriptor(documentFile.getUri(), "r");
         FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
         FileChannel fileChannel = fis.getChannel();
         try {
             fileChannel.position(position);
-            int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
-            return bytesRead;
+            return fileChannel.read(ByteBuffer.wrap(buffer));
         } finally {
             fileChannel.close();
             fis.close();

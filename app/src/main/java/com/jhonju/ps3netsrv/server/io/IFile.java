@@ -1,11 +1,6 @@
 package com.jhonju.ps3netsrv.server.io;
 
-import android.os.ParcelFileDescriptor;
-
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 
 public interface IFile {
     boolean exists();

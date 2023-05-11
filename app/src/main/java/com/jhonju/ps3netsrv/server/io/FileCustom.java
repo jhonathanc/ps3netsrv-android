@@ -67,10 +67,6 @@ public class FileCustom implements IFile {
         }
     }
 
-    public File getFile() {
-        return file;
-    }
-
     public boolean mkdir() {
         return file.mkdir();
     }

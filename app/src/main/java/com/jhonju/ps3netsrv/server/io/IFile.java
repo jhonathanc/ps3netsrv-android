@@ -13,7 +13,6 @@ public interface IFile {
     String getName();
     String[] list();
     IFile findFile(String fileName) throws IOException;
-    String getDecryptionKey();
     int read(byte[] buffer, long position) throws IOException;
     void close() throws IOException;
 }

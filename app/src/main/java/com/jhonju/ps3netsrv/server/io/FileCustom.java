@@ -132,11 +132,6 @@ public class FileCustom implements IFile {
     }
 
     @Override
-    public String getDecryptionKey() {
-        return decryptionKey;
-    }
-
-    @Override
     public int read(byte[] buffer, long position) throws IOException {
         randomAccessFile.seek(position);
         return randomAccessFile.read(buffer);

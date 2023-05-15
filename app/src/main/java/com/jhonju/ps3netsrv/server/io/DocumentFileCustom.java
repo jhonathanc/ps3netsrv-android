@@ -35,20 +35,26 @@ public class DocumentFileCustom implements IFile {
         EEncryptionType encryptionType = EEncryptionType.NONE;
         if (documentFile != null && documentFile.isFile()) {
             DocumentFile parent = documentFile.getParentFile();
-            if (parent != null && parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
-                String fileName = documentFile.getName();
-                int pos = fileName == null ? -1 : fileName.lastIndexOf(DOT_STR);
-                if (pos >= 0 && fileName.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
-                    DocumentFile decryptionKeyFile = parent.findFile(fileName.substring(0, pos) + DKEY_EXT);
-                    if (decryptionKeyFile == null || decryptionKeyFile.isDirectory()) {
-                        DocumentFile redKeyFolder = parent.getParentFile().findFile(REDKEY_FOLDER_NAME);
-                        if (redKeyFolder != null && redKeyFolder.isDirectory()) {
-                            decryptionKeyFile = redKeyFolder.findFile(fileName.substring(0, fileName.lastIndexOf(DOT_STR)) + DKEY_EXT);
+            if (parent != null) {
+                String parentName = parent.getName();
+                if (parentName != null && parentName.equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
+                    String fileName = documentFile.getName();
+                    int pos = fileName == null ? -1 : fileName.lastIndexOf(DOT_STR);
+                    if (pos >= 0 && fileName.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
+                        DocumentFile documentFileAux = parent.findFile(fileName.substring(0, pos) + DKEY_EXT);
+                        if (documentFileAux == null || documentFileAux.isDirectory()) {
+                            documentFileAux = parent.getParentFile();
+                            if (documentFileAux != null) {
+                                documentFileAux = documentFileAux.findFile(REDKEY_FOLDER_NAME);
+                                if (documentFileAux != null && documentFileAux.isDirectory()) {
+                                    documentFileAux = documentFileAux.findFile(fileName.substring(0, fileName.lastIndexOf(DOT_STR)) + DKEY_EXT);
+                                }
+                            }
                         }
-                    }
-                    if (decryptionKeyFile != null && decryptionKeyFile.isFile()) {
-                        decryptionKey = getStringFromDocumentFile(decryptionKeyFile);
-                        encryptionType = EEncryptionType.REDUMP;
+                        if (documentFileAux != null && documentFileAux.isFile()) {
+                            decryptionKey = getStringFromDocumentFile(documentFileAux);
+                            encryptionType = EEncryptionType.REDUMP;
+                        }
                     }
                 }
             }
@@ -133,11 +139,6 @@ public class DocumentFileCustom implements IFile {
     @Override
     public IFile findFile(String fileName) {
         return new DocumentFileCustom(documentFile.findFile(fileName));
-    }
-
-    @Override
-    public String getDecryptionKey() {
-        return decryptionKey;
     }
 
     public int read(byte[] buffer, long position) throws IOException {

@@ -245,8 +245,10 @@ public class SettingsActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_CODE_PICK_FOLDER && resultCode == RESULT_OK && data != null) {
-            SettingsService.setFolder(data.getData().toString());
-            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(data.getData().getPath());
+            Uri selectedData = data.getData();
+            getContentResolver().takePersistableUriPermission(selectedData, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            SettingsService.setFolder(selectedData.toString());
+            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(selectedData.getPath());
         }
     }
 

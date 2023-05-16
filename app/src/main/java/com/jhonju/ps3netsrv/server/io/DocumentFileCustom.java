@@ -4,6 +4,7 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.DKEY_EXT;
 import static com.jhonju.ps3netsrv.server.utils.Utils.DOT_STR;
 import static com.jhonju.ps3netsrv.server.utils.Utils.ISO_EXTENSION;
 import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
+import static com.jhonju.ps3netsrv.server.utils.Utils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
 
 import android.content.ContentResolver;
@@ -28,12 +29,19 @@ public class DocumentFileCustom implements IFile {
     private final String decryptionKey;
     private final EEncryptionType encryptionType;
     private static final ContentResolver contentResolver = PS3NetSrvApp.getAppContext().getContentResolver();
+    private ParcelFileDescriptor pfd;
+    private FileInputStream fis;
+    private FileChannel fileChannel;
 
-    public DocumentFileCustom(DocumentFile documentFile) {
+    public DocumentFileCustom(DocumentFile documentFile) throws IOException {
         this.documentFile = documentFile;
         String decryptionKey = null;
         EEncryptionType encryptionType = EEncryptionType.NONE;
         if (documentFile != null && documentFile.isFile()) {
+            this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
+            this.fis = new FileInputStream(pfd.getFileDescriptor());
+            this.fileChannel = fis.getChannel();
+
             DocumentFile parent = documentFile.getParentFile();
             if (parent != null) {
                 String parentName = parent.getName();
@@ -63,17 +71,13 @@ public class DocumentFileCustom implements IFile {
         this.encryptionType = encryptionType;
     }
 
-    private static String getStringFromDocumentFile(DocumentFile file) {
+    private static String getStringFromDocumentFile(DocumentFile file) throws IOException {
+        InputStream is = contentResolver.openInputStream(file.getUri());
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         try {
-            InputStream is = contentResolver.openInputStream(file.getUri());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-            try {
-                return reader.readLine().trim();
-            } finally {
-                reader.close();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            return reader.readLine().trim();
+        } finally {
+            reader.close();
         }
     }
 
@@ -103,7 +107,7 @@ public class DocumentFileCustom implements IFile {
     }
 
     @Override
-    public IFile[] listFiles() {
+    public IFile[] listFiles() throws IOException {
         DocumentFile[] filesAux = documentFile.listFiles();
         IFile[] files = new IFile[filesAux.length];
         int i = 0;
@@ -137,26 +141,42 @@ public class DocumentFileCustom implements IFile {
     }
 
     @Override
-    public IFile findFile(String fileName) {
+    public IFile findFile(String fileName) throws IOException {
         return new DocumentFileCustom(documentFile.findFile(fileName));
     }
 
     public int read(byte[] buffer, long position) throws IOException {
-        ParcelFileDescriptor pfd = contentResolver.openFileDescriptor(documentFile.getUri(), "r");
-        FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
-        FileChannel fileChannel = fis.getChannel();
-        try {
+        if (encryptionType == EEncryptionType.NONE) {
             fileChannel.position(position);
             return fileChannel.read(ByteBuffer.wrap(buffer));
-        } finally {
-            fileChannel.close();
-            fis.close();
-            pfd.close();
         }
+        return 0;
     }
 
     @Override
     public void close() throws IOException {
-        //TODO: check what classes can be closed here
+        try {
+            if (fileChannel != null) fileChannel.close();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        } finally {
+            fileChannel = null;
+        }
+
+        try {
+            if (fis != null) fis.close();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        } finally {
+            fis = null;
+        }
+
+        try {
+            if (pfd != null) pfd.close();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        } finally {
+            pfd = null;
+        }
     }
 }

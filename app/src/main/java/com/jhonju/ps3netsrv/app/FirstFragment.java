@@ -78,7 +78,7 @@ public class FirstFragment extends Fragment {
                     btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);
 
                     String folderPath = SettingsService.getFolder();
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         folderPath = URLDecoder.decode(folderPath, StandardCharsets.UTF_8.displayName());
                     }
                     int port = SettingsService.getPort();

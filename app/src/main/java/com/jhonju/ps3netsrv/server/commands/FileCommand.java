@@ -42,7 +42,7 @@ public abstract class FileCommand extends AbstractCommand {
             throw new PS3NetSrvException("ERROR: command failed receiving filename.");
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return new FileCustom(new File(ctx.getRootDirectory(), new String(buffer.array(), StandardCharsets.UTF_8).replaceAll("\\x00+$", "")));
         }
 

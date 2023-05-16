@@ -2,7 +2,6 @@ package com.jhonju.ps3netsrv.app;
 
 import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -72,7 +71,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void loadSettings() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(Uri.parse(SettingsService.getFolder()).getPath());
         } else {
             ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(SettingsService.getFolder());
@@ -138,7 +137,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
 
                 if (permission == PERMISSION_GRANTED) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                         startActivityForResult(intent, REQUEST_CODE_PICK_FOLDER);
                     } else {
@@ -239,7 +238,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
     };
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

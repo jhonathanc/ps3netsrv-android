@@ -16,30 +16,29 @@ public class RandomAccessFileLollipop implements IRandomAccessFile {
     private long position;
     private final long fileSize;
     private final DocumentFile documentFile;
-    private final String mode;
     private final ContentResolver resolver;
+    private ParcelFileDescriptor pfd;
+    private FileInputStream fis;
+    private FileChannel fileChannel;
 
     public RandomAccessFileLollipop(Context context, DocumentFile documentFile, String mode) throws IOException {
         this.resolver = context.getContentResolver();
         this.documentFile = documentFile;
-        this.mode = mode;
-        fileSize = documentFile.length();
+        long fileSize = 0;
+        if (documentFile != null && documentFile.isFile()) {
+            this.pfd = resolver.openFileDescriptor(documentFile.getUri(), mode);
+            this.fis = new FileInputStream(pfd.getFileDescriptor());
+            this.fileChannel = fis.getChannel();
+            fileSize = documentFile.length();
+        }
+        this.fileSize = fileSize;
     }
 
     public int read(byte[] buffer) throws IOException {
-        ParcelFileDescriptor pfd = resolver.openFileDescriptor(documentFile.getUri(), mode);
-        FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
-        FileChannel fileChannel = fis.getChannel();
-        try {
-            fileChannel.position(position);
-            int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
-            position = fileChannel.position();
-            return bytesRead;
-        } finally {
-            fileChannel.close();
-            fis.close();
-            pfd.close();
-        }
+        fileChannel.position(position);
+        int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
+        position = fileChannel.position();
+        return bytesRead;
     }
 
     public void seek(long pos) throws IOException {
@@ -52,6 +51,22 @@ public class RandomAccessFileLollipop implements IRandomAccessFile {
 
     @Override
     public void close() throws IOException {
+        try {
+            fileChannel.close();
+        } finally {
+            fileChannel = null;
+        }
 
+        try {
+            fis.close();
+        } finally {
+            fis = null;
+        }
+
+        try {
+            pfd.close();
+        } finally {
+            pfd = null;
+        }
     }
 }

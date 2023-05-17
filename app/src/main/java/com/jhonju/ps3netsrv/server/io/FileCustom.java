@@ -6,8 +6,10 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.ISO_EXTENSION;
 import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
+import static com.jhonju.ps3netsrv.server.utils.Utils.SECTOR_SIZE;
 
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
+import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import javax.crypto.spec.SecretKeySpec;
 
 public class FileCustom implements IFile {
 
@@ -23,17 +26,34 @@ public class FileCustom implements IFile {
     private final EEncryptionType encryptionType;
     private final RandomAccessFile randomAccessFile;
 
+    private final PS3RegionInfo[] regionInfos;
+
     public FileCustom(File file) throws IOException {
         this.file = file;
         String decryptionKey = null;
         RandomAccessFile randomAccessFile = null;
+        PS3RegionInfo[] regionInfos = null;
         if (file != null && file.isFile()) {
             randomAccessFile = new RandomAccessFile(file, READ_ONLY_MODE);
             decryptionKey = getRedumpKey(file.getParentFile(), file.getAbsolutePath(), file.getName());
         }
         this.randomAccessFile = randomAccessFile;
         this.decryptionKey = decryptionKey;
-        this.encryptionType = decryptionKey == null ? EEncryptionType.NONE : EEncryptionType.REDUMP;
+        if (decryptionKey != null) {
+            this.encryptionType = EEncryptionType.REDUMP;
+
+            int sec0Sec1Length = SECTOR_SIZE * 2;
+            if (file.length() >= sec0Sec1Length) {
+                byte[] sec0sec1 = new byte[sec0Sec1Length];
+                randomAccessFile.seek(0);
+                if (randomAccessFile.read(sec0sec1) == sec0Sec1Length) {
+                    regionInfos = Utils.getRegionInfos(sec0sec1);
+                }
+            }
+        } else {
+            this.encryptionType = EEncryptionType.NONE;
+        }
+        this.regionInfos = regionInfos;
     }
 
     private static String getRedumpKey(File parent, String path, String fileName) throws IOException {
@@ -132,7 +152,21 @@ public class FileCustom implements IFile {
     @Override
     public int read(byte[] buffer, long position) throws IOException {
         randomAccessFile.seek(position);
-        return randomAccessFile.read(buffer);
+        int bytesRead = randomAccessFile.read(buffer);
+
+        if (encryptionType == EEncryptionType.NONE) {
+            return bytesRead;
+        }
+
+        for (PS3RegionInfo regionInfo : regionInfos) {
+            if ((position >= regionInfo.getFirstAddress()) && (position <= regionInfo.getLastAddress())) {
+                if (!regionInfo.isEncrypted()) {
+                    return bytesRead;
+                }
+                Utils.decryptData(new SecretKeySpec(decryptionKey.getBytes(), "AES"), buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
+            }
+        }
+        return bytesRead;
     }
 
     @Override

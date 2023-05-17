@@ -6,6 +6,7 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.ISO_EXTENSION;
 import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
+import static com.jhonju.ps3netsrv.server.utils.Utils.SECTOR_SIZE;
 
 import android.content.ContentResolver;
 import android.os.ParcelFileDescriptor;
@@ -14,6 +15,7 @@ import androidx.documentfile.provider.DocumentFile;
 
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
+import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -22,6 +24,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
+
+import javax.crypto.spec.SecretKeySpec;
 
 public class DocumentFileCustom implements IFile {
 
@@ -32,10 +37,12 @@ public class DocumentFileCustom implements IFile {
     private ParcelFileDescriptor pfd;
     private FileInputStream fis;
     private FileChannel fileChannel;
+    private final PS3RegionInfo[] regionInfos;
 
     public DocumentFileCustom(DocumentFile documentFile) throws IOException {
         this.documentFile = documentFile;
         String decryptionKey = null;
+        PS3RegionInfo[] regionInfos = null;
         if (documentFile != null && documentFile.isFile()) {
             this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
             this.fis = new FileInputStream(pfd.getFileDescriptor());
@@ -43,7 +50,22 @@ public class DocumentFileCustom implements IFile {
             decryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
         }
         this.decryptionKey = decryptionKey;
-        this.encryptionType = decryptionKey == null ? EEncryptionType.NONE : EEncryptionType.REDUMP;
+        if (decryptionKey != null) {
+            this.encryptionType = EEncryptionType.REDUMP;
+
+            int sec0Sec1Length = SECTOR_SIZE * 2;
+            if (documentFile.length() >= sec0Sec1Length) {
+                byte[] sec0sec1 = new byte[sec0Sec1Length];
+
+                fileChannel.position(0);
+                if (fileChannel.read(ByteBuffer.wrap(sec0sec1)) == sec0Sec1Length) {
+                    regionInfos = Utils.getRegionInfos(sec0sec1);
+                }
+            }
+        } else {
+            this.encryptionType = EEncryptionType.NONE;
+        }
+        this.regionInfos = regionInfos;
     }
 
     private static String getRedumpKey(DocumentFile parent, String fileName) throws IOException {
@@ -147,11 +169,21 @@ public class DocumentFileCustom implements IFile {
     }
 
     public int read(byte[] buffer, long position) throws IOException {
+        fileChannel.position(position);
+        int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
         if (encryptionType == EEncryptionType.NONE) {
-            fileChannel.position(position);
-            return fileChannel.read(ByteBuffer.wrap(buffer));
+            return bytesRead;
         }
-        return 0;
+
+        for (PS3RegionInfo regionInfo : regionInfos) {
+            if ((position >= regionInfo.getFirstAddress()) && (position <= regionInfo.getLastAddress())) {
+                if (!regionInfo.isEncrypted()) {
+                    return bytesRead;
+                }
+                Utils.decryptData(new SecretKeySpec(decryptionKey.getBytes(), "AES"), buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
+            }
+        }
+        return bytesRead;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.jhonju.ps3netsrv.server.utils;
 
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
+import com.jhonju.ps3netsrv.server.io.PS3RegionInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,6 +9,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.util.Arrays;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Utils {
 
@@ -57,5 +62,49 @@ public class Utils {
         byte[] data = new byte[size];
         if (in.read(data) < 0) return null;
         return ByteBuffer.wrap(data);
+    }
+
+    public static int BytesBEToInt(byte[] value) {
+        return ByteBuffer.wrap(value).order(ByteOrder.BIG_ENDIAN).getInt();
+    }
+
+    public static PS3RegionInfo[] getRegionInfos(byte[] sec0sec1) {
+        int regionCount = Utils.BytesBEToInt(Arrays.copyOf(sec0sec1, 4)) * 2 - 1;
+        PS3RegionInfo[] regionInfos = new PS3RegionInfo[regionCount];
+        for (int i = 0; i < regionCount; i++) {
+            int offsetStart = i * INT_CAPACITY + 8;
+            int offsetEnd = INT_CAPACITY + offsetStart;
+            regionInfos[i] = new PS3RegionInfo(i % 2 == 1
+                    , i == 0 ? 0L : Utils.BytesBEToInt(Arrays.copyOfRange(sec0sec1, offsetStart, offsetEnd)) + 1
+                    , Utils.BytesBEToInt(Arrays.copyOfRange(sec0sec1, offsetEnd, offsetEnd + INT_CAPACITY)));
+        }
+        return regionInfos;
+    }
+
+    public static void decryptData(SecretKeySpec key, byte[] data, int sectorCount, long startLBA) throws IOException {
+        try {
+            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
+            for (int i = 0; i < sectorCount; ++i) {
+                IvParameterSpec ivParams = new IvParameterSpec(resetIV(startLBA + i));
+                cipher.init(Cipher.DECRYPT_MODE, key, ivParams);
+                int offset = SECTOR_SIZE * i;
+                byte[] encryptedSector = new byte[SECTOR_SIZE];
+                System.arraycopy(data, offset, encryptedSector, 0, SECTOR_SIZE);
+                byte[] decryptedSector = cipher.doFinal(encryptedSector);
+                System.arraycopy(decryptedSector, 0, data, offset, SECTOR_SIZE);
+            }
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    private static byte[] resetIV(long lba) {
+        byte[] iv = new byte[16];
+        Arrays.fill(iv, (byte) 0);
+        iv[12] = (byte) ((lba & 0xFF000000) >> 24);
+        iv[13] = (byte) ((lba & 0x00FF0000) >> 16);
+        iv[14] = (byte) ((lba & 0x0000FF00) >> 8);
+        iv[15] = (byte) (lba & 0x000000FF);
+        return iv;
     }
 }

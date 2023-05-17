@@ -36,39 +36,40 @@ public class DocumentFileCustom implements IFile {
     public DocumentFileCustom(DocumentFile documentFile) throws IOException {
         this.documentFile = documentFile;
         String decryptionKey = null;
-        EEncryptionType encryptionType = EEncryptionType.NONE;
         if (documentFile != null && documentFile.isFile()) {
             this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
             this.fis = new FileInputStream(pfd.getFileDescriptor());
             this.fileChannel = fis.getChannel();
+            decryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
+        }
+        this.decryptionKey = decryptionKey;
+        this.encryptionType = decryptionKey == null ? EEncryptionType.NONE : EEncryptionType.REDUMP;
+    }
 
-            DocumentFile parent = documentFile.getParentFile();
-            if (parent != null) {
-                String parentName = parent.getName();
-                if (parentName != null && parentName.equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
-                    String fileName = documentFile.getName();
-                    int pos = fileName == null ? -1 : fileName.lastIndexOf(DOT_STR);
-                    if (pos >= 0 && fileName.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
-                        DocumentFile documentFileAux = parent.findFile(fileName.substring(0, pos) + DKEY_EXT);
-                        if (documentFileAux == null || documentFileAux.isDirectory()) {
-                            documentFileAux = parent.getParentFile();
-                            if (documentFileAux != null) {
-                                documentFileAux = documentFileAux.findFile(REDKEY_FOLDER_NAME);
-                                if (documentFileAux != null && documentFileAux.isDirectory()) {
-                                    documentFileAux = documentFileAux.findFile(fileName.substring(0, fileName.lastIndexOf(DOT_STR)) + DKEY_EXT);
-                                }
+    private static String getRedumpKey(DocumentFile parent, String fileName) throws IOException {
+        String decryptionKey = null;
+        if (parent != null) {
+            String parentName = parent.getName();
+            if (parentName != null && parentName.equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
+                int pos = fileName == null ? -1 : fileName.lastIndexOf(DOT_STR);
+                if (pos >= 0 && fileName.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
+                    DocumentFile documentFileAux = parent.findFile(fileName.substring(0, pos) + DKEY_EXT);
+                    if (documentFileAux == null || documentFileAux.isDirectory()) {
+                        documentFileAux = parent.getParentFile();
+                        if (documentFileAux != null) {
+                            documentFileAux = documentFileAux.findFile(REDKEY_FOLDER_NAME);
+                            if (documentFileAux != null && documentFileAux.isDirectory()) {
+                                documentFileAux = documentFileAux.findFile(fileName.substring(0, fileName.lastIndexOf(DOT_STR)) + DKEY_EXT);
                             }
                         }
-                        if (documentFileAux != null && documentFileAux.isFile()) {
-                            decryptionKey = getStringFromDocumentFile(documentFileAux);
-                            encryptionType = EEncryptionType.REDUMP;
-                        }
+                    }
+                    if (documentFileAux != null && documentFileAux.isFile()) {
+                        decryptionKey = getStringFromDocumentFile(documentFileAux);
                     }
                 }
             }
         }
-        this.decryptionKey = decryptionKey;
-        this.encryptionType = encryptionType;
+        return decryptionKey;
     }
 
     private static String getStringFromDocumentFile(DocumentFile file) throws IOException {

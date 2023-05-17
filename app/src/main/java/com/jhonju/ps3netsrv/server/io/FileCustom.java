@@ -4,6 +4,7 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.DKEY_EXT;
 import static com.jhonju.ps3netsrv.server.utils.Utils.DOT_STR;
 import static com.jhonju.ps3netsrv.server.utils.Utils.ISO_EXTENSION;
 import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
+import static com.jhonju.ps3netsrv.server.utils.Utils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
 
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
@@ -26,44 +27,41 @@ public class FileCustom implements IFile {
         this.file = file;
         String decryptionKey = null;
         RandomAccessFile randomAccessFile = null;
-        EEncryptionType encryptionType = EEncryptionType.NONE;
         if (file != null && file.isFile()) {
-            randomAccessFile = new RandomAccessFile(file, "r");
-            File parent = file.getParentFile();
-            if (parent != null && parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
-                String path = file.getAbsolutePath();
-                int pos = path.lastIndexOf(DOT_STR);
-                if (pos >= 0 && path.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
-                    File decryptionKeyFile = new File(path.substring(0, pos) + DKEY_EXT);
-                    if (!decryptionKeyFile.exists() || decryptionKeyFile.isDirectory()) {
-                        File redKeyFolder = new File(parent.getParentFile(), REDKEY_FOLDER_NAME);
-                        if (redKeyFolder.exists() && redKeyFolder.isDirectory()) {
-                            String fileName = file.getName();
-                            decryptionKeyFile = new File(redKeyFolder, fileName.substring(0, fileName.lastIndexOf(DOT_STR)) + DKEY_EXT);
-                        }
-                    }
-                    if (decryptionKeyFile.exists() && decryptionKeyFile.isFile()) {
-                        decryptionKey = getStringFromFile(decryptionKeyFile);
-                        encryptionType = EEncryptionType.REDUMP;
-                    }
-                }
-            }
+            randomAccessFile = new RandomAccessFile(file, READ_ONLY_MODE);
+            decryptionKey = getRedumpKey(file.getParentFile(), file.getAbsolutePath(), file.getName());
         }
         this.randomAccessFile = randomAccessFile;
         this.decryptionKey = decryptionKey;
-        this.encryptionType = encryptionType;
+        this.encryptionType = decryptionKey == null ? EEncryptionType.NONE : EEncryptionType.REDUMP;
     }
 
-    private static String getStringFromFile(File file) {
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-            try {
-                return reader.readLine().trim();
-            } finally {
-                reader.close();
+    private static String getRedumpKey(File parent, String path, String fileName) throws IOException {
+        String decryptionKey = null;
+        if (parent != null && parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
+            int pos = path.lastIndexOf(DOT_STR);
+            if (pos >= 0 && path.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
+                File decryptionKeyFile = new File(path.substring(0, pos) + DKEY_EXT);
+                if (!decryptionKeyFile.exists() || decryptionKeyFile.isDirectory()) {
+                    File redKeyFolder = new File(parent.getParentFile(), REDKEY_FOLDER_NAME);
+                    if (redKeyFolder.exists() && redKeyFolder.isDirectory()) {
+                        decryptionKeyFile = new File(redKeyFolder, fileName.substring(0, fileName.lastIndexOf(DOT_STR)) + DKEY_EXT);
+                    }
+                }
+                if (decryptionKeyFile.exists() && decryptionKeyFile.isFile()) {
+                    decryptionKey = getStringFromFile(decryptionKeyFile);
+                }
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        }
+        return decryptionKey;
+    }
+
+    private static String getStringFromFile(File file) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+        try {
+            return reader.readLine().trim();
+        } finally {
+            reader.close();
         }
     }
 

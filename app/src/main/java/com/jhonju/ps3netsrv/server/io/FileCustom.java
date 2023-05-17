@@ -22,24 +22,25 @@ import javax.crypto.spec.SecretKeySpec;
 public class FileCustom implements IFile {
 
     private final File file;
-    private final String decryptionKey;
+    private final SecretKeySpec decryptionKey;
     private final EEncryptionType encryptionType;
     private final RandomAccessFile randomAccessFile;
 
     private final PS3RegionInfo[] regionInfos;
+    private final byte[] iv = new byte[16];
 
     public FileCustom(File file) throws IOException {
         this.file = file;
-        String decryptionKey = null;
+        String redumpKey = null;
         RandomAccessFile randomAccessFile = null;
         PS3RegionInfo[] regionInfos = null;
         if (file != null && file.isFile()) {
             randomAccessFile = new RandomAccessFile(file, READ_ONLY_MODE);
-            decryptionKey = getRedumpKey(file.getParentFile(), file.getAbsolutePath(), file.getName());
+            redumpKey = getRedumpKey(file.getParentFile(), file.getAbsolutePath(), file.getName());
         }
         this.randomAccessFile = randomAccessFile;
-        this.decryptionKey = decryptionKey;
-        if (decryptionKey != null) {
+        if (redumpKey != null) {
+            this.decryptionKey = new SecretKeySpec(redumpKey.getBytes(), "AES");
             this.encryptionType = EEncryptionType.REDUMP;
 
             int sec0Sec1Length = SECTOR_SIZE * 2;
@@ -51,6 +52,7 @@ public class FileCustom implements IFile {
                 }
             }
         } else {
+            this.decryptionKey = null;
             this.encryptionType = EEncryptionType.NONE;
         }
         this.regionInfos = regionInfos;
@@ -163,7 +165,7 @@ public class FileCustom implements IFile {
                 if (!regionInfo.isEncrypted()) {
                     return bytesRead;
                 }
-                Utils.decryptData(new SecretKeySpec(decryptionKey.getBytes(), "AES"), buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
+                Utils.decryptData(decryptionKey, iv, buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
             }
         }
         return bytesRead;

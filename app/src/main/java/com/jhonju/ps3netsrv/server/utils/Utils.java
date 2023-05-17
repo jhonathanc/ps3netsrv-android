@@ -81,16 +81,14 @@ public class Utils {
         return regionInfos;
     }
 
-    public static void decryptData(SecretKeySpec key, byte[] data, int sectorCount, long startLBA) throws IOException {
+    public static void decryptData(SecretKeySpec key, byte[] iv, byte[] data, int sectorCount, long startLBA) throws IOException {
         try {
             Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             for (int i = 0; i < sectorCount; ++i) {
-                IvParameterSpec ivParams = new IvParameterSpec(resetIV(startLBA + i));
+                IvParameterSpec ivParams = new IvParameterSpec(resetIV(iv,startLBA + i));
                 cipher.init(Cipher.DECRYPT_MODE, key, ivParams);
                 int offset = SECTOR_SIZE * i;
-                byte[] encryptedSector = new byte[SECTOR_SIZE];
-                System.arraycopy(data, offset, encryptedSector, 0, SECTOR_SIZE);
-                byte[] decryptedSector = cipher.doFinal(encryptedSector);
+                byte[] decryptedSector = cipher.doFinal(data);
                 System.arraycopy(decryptedSector, 0, data, offset, SECTOR_SIZE);
             }
         } catch (Exception e) {
@@ -98,8 +96,7 @@ public class Utils {
         }
     }
 
-    private static byte[] resetIV(long lba) {
-        byte[] iv = new byte[16];
+    private static byte[] resetIV(byte[] iv, long lba) {
         Arrays.fill(iv, (byte) 0);
         iv[12] = (byte) ((lba & 0xFF000000) >> 24);
         iv[13] = (byte) ((lba & 0x00FF0000) >> 16);

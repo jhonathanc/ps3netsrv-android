@@ -24,33 +24,33 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 import javax.crypto.spec.SecretKeySpec;
 
 public class DocumentFileCustom implements IFile {
 
     public final DocumentFile documentFile;
-    private final String decryptionKey;
+    private final SecretKeySpec decryptionKey;
     private final EEncryptionType encryptionType;
     private static final ContentResolver contentResolver = PS3NetSrvApp.getAppContext().getContentResolver();
     private ParcelFileDescriptor pfd;
     private FileInputStream fis;
     private FileChannel fileChannel;
     private final PS3RegionInfo[] regionInfos;
+    private final byte[] iv = new byte[16];
 
     public DocumentFileCustom(DocumentFile documentFile) throws IOException {
         this.documentFile = documentFile;
-        String decryptionKey = null;
+        String redumpKey = null;
         PS3RegionInfo[] regionInfos = null;
         if (documentFile != null && documentFile.isFile()) {
             this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
             this.fis = new FileInputStream(pfd.getFileDescriptor());
             this.fileChannel = fis.getChannel();
-            decryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
+            redumpKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
         }
-        this.decryptionKey = decryptionKey;
-        if (decryptionKey != null) {
+        if (redumpKey != null) {
+            this.decryptionKey = new SecretKeySpec(redumpKey.getBytes(), "AES");
             this.encryptionType = EEncryptionType.REDUMP;
 
             int sec0Sec1Length = SECTOR_SIZE * 2;
@@ -63,6 +63,7 @@ public class DocumentFileCustom implements IFile {
                 }
             }
         } else {
+            this.decryptionKey = null;
             this.encryptionType = EEncryptionType.NONE;
         }
         this.regionInfos = regionInfos;
@@ -180,7 +181,7 @@ public class DocumentFileCustom implements IFile {
                 if (!regionInfo.isEncrypted()) {
                     return bytesRead;
                 }
-                Utils.decryptData(new SecretKeySpec(decryptionKey.getBytes(), "AES"), buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
+                Utils.decryptData(decryptionKey, iv, buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
             }
         }
         return bytesRead;

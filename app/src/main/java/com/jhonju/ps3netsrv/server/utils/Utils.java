@@ -71,12 +71,12 @@ public class Utils {
     public static PS3RegionInfo[] getRegionInfos(byte[] sec0sec1) {
         int regionCount = Utils.BytesBEToInt(Arrays.copyOf(sec0sec1, 4)) * 2 - 1;
         PS3RegionInfo[] regionInfos = new PS3RegionInfo[regionCount];
-        for (int i = 0; i < regionCount; i++) {
+        for (int i = 0; i < regionCount; ++i) {
             int offsetStart = i * INT_CAPACITY + 8;
             int offsetEnd = INT_CAPACITY + offsetStart;
             regionInfos[i] = new PS3RegionInfo(i % 2 == 1
-                    , i == 0 ? 0L : Utils.BytesBEToInt(Arrays.copyOfRange(sec0sec1, offsetStart, offsetEnd)) + 1
-                    , Utils.BytesBEToInt(Arrays.copyOfRange(sec0sec1, offsetEnd, offsetEnd + INT_CAPACITY)));
+                    , i == 0 ? 0L : regionInfos[i - 1].getLastAddress() + 1L
+                    , (Utils.BytesBEToInt(Arrays.copyOfRange(sec0sec1, offsetEnd, offsetEnd + INT_CAPACITY)) - (i % 2 == 1 ? 1L : 0L)) * SECTOR_SIZE + SECTOR_SIZE - 1L);
         }
         return regionInfos;
     }

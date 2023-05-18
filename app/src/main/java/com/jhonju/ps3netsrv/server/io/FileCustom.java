@@ -11,11 +11,9 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.SECTOR_SIZE;
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -31,7 +29,7 @@ public class FileCustom implements IFile {
 
     public FileCustom(File file) throws IOException {
         this.file = file;
-        String redumpKey = null;
+        byte[] redumpKey = null;
         RandomAccessFile randomAccessFile = null;
         PS3RegionInfo[] regionInfos = null;
         if (file != null && file.isFile()) {
@@ -40,7 +38,7 @@ public class FileCustom implements IFile {
         }
         this.randomAccessFile = randomAccessFile;
         if (redumpKey != null) {
-            this.decryptionKey = new SecretKeySpec(redumpKey.getBytes(), "AES");
+            this.decryptionKey = new SecretKeySpec(redumpKey, "AES");
             this.encryptionType = EEncryptionType.REDUMP;
 
             int sec0Sec1Length = SECTOR_SIZE * 2;
@@ -58,8 +56,8 @@ public class FileCustom implements IFile {
         this.regionInfos = regionInfos;
     }
 
-    private static String getRedumpKey(File parent, String path, String fileName) throws IOException {
-        String decryptionKey = null;
+    private static byte[] getRedumpKey(File parent, String path, String fileName) throws IOException {
+        byte[] decryptionKey = null;
         if (parent != null && parent.getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
             int pos = path.lastIndexOf(DOT_STR);
             if (pos >= 0 && path.substring(pos).equalsIgnoreCase(ISO_EXTENSION)) {
@@ -71,19 +69,23 @@ public class FileCustom implements IFile {
                     }
                 }
                 if (decryptionKeyFile.exists() && decryptionKeyFile.isFile()) {
-                    decryptionKey = getStringFromFile(decryptionKeyFile);
+                    decryptionKey = getKeyFromDocumentFile(decryptionKeyFile);
                 }
             }
         }
         return decryptionKey;
     }
 
-    private static String getStringFromFile(File file) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+    private static byte[] getKeyFromDocumentFile(File file) throws IOException {
+        FileInputStream fis = new FileInputStream(file);
         try {
-            return reader.readLine().trim();
+            byte[] key = new byte[16];
+            if (fis.read(key) < 0) {
+                throw new IOException("Redump key is invalid");
+            }
+            return key;
         } finally {
-            reader.close();
+            fis.close();
         }
     }
 

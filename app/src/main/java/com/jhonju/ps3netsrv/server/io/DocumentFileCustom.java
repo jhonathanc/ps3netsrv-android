@@ -17,11 +17,9 @@ import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -41,7 +39,7 @@ public class DocumentFileCustom implements IFile {
 
     public DocumentFileCustom(DocumentFile documentFile) throws IOException {
         this.documentFile = documentFile;
-        String redumpKey = null;
+        byte[] redumpKey = null;
         PS3RegionInfo[] regionInfos = null;
         if (documentFile != null && documentFile.isFile()) {
             this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
@@ -50,7 +48,7 @@ public class DocumentFileCustom implements IFile {
             redumpKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
         }
         if (redumpKey != null) {
-            this.decryptionKey = new SecretKeySpec(redumpKey.getBytes(), "AES");
+            this.decryptionKey = new SecretKeySpec(redumpKey, "AES");
             this.encryptionType = EEncryptionType.REDUMP;
 
             int sec0Sec1Length = SECTOR_SIZE * 2;
@@ -69,8 +67,8 @@ public class DocumentFileCustom implements IFile {
         this.regionInfos = regionInfos;
     }
 
-    private static String getRedumpKey(DocumentFile parent, String fileName) throws IOException {
-        String decryptionKey = null;
+    private static byte[] getRedumpKey(DocumentFile parent, String fileName) throws IOException {
+        byte[] decryptionKey = null;
         if (parent != null) {
             String parentName = parent.getName();
             if (parentName != null && parentName.equalsIgnoreCase(PS3ISO_FOLDER_NAME)) {
@@ -87,7 +85,7 @@ public class DocumentFileCustom implements IFile {
                         }
                     }
                     if (documentFileAux != null && documentFileAux.isFile()) {
-                        decryptionKey = getStringFromDocumentFile(documentFileAux);
+                        decryptionKey = getKeyFromDocumentFile(documentFileAux);
                     }
                 }
             }
@@ -95,13 +93,16 @@ public class DocumentFileCustom implements IFile {
         return decryptionKey;
     }
 
-    private static String getStringFromDocumentFile(DocumentFile file) throws IOException {
+    private static byte[] getKeyFromDocumentFile(DocumentFile file) throws IOException {
         InputStream is = contentResolver.openInputStream(file.getUri());
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         try {
-            return reader.readLine().trim();
+            byte[] key = new byte[16];
+            if (is.read(key) < 0) {
+                throw new IOException("Redump key is invalid");
+            }
+            return key;
         } finally {
-            reader.close();
+            is.close();
         }
     }
 

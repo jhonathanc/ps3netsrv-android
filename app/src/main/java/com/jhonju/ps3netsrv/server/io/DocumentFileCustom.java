@@ -173,16 +173,14 @@ public class DocumentFileCustom implements IFile {
     public int read(byte[] buffer, long position) throws IOException {
         fileChannel.position(position);
         int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
-        if (encryptionType == EEncryptionType.NONE) {
-            return bytesRead;
-        }
-
-        for (PS3RegionInfo regionInfo : regionInfos) {
-            if ((position >= regionInfo.getFirstAddress()) && (position <= regionInfo.getLastAddress())) {
-                if (!regionInfo.isEncrypted()) {
-                    return bytesRead;
+        if (encryptionType != EEncryptionType.NONE) {
+            for (PS3RegionInfo regionInfo : regionInfos) {
+                if ((position >= regionInfo.getFirstAddress()) && (position <= regionInfo.getLastAddress())) {
+                    if (!regionInfo.isEncrypted()) {
+                        return bytesRead;
+                    }
+                    Utils.decryptData(decryptionKey, iv, buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
                 }
-                Utils.decryptData(decryptionKey, iv, buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
             }
         }
         return bytesRead;

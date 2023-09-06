@@ -40,13 +40,32 @@ public abstract class FileCommand extends AbstractCommand {
         }
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            return new File(new java.io.File(ctx.getRootDirectory(), new String(buffer.array(), StandardCharsets.UTF_8).replaceAll("\\x00+$", "")));
+            File file = null;
+            for (String rootDirectory : ctx.getRootDirectorys()) {
+                File fileAux = new File(new java.io.File(rootDirectory, new String(buffer.array(), StandardCharsets.UTF_8).replaceAll("\\x00+$", "")));
+                if (fileAux.exists()) {
+                    file = fileAux;
+                    break;
+                }
+            }
+            if (file == null) {
+                send(ERROR_CODE_BYTEARRAY);
+                throw new PS3NetSrvException("ERROR: file not found.");
+            }
+            return file;
         }
 
-        androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(ctx.getRootDirectory()));
-        if (documentFile == null || !documentFile.exists()) {
+        androidx.documentfile.provider.DocumentFile documentFile = null;
+        for (String rootDirectory : ctx.getRootDirectorys()) {
+            androidx.documentfile.provider.DocumentFile documentFileAux = androidx.documentfile.provider.DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(rootDirectory));
+            if (documentFileAux.exists()) {
+                documentFile = documentFileAux;
+                break;
+            }
+        }
+        if (documentFile == null) {
             send(ERROR_CODE_BYTEARRAY);
-            throw new PS3NetSrvException("ERROR: wrong path configuration.");
+            throw new PS3NetSrvException("ERROR: file not found.");
         }
 
         String path = getFormattedPath(new String(buffer.array(), StandardCharsets.UTF_8));

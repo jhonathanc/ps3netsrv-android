@@ -18,7 +18,7 @@
     <string name="start_server">Avviare il server</string>
     <string name="stop_server">Arrestare il server</string>
     <string name="server_stopped">Il server è stato arrestato</string>
-    <string name="server_running">Il server è in esecuzione su %s\nporta %d\ncartella %s</string>
+    <string name="server_running">Il server è in esecuzione su %s\nporta %d\ncartelle: %s</string>
     <string name="read_external_permission_error">È necessario concedere prima i permessi di lettura dello storage</string>
     <string name="listType">Tipo di lista:</string>
     <string name="rbNone">Nessuno</string>

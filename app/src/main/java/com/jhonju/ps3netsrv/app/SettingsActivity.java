@@ -34,6 +34,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
@@ -73,9 +74,9 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void loadSettings() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(Uri.parse(SettingsService.getFolder()).getPath());
+            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(Uri.parse(SettingsService.getFolders().iterator().next()).getPath());
         } else {
-            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(SettingsService.getFolder());
+            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(SettingsService.getFolders().iterator().next());
         }
         ((TextInputLayout) findViewById(R.id.tilPort)).getEditText().setText(SettingsService.getPort() + "");
         ((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber)).getEditText().setText(SettingsService.getMaxConnections() + "");
@@ -234,7 +235,9 @@ public class SettingsActivity extends AppCompatActivity {
     private final SimpleFileChooser.FileSelectedListener onFileSelectedListener = new SimpleFileChooser.FileSelectedListener() {
         @Override
         public void onFileSelected(File file) {
-            SettingsService.setFolder(file.getAbsolutePath());
+            Set<String> folderAux = new HashSet<>();
+            folderAux.add(file.getAbsolutePath());
+            SettingsService.setFolders(folderAux);
             ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(file.getAbsolutePath());
         }
     };
@@ -245,7 +248,9 @@ public class SettingsActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_CODE_PICK_FOLDER && resultCode == RESULT_OK && data != null) {
-            SettingsService.setFolder(data.getData().toString());
+            Set<String> folderAux = new HashSet<>();
+            folderAux.add(data.getData().toString());
+            SettingsService.setFolders(folderAux);
             ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(data.getData().getPath());
         }
     }

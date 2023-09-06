@@ -20,7 +20,7 @@
     <string name="start_server">Iniciar servidor</string>
     <string name="stop_server">Detener servidor</string>
     <string name="server_stopped">Servidor detenido</string>
-    <string name="server_running">Servidor en ejecución en %s\npuerto %d\nRuta: %s</string>
+    <string name="server_running">Servidor en ejecución en %s\npuerto %d\nRutas: %s</string>
     <string name="read_external_permission_error">Primero debe dar los permisos de lectura de almacenamiento</string>
     <string name="listType">Tipo de lista:</string>
     <string name="rbNone">Ninguna</string>

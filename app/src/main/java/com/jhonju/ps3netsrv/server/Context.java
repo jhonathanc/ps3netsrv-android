@@ -15,23 +15,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Set;
 
 public class Context {
     private Socket socket;
-    private final String rootDirectory;
+    private final Set<String> rootDirectorys;
     private final boolean readOnly;
     private IFile file;
     private IRandomAccessFile readOnlyFile;
     private CDSectorSize cdSectorSize;
 
-    public Context(Socket socket, String rootDirectory, boolean readOnly) {
-        this.rootDirectory = rootDirectory;
+    public Context(Socket socket, Set<String> rootDirectorys, boolean readOnly) {
+        this.rootDirectorys = rootDirectorys;
         this.socket = socket;
         this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
         this.readOnly = readOnly;
     }
 
-    public String getRootDirectory() { return rootDirectory; }
+    public Set<String> getRootDirectorys() { return rootDirectorys; }
 
     public boolean isSocketConnected() { return socket.isConnected(); }
 

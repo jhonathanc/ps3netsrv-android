@@ -7,4 +7,5 @@ public interface IRandomAccessFile {
     void seek(long pos) throws IOException;
     long length() throws IOException;
     void close() throws IOException;
+    long lastModified();
 }

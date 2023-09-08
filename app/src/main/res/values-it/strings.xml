@@ -28,7 +28,7 @@
     <string name="add">Aggiungi</string>
     <string name="ipRemoved">Indirizzo IP rimosso: </string>
     <string name="undo">Disfare</string>
-    <string name="select">Selezionare</string>
+    <string name="select">Aggiungi cartella</string>
     <string name="empty_response_error">Tentativo di inviare una risposta vuota a %s (metodo %s)</string>
     <string name="readOnly">Sola lettura</string>
     <string name="maxConnectedClients">Max connessioni (0 significa illimitato):</string>

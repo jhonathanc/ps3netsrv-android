@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ReadDirCommand extends AbstractCommand {
     private static final long MAX_ENTRIES = 4096;
@@ -79,16 +80,23 @@ public class ReadDirCommand extends AbstractCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        IFile file = ctx.getFile();
-        if (file == null || !file.isDirectory()) {
+        List<ReadDirEntry> entries = new ArrayList<>();
+        Set<IFile> directories = ctx.getFile();
+        if (directories != null) {
+            for (IFile file : directories) {
+                if (entries.size() == MAX_ENTRIES) break;
+                if (file != null && file.isDirectory()) {
+                    IFile[] files = file.listFiles();
+                    for (IFile f : files) {
+                        if (entries.size() == MAX_ENTRIES) break;
+                        entries.add(new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName() != null ? f.getName() : ""));
+                    }
+                }
+            }
+        }
+        if (entries.isEmpty()) {
             send(Utils.longToBytesBE(EMPTY_SIZE));
         } else {
-            List<ReadDirEntry> entries = new ArrayList<>();
-            IFile[] files = file.listFiles();
-            for (IFile f : files) {
-                if (entries.size() == MAX_ENTRIES) break;
-                entries.add(new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName() != null ? f.getName() : ""));
-            }
             send(new ReadDirResult(entries));
         }
         ctx.setFile(null);

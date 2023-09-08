@@ -13,17 +13,15 @@ public class PS3NetSrvTask implements Runnable {
     private final int port;
     private final Set<String> folderPaths;
     private final int maxConnections;
-    private final boolean readOnly;
     private final EListType listType;
     private final Set<String> filterAddresses;
     private ServerSocket serverSocket;
     private boolean isRunning = true;
 
-    public PS3NetSrvTask(int port, Set<String> folderPaths, int maxConnections, boolean readOnly, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
+    public PS3NetSrvTask(int port, Set<String> folderPaths, int maxConnections, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
         this.port = port;
         this.folderPaths = folderPaths;
         this.maxConnections = maxConnections;
-        this.readOnly = readOnly;
         this.filterAddresses = filterAddresses;
         this.listType = listType;
 
@@ -45,7 +43,7 @@ public class PS3NetSrvTask implements Runnable {
                     }
                     continue;
                 }
-                new ContextHandler(new Context(clientSocket, folderPaths, readOnly), maxConnections, exceptionHandler).start();
+                new ContextHandler(new Context(clientSocket, folderPaths), maxConnections, exceptionHandler).start();
             }
         } catch (IOException e) {
             exceptionHandler.uncaughtException(null, e);

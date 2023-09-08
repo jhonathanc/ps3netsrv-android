@@ -11,6 +11,7 @@ import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Set;
 
 public class OpenFileCommand extends FileCommand {
 
@@ -49,22 +50,23 @@ public class OpenFileCommand extends FileCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        IFile file = getFile();
-        if (file == null) {
+        Set<IFile> files = getFile();
+        if (files == null) {
             ctx.setFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: on OpenFileCommand - file not exists");
         }
-        ctx.setFile(file);
+        ctx.setFile(files);
 
+        IRandomAccessFile randomAccessFile = ctx.getReadOnlyFile();
         try {
-            determineCdSectorSize(ctx.getReadOnlyFile());
+            determineCdSectorSize(randomAccessFile);
         } catch (IOException e) {
             ctx.setFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: not possible to determine CD Sector size");
         }
-        send(new OpenFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND));
+        send(new OpenFileResult(randomAccessFile.length(), randomAccessFile.lastModified() / MILLISECONDS_IN_SECOND));
     }
 
     private void determineCdSectorSize(IRandomAccessFile file) throws IOException {

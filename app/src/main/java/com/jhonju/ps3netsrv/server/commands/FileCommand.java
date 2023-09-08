@@ -13,12 +13,13 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 
 public abstract class FileCommand extends AbstractCommand {
     protected short filePathLength;
-    protected String fileName;
-    protected androidx.documentfile.provider.DocumentFile currentDirectory;
 
     public FileCommand(Context ctx, short filePathLength) {
         super(ctx);
@@ -32,56 +33,53 @@ public abstract class FileCommand extends AbstractCommand {
         return path;
     }
 
-    protected IFile getFile() throws IOException, PS3NetSrvException {
+    protected Set<IFile> getFile() throws IOException, PS3NetSrvException {
         ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), this.filePathLength);
         if (buffer == null) {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: command failed receiving filename.");
         }
 
+        String path = new String(buffer.array(), StandardCharsets.UTF_8);
+
+        HashSet<IFile> files = new HashSet<>();
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            File file = null;
             for (String rootDirectory : ctx.getRootDirectorys()) {
-                File fileAux = new File(new java.io.File(rootDirectory, new String(buffer.array(), StandardCharsets.UTF_8).replaceAll("\\x00+$", "")));
+                File fileAux = new File(new java.io.File(rootDirectory, path.replaceAll("\\x00+$", "")));
                 if (fileAux.exists()) {
-                    file = fileAux;
-                    break;
+                    files.add(fileAux);
                 }
             }
-            if (file == null) {
+            if (files.isEmpty()) {
                 send(ERROR_CODE_BYTEARRAY);
                 throw new PS3NetSrvException("ERROR: file not found.");
             }
-            return file;
+            return files;
         }
 
-        androidx.documentfile.provider.DocumentFile documentFile = null;
-        for (String rootDirectory : ctx.getRootDirectorys()) {
-            androidx.documentfile.provider.DocumentFile documentFileAux = androidx.documentfile.provider.DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(rootDirectory));
-            if (documentFileAux.exists()) {
-                documentFile = documentFileAux;
-                break;
-            }
-        }
-        if (documentFile == null) {
-            send(ERROR_CODE_BYTEARRAY);
-            throw new PS3NetSrvException("ERROR: file not found.");
-        }
+        String formattedPath = getFormattedPath(path);
 
-        String path = getFormattedPath(new String(buffer.array(), StandardCharsets.UTF_8));
-        if (!path.isEmpty()) {
-            String[] paths = path.split("/");
+        if (!formattedPath.isEmpty()) {
+            String[] paths = formattedPath.split("/");
             if (paths.length > 0) {
-                for (String s : paths) {
-                    currentDirectory = documentFile;
-                    documentFile = documentFile.findFile(s);
-                    if (documentFile == null) {
-                        fileName = s;
-                        break;
+                for (String rootDirectory : ctx.getRootDirectorys()) {
+                    androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(rootDirectory));
+                    if (documentFile != null && documentFile.exists()) {
+                        for (String s : paths) {
+                            documentFile = documentFile.findFile(s);
+                            if (documentFile == null) break;
+                        }
+                        if (documentFile != null) {
+                            files.add(new DocumentFile(documentFile));
+                        }
                     }
+                }
+                if (files.isEmpty()) {
+                    send(ERROR_CODE_BYTEARRAY);
+                    throw new PS3NetSrvException("ERROR: file not found.");
                 }
             }
         }
-        return new DocumentFile(documentFile);
+        return files;
     }
 }

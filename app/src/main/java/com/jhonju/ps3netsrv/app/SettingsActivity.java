@@ -2,7 +2,6 @@ package com.jhonju.ps3netsrv.app;
 
 import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,7 +39,10 @@ import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    List<String> listIps = new ArrayList<>();
+    private List<String> listIps = new ArrayList<>();
+    private List<String> listFolders = new ArrayList<>();
+    private ListView listViewIps;
+    private ListView listViewFolders;
     private static final int REQUEST_CODE_PICK_FOLDER = 1002;
 
     private SimpleFileChooser fileDialog;
@@ -73,15 +75,10 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void loadSettings() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(Uri.parse(SettingsService.getFolders().iterator().next()).getPath());
-        } else {
-            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(SettingsService.getFolders().iterator().next());
-        }
         ((TextInputLayout) findViewById(R.id.tilPort)).getEditText().setText(SettingsService.getPort() + "");
         ((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber)).getEditText().setText(SettingsService.getMaxConnections() + "");
-        ((CheckBox) findViewById(R.id.cbReadOnly)).setChecked(SettingsService.isReadOnly());
         listIps.addAll(SettingsService.getIps());
+        listFolders.addAll(SettingsService.getFolders());
         int listType = SettingsService.getListType();
         if (listType > 0) {
             RadioButton radio = findViewById(listType);
@@ -102,7 +99,10 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        listViewIps = findViewById(R.id.lvIps);
+        listViewFolders = findViewById(R.id.lvFolders);
         Toolbar toolbar = findViewById(R.id.toolbar);
+
         setSupportActionBar(toolbar);
 
         loadSettings();
@@ -120,8 +120,8 @@ public class SettingsActivity extends AppCompatActivity {
                 hasError = showMessage(view, message) || hasError;
                 if (!hasError) {
                     SettingsService.setIps(new HashSet<>(listIps));
+                    SettingsService.setFolders(new HashSet<>(listFolders));
                     SettingsService.setListType(((RadioGroup) findViewById(R.id.rgIpListType)).getCheckedRadioButtonId());
-                    SettingsService.setReadOnly(((CheckBox) findViewById(R.id.cbReadOnly)).isChecked());
                     showMessage(view, getResources().getString(R.string.saveSuccess));
                 }
             }
@@ -151,9 +151,11 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listIps);
-        final ListView listView = findViewById(R.id.lvIps);
-        listView.setAdapter(adapter);
+        final ArrayAdapter<String> adapterIps = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listIps);
+        final ArrayAdapter<String> adapterFolders = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listFolders);
+
+        listViewIps.setAdapter(adapterIps);
+        listViewFolders.setAdapter(adapterFolders);
 
         final EditText editTextIp = findViewById(R.id.etIp);
 
@@ -194,29 +196,14 @@ public class SettingsActivity extends AppCompatActivity {
 
                 if (!newIp.isEmpty()) {
                     listIps.add(newIp);
-                    adapter.notifyDataSetChanged();
+                    adapterIps.notifyDataSetChanged();
                     editTextIp.setText("");
                 }
             }
         });
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                final String ip = listIps.get(position);
-                listIps.remove(position);
-                adapter.notifyDataSetChanged();
-
-                Snackbar.make(view, getResources().getString(R.string.ipRemoved) + ip, Snackbar.LENGTH_SHORT)
-                        .setAction(getResources().getString(R.string.undo), new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                listIps.add(position, ip);
-                                adapter.notifyDataSetChanged();
-                            }
-                        }).show();
-            }
-        });
+        listViewIps.setOnItemClickListener(new ListViewItemClickListener(listIps));
+        listViewFolders.setOnItemClickListener(new ListViewItemClickListener(listFolders));
 
         RadioGroup rgIpListType = findViewById(R.id.rgIpListType);
         rgIpListType.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -235,10 +222,9 @@ public class SettingsActivity extends AppCompatActivity {
     private final SimpleFileChooser.FileSelectedListener onFileSelectedListener = new SimpleFileChooser.FileSelectedListener() {
         @Override
         public void onFileSelected(File file) {
-            Set<String> folderAux = new HashSet<>();
-            folderAux.add(file.getAbsolutePath());
-            SettingsService.setFolders(folderAux);
-            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(file.getAbsolutePath());
+            listFolders.add(file.getAbsolutePath());
+            SettingsService.setFolders(new HashSet<String>(listFolders));
+            ((ArrayAdapter)listViewFolders.getAdapter()).notifyDataSetChanged();
         }
     };
 
@@ -248,10 +234,35 @@ public class SettingsActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_CODE_PICK_FOLDER && resultCode == RESULT_OK && data != null) {
-            Set<String> folderAux = new HashSet<>();
-            folderAux.add(data.getData().toString());
-            SettingsService.setFolders(folderAux);
-            ((TextInputLayout) findViewById(R.id.tilFolder)).getEditText().setText(data.getData().getPath());
+            listFolders.add(data.getData().toString());
+            SettingsService.setFolders(new HashSet<String>(listFolders));
+            ((ArrayAdapter)listViewFolders.getAdapter()).notifyDataSetChanged();
+        }
+    }
+
+    private class ListViewItemClickListener implements AdapterView.OnItemClickListener {
+        private final List<String> list;
+
+        public ListViewItemClickListener(List<String> list) {
+            this.list = list;
+        }
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+            ListView listView = (ListView) parent;
+            final ArrayAdapter adapter = (ArrayAdapter) listView.getAdapter();
+            final String value = list.get(position);
+            list.remove(position);
+            adapter.notifyDataSetChanged();
+
+            Snackbar.make(view, getResources().getString(R.string.ipRemoved) + value, Snackbar.LENGTH_SHORT)
+                    .setAction(getResources().getString(R.string.undo), new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            list.add(position, value);
+                            adapter.notifyDataSetChanged();
+                        }
+                    }).show();
         }
     }
 

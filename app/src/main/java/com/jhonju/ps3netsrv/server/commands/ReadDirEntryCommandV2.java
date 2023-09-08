@@ -8,6 +8,7 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Set;
 
 public class ReadDirEntryCommandV2 extends AbstractCommand {
 
@@ -69,40 +70,47 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        IFile file = ctx.getFile();
-        if (file == null || !file.isDirectory()) {
-            send(new ReadDirEntryResultV2());
-            return;
-        }
-
-        IFile fileAux = null;
-        String[] fileList = file.list();
-        if (fileList != null) {
-            for (String fileName : fileList) {
-                fileAux = file.findFile(fileName);
-                if (fileName.length() <= MAX_FILE_NAME_LENGTH) {
-                    break;
+        Set<IFile> directories = ctx.getFile();
+        if (directories != null) {
+            for (IFile file : directories) {
+                if (file == null || !file.isDirectory()) {
+                    send(new ReadDirEntryResultV2());
+                    return;
                 }
-            }
-        }
-        if (fileAux == null) {
-            ctx.setFile(null);
-            send(new ReadDirEntryResultV2());
-            return;
-        }
 
-        //TODO: fix file stats
-        long[] fileTimes = { 0, 0 };
-        send(new ReadDirEntryResultV2(
-                        fileAux.isDirectory() ? EMPTY_SIZE : file.length()
-                        , fileAux.lastModified() / MILLISECONDS_IN_SECOND
+                IFile fileAux = null;
+                String[] fileList = file.list();
+                if (fileList != null) {
+                    for (String fileName : fileList) {
+                        fileAux = file.findFile(fileName);
+                        if (fileName.length() <= MAX_FILE_NAME_LENGTH) {
+                            break;
+                        }
+                    }
+                }
+                if (fileAux == null) {
+                    ctx.setFile(null);
+                    send(new ReadDirEntryResultV2());
+                    return;
+                }
+
+                //TODO: fix file stats
+                long[] fileTimes = {0, 0};
+                send(new ReadDirEntryResultV2(
+                                fileAux.isDirectory() ? EMPTY_SIZE : file.length()
+                                , fileAux.lastModified() / MILLISECONDS_IN_SECOND
 //                , fileTimes[0] / MILLISECONDS_IN_SECOND
 //                , fileTimes[1] / MILLISECONDS_IN_SECOND
-                        , fileTimes[0]
-                        , fileTimes[1]
-                        , (short) (fileAux.getName() != null ? fileAux.getName().length() : 0)
-                        , fileAux.isDirectory()
-                        , fileAux.getName())
-        );
+                                , fileTimes[0]
+                                , fileTimes[1]
+                                , (short) (fileAux.getName() != null ? fileAux.getName().length() : 0)
+                                , fileAux.isDirectory()
+                                , fileAux.getName())
+                );
+                return;
+            }
+        }
+        ctx.setFile(null);
+        send(new ReadDirEntryResultV2());
     }
 }

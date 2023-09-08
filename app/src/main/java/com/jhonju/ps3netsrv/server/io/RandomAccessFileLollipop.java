@@ -19,11 +19,14 @@ public class RandomAccessFileLollipop implements IRandomAccessFile {
     private final String mode;
     private final ContentResolver resolver;
 
+    private final long lastModified;
+
     public RandomAccessFileLollipop(Context context, DocumentFile documentFile, String mode) throws IOException {
         this.resolver = context.getContentResolver();
         this.documentFile = documentFile;
         this.mode = mode;
-        fileSize = documentFile.length();
+        this.fileSize = documentFile.length();
+        this.lastModified = documentFile.lastModified();
     }
 
     public int read(byte[] buffer) throws IOException {
@@ -53,5 +56,10 @@ public class RandomAccessFileLollipop implements IRandomAccessFile {
     @Override
     public void close() throws IOException {
 
+    }
+
+    @Override
+    public long lastModified() {
+        return lastModified;
     }
 }

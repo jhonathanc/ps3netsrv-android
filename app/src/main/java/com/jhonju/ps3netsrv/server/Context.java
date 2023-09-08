@@ -20,16 +20,14 @@ import java.util.Set;
 public class Context {
     private Socket socket;
     private final Set<String> rootDirectorys;
-    private final boolean readOnly;
-    private IFile file;
+    private Set<IFile> file;
     private IRandomAccessFile readOnlyFile;
     private CDSectorSize cdSectorSize;
 
-    public Context(Socket socket, Set<String> rootDirectorys, boolean readOnly) {
+    public Context(Socket socket, Set<String> rootDirectorys) {
         this.rootDirectorys = rootDirectorys;
         this.socket = socket;
         this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
-        this.readOnly = readOnly;
     }
 
     public Set<String> getRootDirectorys() { return rootDirectorys; }
@@ -50,34 +48,30 @@ public class Context {
         return socket.getOutputStream();
     }
 
-    public void setFile(IFile file) {
-        this.file = file;
-
-        if (file != null && file.isFile()) {
-            try {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                    readOnlyFile = new RandomAccessFile(((File)file).getFile(), "r");
-                } else {
-                    readOnlyFile = new RandomAccessFileLollipop(PS3NetSrvApp.getAppContext(), ((DocumentFile)file).getDocumentFile(), "r");
+    public void setFile(Set<IFile> files) throws IOException {
+        this.file = files;
+        this.readOnlyFile = null;
+        if (files != null) {
+            for (IFile file : files) {
+                if (file != null && file.isFile()) {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                        readOnlyFile = new RandomAccessFile(((File) files).getFile(), "r");
+                    } else {
+                        readOnlyFile = new RandomAccessFileLollipop(PS3NetSrvApp.getAppContext(), ((DocumentFile) files).getDocumentFile(), "r");
+                    }
                 }
-            } catch (IOException fe) {
-                readOnlyFile = null;
-                fe.printStackTrace();
+                break;
             }
-        } else {
-            readOnlyFile = null;
         }
     }
 
-    public IFile getFile() {
+    public Set<IFile> getFile() {
         return file;
     }
 
     public IRandomAccessFile getReadOnlyFile() {
         return readOnlyFile;
     }
-
-    public boolean isReadOnly() { return readOnly; }
 
     public void close() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {

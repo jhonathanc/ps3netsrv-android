@@ -30,7 +30,7 @@
     <string name="add">Adicionar</string>
     <string name="ipRemoved">IP Removido: </string>
     <string name="undo">Deshacer</string>
-    <string name="select">Selecionar</string>
+    <string name="select">Adicionar ruta</string>
     <string name="empty_response_error">Intentando enviar una respuesta vacía para %s (método %s)</string>
     <string name="readOnly">Solo lectura</string>
     <string name="maxConnectedClients">Límite de conexión (0 es ilimitado)</string>

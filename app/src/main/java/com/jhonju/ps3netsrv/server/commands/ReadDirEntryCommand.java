@@ -8,6 +8,9 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class ReadDirEntryCommand extends AbstractCommand {
 
@@ -57,31 +60,38 @@ public class ReadDirEntryCommand extends AbstractCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        IFile file = ctx.getFile();
-        if (file == null || !file.isDirectory()) {
-            send(new ReadDirEntryResult());
-            return;
-        }
-        IFile fileAux = null;
-        String[] fileList = file.list();
-        if (fileList != null) {
-            for (String fileName : fileList) {
-                fileAux = file.findFile(fileName);
-                if (fileName.length() <= MAX_FILE_NAME_LENGTH) {
-                    break;
+        Set<IFile> directories = ctx.getFile();
+        if (directories != null) {
+            for (IFile file : directories) {
+                if (file == null || !file.isDirectory()) {
+                    send(new ReadDirEntryResult());
+                    return;
                 }
+                IFile fileAux = null;
+                String[] fileList = file.list();
+                if (fileList != null) {
+                    for (String fileName : fileList) {
+                        fileAux = file.findFile(fileName);
+                        if (fileName.length() <= MAX_FILE_NAME_LENGTH) {
+                            break;
+                        }
+                    }
+                }
+                if (fileAux == null) {
+                    ctx.setFile(null);
+                    send(new ReadDirEntryResult());
+                    return;
+                }
+                send(new ReadDirEntryResult(
+                        fileAux.isDirectory() ? EMPTY_SIZE : file.length()
+                        , (short) fileAux.getName().length()
+                        , fileAux.isDirectory()
+                        , fileAux.getName())
+                );
+                return;
             }
         }
-        if (fileAux == null) {
-            ctx.setFile(null);
-            send(new ReadDirEntryResult());
-            return;
-        }
-        send(new ReadDirEntryResult(
-                fileAux.isDirectory() ? EMPTY_SIZE : file.length()
-                , (short) fileAux.getName().length()
-                , fileAux.isDirectory()
-                , fileAux.getName())
-        );
+        ctx.setFile(null);
+        send(new ReadDirEntryResult());
     }
 }

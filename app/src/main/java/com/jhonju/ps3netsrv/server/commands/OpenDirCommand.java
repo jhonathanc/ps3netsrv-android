@@ -15,6 +15,11 @@ public class OpenDirCommand  extends FileCommand {
     public void executeTask() throws PS3NetSrvException, IOException {
         Set<IFile> files = getFile();
         boolean isDirectory = false;
+        if (files == null) {
+            ctx.setFile(null);
+            send(ERROR_CODE_BYTEARRAY);
+            return;
+        }
         for (IFile file : files) {
             if (!file.exists()) {
                 ctx.setFile(null);

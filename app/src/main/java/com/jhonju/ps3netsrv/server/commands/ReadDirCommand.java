@@ -10,6 +10,7 @@ import com.jhonju.ps3netsrv.server.utils.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -89,7 +90,13 @@ public class ReadDirCommand extends AbstractCommand {
                     IFile[] files = file.listFiles();
                     for (IFile f : files) {
                         if (entries.size() == MAX_ENTRIES) break;
-                        entries.add(new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName() != null ? f.getName() : ""));
+                        ReadDirEntry entry = new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName() != null ? f.getName() : "");
+                        boolean entryExists = false;
+                        for (ReadDirEntry entryAux : entries) {
+                            entryExists = (Arrays.equals(entry.dName, entryAux.dName) && entry.cIsDirectory == entryAux.cIsDirectory);
+                            if (entryExists) break;
+                        }
+                        if (!entryExists) entries.add(entry);
                     }
                 }
             }

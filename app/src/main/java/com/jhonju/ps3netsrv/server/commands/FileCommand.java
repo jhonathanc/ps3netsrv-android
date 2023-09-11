@@ -59,25 +59,25 @@ public abstract class FileCommand extends AbstractCommand {
 
         String formattedPath = getFormattedPath(path);
 
-        if (!formattedPath.isEmpty()) {
-            String[] paths = formattedPath.split("/");
-            if (paths.length > 0) {
-                for (String rootDirectory : ctx.getRootDirectorys()) {
-                    androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(rootDirectory));
+        String[] paths = formattedPath.split("/");
+        for (String rootDirectory : ctx.getRootDirectorys()) {
+            androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(rootDirectory));
+            if (documentFile == null || !documentFile.exists()) {
+                send(ERROR_CODE_BYTEARRAY);
+                throw new PS3NetSrvException("ERROR: wrong path configuration.");
+            }
+            if (!formattedPath.isEmpty()) {
+                if (paths.length > 0) {
                     if (documentFile != null && documentFile.exists()) {
                         for (String s : paths) {
                             documentFile = documentFile.findFile(s);
                             if (documentFile == null) break;
                         }
-                        if (documentFile != null) {
-                            files.add(new DocumentFile(documentFile));
-                        }
                     }
                 }
-                if (files.isEmpty()) {
-                    send(ERROR_CODE_BYTEARRAY);
-                    throw new PS3NetSrvException("ERROR: file not found.");
-                }
+            }
+            if (documentFile != null) {
+                files.add(new DocumentFile(documentFile));
             }
         }
         return files;

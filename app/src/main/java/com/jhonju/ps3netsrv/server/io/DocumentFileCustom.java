@@ -145,7 +145,7 @@ public class DocumentFileCustom implements IFile {
 
     @Override
     public long lastModified() {
-        return documentFile.length();
+        return documentFile.lastModified();
     }
 
     @Override

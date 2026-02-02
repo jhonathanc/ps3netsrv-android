@@ -1,6 +1,7 @@
 package com.jhonju.ps3netsrv.app;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -135,6 +136,12 @@ public class SettingsActivity extends AppCompatActivity {
         return false;
     }
 
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(com.jhonju.ps3netsrv.app.utils.LocaleHelper.onAttach(newBase));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -149,6 +156,28 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Fallback for older Android versions
         fileDialog = new SimpleFileChooser(this, Environment.getExternalStorageDirectory(), onFileSelectedListener, true);
+
+        // Language Spinner Setup
+        android.widget.Spinner languageSpinner = findViewById(R.id.language_spinner);
+        String currentLanguage = com.jhonju.ps3netsrv.app.utils.LocaleHelper.getLanguage(this);
+        int position = getIndexFromLanguage(currentLanguage);
+        languageSpinner.setSelection(position);
+
+        languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedLang = getLanguageFromIndex(position);
+                if (!selectedLang.equals(com.jhonju.ps3netsrv.app.utils.LocaleHelper.getLanguage(SettingsActivity.this))) {
+                    com.jhonju.ps3netsrv.app.utils.LocaleHelper.setLocale(SettingsActivity.this, selectedLang);
+                    recreate(); // Restart activity to apply changes
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
 
         Button btnSave = findViewById(R.id.btnSave);
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -168,29 +197,23 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        final Button btnSelectFolder = findViewById(R.id.btnSelectFolder);
+final Button btnSelectFolder = findViewById(R.id.btnSelectFolder);
         btnSelectFolder.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                int permission = -1;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    permission = ContextCompat.checkSelfPermission(PS3NetSrvApp.getAppContext(), Manifest.permission.READ_EXTERNAL_STORAGE);
+                // For Lollipop and above, use Storage Access Framework (SAF)
+                // This does NOT require READ_EXTERNAL_STORAGE permission to launch the picker
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                    folderPickerLauncher.launch(intent);
                 } else {
-                    permission = Build.VERSION.SDK_INT < Build.VERSION_CODES.M ? 0 : getPackageManager().checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, getPackageName());
-                }
-
-                if (permission == PERMISSION_GRANTED) {
-                    // Use SAF for stricter storage scoped environments (Android 10+ and above, but generally good practice for recent versions)
-                    // The original code used it for Q (API 29) and above. We can stick to that or lower it to Lollipop (API 21) if we wanted to standardization.
-                    // Given the goal is "check android activities ... do necessary modifications to let it better to use", standardizing on SAF for API 21+ is a good move.
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                        folderPickerLauncher.launch(intent);
-                    } else {
+                    // For legacy devices (Pre-Lollipop), use internal file chooser which requires permission
+                    int permission = ContextCompat.checkSelfPermission(SettingsActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+                    if (permission == PERMISSION_GRANTED) {
                         fileDialog.showDialog();
+                    } else {
+                        requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
                     }
-                } else {
-                    requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
                 }
             }
         });
@@ -262,6 +285,26 @@ public class SettingsActivity extends AppCompatActivity {
         btnAddIp.setEnabled(rgIpListType.getCheckedRadioButtonId() != R.id.rbNone);
     }
 
+    private int getIndexFromLanguage(String language) {
+        switch (language) {
+            case "it": return 0;
+            case "en": return 1;
+            case "es": return 2;
+            case "pt": return 3;
+            default: return 1; // Default to English
+        }
+    }
+
+    private String getLanguageFromIndex(int index) {
+        switch (index) {
+            case 0: return "it";
+            case 1: return "en";
+            case 2: return "es";
+            case 3: return "pt";
+            default: return "en";
+        }
+    }
+
     // Event when a file is selected on file dialog.
     private final SimpleFileChooser.FileSelectedListener onFileSelectedListener = new SimpleFileChooser.FileSelectedListener() {
         @Override
@@ -297,5 +340,6 @@ public class SettingsActivity extends AppCompatActivity {
                     }).show();
         }
     }
+
 
 }

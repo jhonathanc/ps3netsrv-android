@@ -48,6 +48,12 @@ public class MainActivity extends AppCompatActivity {
             }
     );
 
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(com.jhonju.ps3netsrv.app.utils.LocaleHelper.onAttach(newBase));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

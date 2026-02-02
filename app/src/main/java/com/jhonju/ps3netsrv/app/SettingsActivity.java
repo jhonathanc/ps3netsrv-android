@@ -3,6 +3,7 @@ package com.jhonju.ps3netsrv.app;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -169,8 +170,8 @@ public class SettingsActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedLang = getLanguageFromIndex(position);
                 if (!selectedLang.equals(com.jhonju.ps3netsrv.app.utils.LocaleHelper.getLanguage(SettingsActivity.this))) {
-                    com.jhonju.ps3netsrv.app.utils.LocaleHelper.setLocale(SettingsActivity.this, selectedLang);
-                    updateViewResources();
+                    Context localizedContext = com.jhonju.ps3netsrv.app.utils.LocaleHelper.setLocale(SettingsActivity.this, selectedLang);
+                    updateViewResources(localizedContext);
                     recreate(); // Restart activity to apply changes
                 }
             }
@@ -368,23 +369,24 @@ public class SettingsActivity extends AppCompatActivity {
         return false;
     }
 
-    private void updateViewResources() {
-        ((TextView) findViewById(R.id.tvSectionGeneral)).setText(R.string.section_general);
-        ((TextView) findViewById(R.id.tvSectionContent)).setText(R.string.section_content);
-        ((TextView) findViewById(R.id.tvSectionSecurity)).setText(R.string.section_security);
-        ((TextView) findViewById(R.id.tvAppLanguage)).setText(R.string.select_language);
-        ((TextInputLayout) findViewById(R.id.tilPort)).setHint(getString(R.string.port));
-        ((TextInputLayout) findViewById(R.id.tilFolder)).setHint(getString(R.string.folder));
-        ((Button) findViewById(R.id.btnSelectFolder)).setText(R.string.add);
-        ((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber)).setHint(getString(R.string.maxConnectedClients));
-        ((android.widget.CheckBox) findViewById(R.id.cbReadOnly)).setText(R.string.readOnly);
-        ((TextView) findViewById(R.id.tvListType)).setText(R.string.listType);
-        ((RadioButton) findViewById(R.id.rbNone)).setText(R.string.rbNone);
-        ((RadioButton) findViewById(R.id.rbAllowed)).setText(R.string.rbAllowed);
-        ((RadioButton) findViewById(R.id.rbBlocked)).setText(R.string.rbBlocked);
-        ((TextInputLayout) findViewById(R.id.tilIp)).setHint(getString(R.string.ipAddress));
-        ((Button) findViewById(R.id.btnAddIp)).setText(R.string.add);
-        ((Button) findViewById(R.id.btnSave)).setText(R.string.save);
+    private void updateViewResources(Context context) {
+        Resources resources = context.getResources();
+        ((TextView) findViewById(R.id.tvSectionGeneral)).setText(resources.getString(R.string.section_general));
+        ((TextView) findViewById(R.id.tvSectionContent)).setText(resources.getString(R.string.section_content));
+        ((TextView) findViewById(R.id.tvSectionSecurity)).setText(resources.getString(R.string.section_security));
+        ((TextView) findViewById(R.id.tvAppLanguage)).setText(resources.getString(R.string.select_language));
+        ((TextInputLayout) findViewById(R.id.tilPort)).setHint(resources.getString(R.string.port));
+        ((TextInputLayout) findViewById(R.id.tilFolder)).setHint(resources.getString(R.string.folder));
+        ((Button) findViewById(R.id.btnSelectFolder)).setText(resources.getString(R.string.add));
+        ((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber)).setHint(resources.getString(R.string.maxConnectedClients));
+        ((android.widget.CheckBox) findViewById(R.id.cbReadOnly)).setText(resources.getString(R.string.readOnly));
+        ((TextView) findViewById(R.id.tvListType)).setText(resources.getString(R.string.listType));
+        ((RadioButton) findViewById(R.id.rbNone)).setText(resources.getString(R.string.rbNone));
+        ((RadioButton) findViewById(R.id.rbAllowed)).setText(resources.getString(R.string.rbAllowed));
+        ((RadioButton) findViewById(R.id.rbBlocked)).setText(resources.getString(R.string.rbBlocked));
+        ((TextInputLayout) findViewById(R.id.tilIp)).setHint(resources.getString(R.string.ipAddress));
+        ((Button) findViewById(R.id.btnAddIp)).setText(resources.getString(R.string.add));
+        ((Button) findViewById(R.id.btnSave)).setText(resources.getString(R.string.save));
     }
 
 }

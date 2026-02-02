@@ -1,17 +1,45 @@
-# ps3netsrv-android
-Android ps3netsrv
+# PS3NetSrv for Android
+![Android CI](https://github.com/jhonathanc/ps3netsrv-android/actions/workflows/gradle.yml/badge.svg)
 
-Work in progress.
+This is an Android implementation of the `ps3netsrv` server, allowing you to stream ISOs and other media files to your PlayStation 3 directly from your Android device.
 
-Features missing from original ps3netsrv that I still wants to develop:
-1. Multi part ISO.
-2. Virtual ISO from "JB Games".
-3. Encrypted ISO.
-4. ~~Whitelist / Blacklist of client IP's.~~ (released on 0.3 Alpha)
-5. ~~Limit the maximum number of clients.~~ (released on 0.4 Alpha)
+## Features
 
-I also have to improve the interface, because it's a lot uggly.
+- **Serve PS3 ISOs/Games:** Stream your backups over the local network to your console (WebMAN MOD / multiMAN compatible).
+- **Multiple Folders:** Support for serving files from multiple directories on your device.
+- **Ordered Priority:** If a file exists in multiple folders, the one in the first listed folder takes priority.
+- **Port Configuration:** Customizable server port (Default: 38008).
+- **Connection Limits:** Set a maximum number of connected clients.
+- **Security:**
+  - **IP Whitelist/Blacklist:** Restrict access to specific IP addresses.
+  - **Read-Only Mode:** Prevent clients from deleting or modifying files on your device.
+- **Persistent Service:** Option to keep the server running in the background with a persistent notification (Android 13+ supported).
+- **Multilingual:** Available in English, Portuguese, Spanish, and Italian.
 
-The project is developed using only native Android/Java libraries, to avoid problems with licensing.
+## How to Use
 
-If you want to contribute, feel free to open a PR.
+1.  **Grant Permissions:** Upon first launch, grant the necessary storage permissions so the app can access your game files. On Android 13+, also grant notification permissions to ensure the service runs reliably in the background.
+2.  **Add Folders:**
+    - Tap "Add folder" (or "Adicionar pasta").
+    - Navigate to the directory containing your PS3 content (e.g., `GAMES`, `PS3ISO`, `DVDISO`).
+    - You can add multiple folders. The order matters for file priority.
+3.  **Configure (Optional):**
+    - Tap the **Settings** (Configurações) icon in the menu.
+    - **Port:** Change the listening port if needed.
+    - **IP Filtering:** Set up a whitelist/blacklist if you want to secure access.
+    - **Max Connections:** Limit how many devices can connect simultaneously.
+4.  **Start Server:**
+    - Return to the main screen.
+    - Tap **Start Server** (Iniciar servidor).
+    - The status will update to show the running port and IP address.
+5.  **Connect from PS3:**
+    - On your PS3 (running WebMAN MOD or multiMAN), configure the `ps3netsrv` settings to point to your Android device's IP address and the port you configured (default 38008).
+
+## About
+
+- **Developer:** Jhonathan Corrêa
+- **Thanks to:** Aldostools (for the original concept and tools)
+
+## Disclaimer
+
+This application is intended for legal use with your own personal backups. The developer is not responsible for any misuse.

@@ -37,5 +37,8 @@
     <string name="readOnlyDescription">Marque esta opção para evitar que os clientes criem ou excluam arquivos no servidor</string>
     <string name="negativeMaxConnectedClients">Limite de conexões não pode ser negativo.</string>
     <string name="invalidMaxConnectedClients">Limite de conexões inválido</string>
+    <string name="section_general">Geral</string>
+    <string name="section_content">Conteúdo</string>
+    <string name="section_security">Segurança</string>
     <string name="select_language">Idioma da aplicação:</string>
 </resources>

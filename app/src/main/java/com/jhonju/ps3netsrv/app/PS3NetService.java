@@ -108,4 +108,8 @@ public class PS3NetService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) { return null; }
+
+    public static boolean isRunning() {
+        return task != null && task.isRunning();
+    }
 }

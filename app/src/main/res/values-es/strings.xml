@@ -37,5 +37,8 @@
     <string name="negativeMaxConnectedClients">Límite de conexión no puede tener un valor negativo.</string>
     <string name="invalidMaxConnectedClients">Límite de conexión inválido</string>
     <string name="readOnlyDescription">Marque esta opción para evitar que los clientes creen o eliminen archivos en el servidor</string>
+    <string name="section_general">General</string>
+    <string name="section_content">Contenido</string>
+    <string name="section_security">Seguridad</string>
     <string name="select_language">Idioma de la aplicación:</string>
 </resources>

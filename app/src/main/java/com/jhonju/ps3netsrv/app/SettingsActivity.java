@@ -32,6 +32,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -169,6 +170,7 @@ public class SettingsActivity extends AppCompatActivity {
                 String selectedLang = getLanguageFromIndex(position);
                 if (!selectedLang.equals(com.jhonju.ps3netsrv.app.utils.LocaleHelper.getLanguage(SettingsActivity.this))) {
                     com.jhonju.ps3netsrv.app.utils.LocaleHelper.setLocale(SettingsActivity.this, selectedLang);
+                    updateViewResources();
                     recreate(); // Restart activity to apply changes
                 }
             }
@@ -183,21 +185,30 @@ public class SettingsActivity extends AppCompatActivity {
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String message = savePortValue();
-                boolean hasError = showMessage(view, message);
-                hasError = showMessage(view, message) || hasError;
-                message = saveMaxConnection();
-                hasError = showMessage(view, message) || hasError;
-                if (!hasError) {
-                    SettingsService.setIps(new HashSet<>(listIps));
-                    SettingsService.setFolders(new HashSet<>(listFolders));
-                    SettingsService.setListType(((RadioGroup) findViewById(R.id.rgIpListType)).getCheckedRadioButtonId());
-                    showMessage(view, getResources().getString(R.string.saveSuccess));
+                if (PS3NetService.isRunning()) {
+                    new androidx.appcompat.app.AlertDialog.Builder(SettingsActivity.this)
+                            .setTitle(getString(R.string.title_activity_settings))
+                            .setMessage("Server is running. Restart to apply changes?")
+                            .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                                if (saveSettings(view)) {
+                                    // Restart Service
+                                    stopService(new Intent(SettingsActivity.this, PS3NetService.class));
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                        startForegroundService(new Intent(SettingsActivity.this, PS3NetService.class));
+                                    } else {
+                                        startService(new Intent(SettingsActivity.this, PS3NetService.class));
+                                    }
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, null)
+                            .show();
+                } else {
+                    saveSettings(view);
                 }
             }
         });
 
-final Button btnSelectFolder = findViewById(R.id.btnSelectFolder);
+        final Button btnSelectFolder = findViewById(R.id.btnSelectFolder);
         btnSelectFolder.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -341,5 +352,39 @@ final Button btnSelectFolder = findViewById(R.id.btnSelectFolder);
         }
     }
 
+    private boolean saveSettings(View view) {
+        String message = savePortValue();
+        boolean hasError = showMessage(view, message);
+        hasError = showMessage(view, message) || hasError;
+        message = saveMaxConnection();
+        hasError = showMessage(view, message) || hasError;
+        if (!hasError) {
+            SettingsService.setIps(new HashSet<>(listIps));
+            SettingsService.setFolders(new HashSet<>(listFolders));
+            SettingsService.setListType(((RadioGroup) findViewById(R.id.rgIpListType)).getCheckedRadioButtonId());
+            showMessage(view, getResources().getString(R.string.saveSuccess));
+            return true;
+        }
+        return false;
+    }
+
+    private void updateViewResources() {
+        ((TextView) findViewById(R.id.tvSectionGeneral)).setText(R.string.section_general);
+        ((TextView) findViewById(R.id.tvSectionContent)).setText(R.string.section_content);
+        ((TextView) findViewById(R.id.tvSectionSecurity)).setText(R.string.section_security);
+        ((TextView) findViewById(R.id.tvAppLanguage)).setText(R.string.select_language);
+        ((TextInputLayout) findViewById(R.id.tilPort)).setHint(getString(R.string.port));
+        ((TextInputLayout) findViewById(R.id.tilFolder)).setHint(getString(R.string.folder));
+        ((Button) findViewById(R.id.btnSelectFolder)).setText(R.string.add);
+        ((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber)).setHint(getString(R.string.maxConnectedClients));
+        ((android.widget.CheckBox) findViewById(R.id.cbReadOnly)).setText(R.string.readOnly);
+        ((TextView) findViewById(R.id.tvListType)).setText(R.string.listType);
+        ((RadioButton) findViewById(R.id.rbNone)).setText(R.string.rbNone);
+        ((RadioButton) findViewById(R.id.rbAllowed)).setText(R.string.rbAllowed);
+        ((RadioButton) findViewById(R.id.rbBlocked)).setText(R.string.rbBlocked);
+        ((TextInputLayout) findViewById(R.id.tilIp)).setHint(getString(R.string.ipAddress));
+        ((Button) findViewById(R.id.btnAddIp)).setText(R.string.add);
+        ((Button) findViewById(R.id.btnSave)).setText(R.string.save);
+    }
 
 }

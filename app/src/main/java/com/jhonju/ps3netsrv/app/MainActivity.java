@@ -54,9 +54,12 @@ public class MainActivity extends AppCompatActivity {
         super.attachBaseContext(com.jhonju.ps3netsrv.app.utils.LocaleHelper.onAttach(newBase));
     }
 
+    private String currentLanguage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        currentLanguage = com.jhonju.ps3netsrv.app.utils.LocaleHelper.getLanguage(this);
         setContentView(R.layout.activity_main);
 
         setupNetworkMonitoring();
@@ -66,6 +69,54 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         checkPermissions();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String storedLanguage = com.jhonju.ps3netsrv.app.utils.LocaleHelper.getLanguage(this);
+        if (!currentLanguage.equals(storedLanguage)) {
+             if (PS3NetService.isRunning()) {
+                   new androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle(R.string.app_name)
+                        .setMessage("Language changed. Application needs to restart to apply changes. The server will be restarted.")
+                        .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                            // Stop server to ensure clean restart state or just trust recreate/service lifecycle
+                            // Just recreating activity doesn't kill service (started service).
+                            // But user asked for warning that "server will be restarted" - implies we SHOULD might restart it?
+                            // Actually the user request "dizendo que o servidor será reiniciado".
+                            // If I recreate the activity, the service keeps running.
+                            // If I want to "restart the server", I should stop and start it.
+                            // But MainActivity isn't the one starting it usually (FirstFragment does).
+                            // Let's assume the user just means "App restart" might imply interruption.
+                            // But wait, "o servidor derverá ser reiniciado".
+                            // If I just recreate MainActivity, the service persists.
+                            // To restart server, I should stop it here.
+                            
+                            // Stopping service before recreate:
+                            stopService(new Intent(MainActivity.this, PS3NetService.class));
+                            // Since FirstFragment handles auto-start or we normally start manually, 
+                            // if we stop it here, it will be DEAD when activity comes back.
+                            // Unless we pass an intent extra to restart it?
+                            // Or maybe the user just wants the APP to restart.
+                            
+                            // Let's stick to "recreate()" for the App. 
+                            // If the service needs restart to picking up new strings in notifications (if any), 
+                            // we definitely need to stop/start.
+                            stopService(new Intent(MainActivity.this, PS3NetService.class));
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                startForegroundService(new Intent(MainActivity.this, PS3NetService.class));
+                            } else {
+                                startService(new Intent(MainActivity.this, PS3NetService.class));
+                            }
+                            recreate();
+                        })
+                        .setNegativeButton(android.R.string.no, null) // Keep old language in UI?
+                        .show();
+             } else {
+                 recreate();
+             }
+        }
     }
 
     private void setupNetworkMonitoring() {

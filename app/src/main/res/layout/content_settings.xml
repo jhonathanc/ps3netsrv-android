@@ -17,9 +17,10 @@
 
         <!-- General Settings Section -->
         <TextView
+            android:id="@+id/tvSectionGeneral"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="General"
+            android:text="@string/section_general"
             android:textColor="@color/colorPrimary"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
@@ -64,9 +65,10 @@
 
         <!-- Content Section -->
         <TextView
+            android:id="@+id/tvSectionContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Content"
+            android:text="@string/section_content"
             android:textColor="@color/colorPrimary"
             android:textStyle="bold"
             android:layout_marginTop="8dp"
@@ -114,9 +116,10 @@
 
         <!-- Security Section -->
         <TextView
+            android:id="@+id/tvSectionSecurity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Security"
+            android:text="@string/section_security"
             android:textColor="@color/colorPrimary"
             android:textStyle="bold"
             android:layout_marginTop="8dp"
@@ -189,6 +192,7 @@
             android:layout_marginBottom="8dp">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilIp"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

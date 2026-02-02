@@ -45,5 +45,8 @@
     <string name="negativeMaxConnectedClients">Max connections can\'t be negative.</string>
     <string name="invalidMaxConnectedClients">Invalid max connections</string>
     <string name="readOnlyDescription">Check this to prevent clients from creating or deleting files on the server</string>
+    <string name="section_general">General</string>
+    <string name="section_content">Content</string>
+    <string name="section_security">Security</string>
     <string name="select_language">App language:</string>
 </resources>

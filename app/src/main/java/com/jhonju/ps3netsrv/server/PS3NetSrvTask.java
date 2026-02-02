@@ -17,6 +17,10 @@ public class PS3NetSrvTask implements Runnable {
     private final Set<String> filterAddresses;
     private ServerSocket serverSocket;
     private boolean isRunning = true;
+    
+    public boolean isRunning() {
+        return isRunning;
+    }
 
     public PS3NetSrvTask(int port, Set<String> folderPaths, int maxConnections, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
         this.port = port;

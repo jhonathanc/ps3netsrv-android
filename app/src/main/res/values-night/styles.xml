@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Mode Styles -->
+    
+    <!-- Override PopupOverlay to be Dark, ensuring text is Light/White -->
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" />
+    
+</resources>

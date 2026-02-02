@@ -45,5 +45,8 @@
     <string name="negativeMaxConnectedClients">最大接続数負なすしぇーなやびらん。</string>
     <string name="invalidMaxConnectedClients">最大接続数が無効やいびーん</string>
     <string name="readOnlyDescription">クライアントぬサーバーうぃーうぅてぃファイル作成あらんでぃ削除ならんぐとぅすんがー、くりオンなさびーん</string>
+    <string name="section_general">一般</string>
+    <string name="section_content">コンテンツ</string>
+    <string name="section_security">セキュリティ</string>
     <string name="select_language">アプリぬ言語：</string>
 </resources>

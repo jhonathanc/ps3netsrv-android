@@ -303,6 +303,8 @@ public class SettingsActivity extends AppCompatActivity {
             case "en": return 1;
             case "es": return 2;
             case "pt": return 3;
+            case "ryu": return 4;
+            case "ja": return 4;
             default: return 1; // Default to English
         }
     }
@@ -313,6 +315,7 @@ public class SettingsActivity extends AppCompatActivity {
             case 1: return "en";
             case 2: return "es";
             case 3: return "pt";
+            case 4: return "ryu";
             default: return "en";
         }
     }

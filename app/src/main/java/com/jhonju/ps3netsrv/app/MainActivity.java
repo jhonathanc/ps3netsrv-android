@@ -8,11 +8,19 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
+import android.net.Uri;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -25,26 +33,64 @@ import com.jhonju.ps3netsrv.R;
 
 public class MainActivity extends AppCompatActivity {
 
+    private final ActivityResultLauncher<Intent> manageAllFilesLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    // Check if permission is granted after returning from settings
+                    if (SDK_INT >= Build.VERSION_CODES.R) {
+                       if (!Environment.isExternalStorageManager()) {
+                           // Permission not granted, handle appropriately (maybe show a dialog or exit)
+                       }
+                    }
+                }
+            }
+    );
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo ethernetInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET);
-        if (ethernetInfo != null && ethernetInfo.isConnected()) {
-            connManager.setNetworkPreference(ConnectivityManager.TYPE_ETHERNET);
-        } else {
-            NetworkInfo wifiInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-            if (wifiInfo != null && wifiInfo.isConnected()) {
-                connManager.setNetworkPreference(ConnectivityManager.TYPE_WIFI);
-            }
-        }
+        setupNetworkMonitoring();
 
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        checkPermissions();
+    }
+
+    private void setupNetworkMonitoring() {
+        final ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connManager != null) {
+            NetworkRequest request = new NetworkRequest.Builder()
+                    .addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
+                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                    .build();
+
+            connManager.registerNetworkCallback(request, new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(Network network) {
+                    super.onAvailable(network);
+                    // Bind process to network if needed, or rely on system default.
+                    // Prioritizing Ethernet over Wi-Fi is usually handled by the OS.
+                    // If strict binding is required:
+                    try {
+                        NetworkCapabilities caps = connManager.getNetworkCapabilities(network);
+                        if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                            connManager.bindProcessToNetwork(network);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
+    private void checkPermissions() {
         if (SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager()) {
                 requestPermission();
@@ -59,17 +105,17 @@ public class MainActivity extends AppCompatActivity {
     private void requestPermission() {
         if (SDK_INT >= Build.VERSION_CODES.R) {
             try {
-                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                 intent.addCategory("android.intent.category.DEFAULT");
-                intent.setData(android.net.Uri.parse(String.format("package:%s", getApplicationContext().getPackageName())));
-                startActivityForResult(intent, 2296);
+                intent.setData(Uri.parse(String.format("package:%s", getApplicationContext().getPackageName())));
+                manageAllFilesLauncher.launch(intent);
             } catch (Exception e) {
                 Intent intent = new Intent();
-                intent.setAction(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                startActivityForResult(intent, 2296);
+                intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                manageAllFilesLauncher.launch(intent);
             }
         } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
     }
 

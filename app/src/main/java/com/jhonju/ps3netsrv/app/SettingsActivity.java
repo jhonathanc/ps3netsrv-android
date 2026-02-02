@@ -12,8 +12,11 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.components.SimpleFileChooser;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -24,7 +27,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioButton;
@@ -34,7 +36,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
@@ -44,10 +45,32 @@ public class SettingsActivity extends AppCompatActivity {
     private List<String> listFolders = new ArrayList<>();
     private ListView listViewIps;
     private ListView listViewFolders;
-    private static final int REQUEST_CODE_PICK_FOLDER = 1002;
 
     private SimpleFileChooser fileDialog;
 
+    private final ActivityResultLauncher<Intent> folderPickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri selectedData = result.getData().getData();
+                        if (selectedData != null) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                                try {
+                                    getContentResolver().takePersistableUriPermission(selectedData, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                                } catch (SecurityException e) {
+                                    Log.e("SettingsActivity", "Failed to persist URI permission: " + e.getMessage());
+                                }
+                            }
+                            listFolders.add(selectedData.toString());
+                            SettingsService.setFolders(new HashSet<>(listFolders));
+                            ((ArrayAdapter) listViewFolders.getAdapter()).notifyDataSetChanged();
+                        }
+                    }
+                }
+            }
+    );
 
     private String savePortValue() {
         TextInputLayout tilPort = findViewById(R.id.tilPort);
@@ -108,6 +131,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         loadSettings();
 
+        // Fallback for older Android versions
         fileDialog = new SimpleFileChooser(this, Environment.getExternalStorageDirectory(), onFileSelectedListener, true);
 
         Button btnSave = findViewById(R.id.btnSave);
@@ -140,9 +164,12 @@ public class SettingsActivity extends AppCompatActivity {
                 }
 
                 if (permission == PERMISSION_GRANTED) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Use SAF for stricter storage scoped environments (Android 10+ and above, but generally good practice for recent versions)
+                    // The original code used it for Q (API 29) and above. We can stick to that or lower it to Lollipop (API 21) if we wanted to standardization.
+                    // Given the goal is "check android activities ... do necessary modifications to let it better to use", standardizing on SAF for API 21+ is a good move.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                        startActivityForResult(intent, REQUEST_CODE_PICK_FOLDER);
+                        folderPickerLauncher.launch(intent);
                     } else {
                         fileDialog.showDialog();
                     }
@@ -176,7 +203,7 @@ public class SettingsActivity extends AppCompatActivity {
                     } else {
                         String[] splits = resultingTxt.split("\\.");
                         for (String split : splits) {
-                            if (Integer.parseInt(split) > 255) {
+                            if (!split.isEmpty() && Integer.parseInt(split) > 255) {
                                 return "";
                             }
                         }
@@ -228,28 +255,6 @@ public class SettingsActivity extends AppCompatActivity {
             ((ArrayAdapter)listViewFolders.getAdapter()).notifyDataSetChanged();
         }
     };
-
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_CODE_PICK_FOLDER && resultCode == RESULT_OK && data != null) {
-            Uri selectedData = data.getData();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                try {
-                    // Persist read/write permissions for the selected URI
-                    getContentResolver().takePersistableUriPermission(selectedData, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                } catch (SecurityException e) {
-                    // Ignore if context doesn't have permission to grant/persist, or if URI is not persistable
-                    Log.e("SettingsActivity", "Failed to persist URI permission: " + e.getMessage());
-                }
-            }
-            listFolders.add(selectedData.toString());
-            SettingsService.setFolders(new HashSet<String>(listFolders));
-            ((ArrayAdapter)listViewFolders.getAdapter()).notifyDataSetChanged();
-        }
-    }
 
     private class ListViewItemClickListener implements AdapterView.OnItemClickListener {
         private final List<String> list;

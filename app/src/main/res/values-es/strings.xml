@@ -41,4 +41,8 @@
     <string name="section_content">Contenido</string>
     <string name="section_security">Seguridad</string>
     <string name="select_language">Idioma de la aplicación:</string>
+    <string name="title_activity_about">Acerca de</string>
+    <string name="about_developer_label">Desarrollador:</string>
+    <string name="about_credits_label">Agradecimientos:</string>
+    <string name="about_version_label">Versión (Commit):</string>
 </resources>

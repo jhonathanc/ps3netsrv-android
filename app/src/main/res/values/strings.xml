@@ -50,10 +50,10 @@
     <string name="section_content">Content</string>
     <string name="section_security">Security</string>
     <string name="select_language">App language:</string>
-    <string name="title_activity_about">Sobre</string>
-    <string name="about_developer_label">Desenvolvedor:</string>
+    <string name="title_activity_about">About</string>
+    <string name="about_developer_label">Developer:</string>
     <string name="about_developer_value">Jhonathan Corrêa</string>
-    <string name="about_credits_label">Agradecimentos:</string>
+    <string name="about_credits_label">Thanks to:</string>
     <string name="about_credits_value">Aldostools</string>
-    <string name="about_version_label">Versão (Commit):</string>
+    <string name="about_version_label">Version (Commit):</string>
 </resources>

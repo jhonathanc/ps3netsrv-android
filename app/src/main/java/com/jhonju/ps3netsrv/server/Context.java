@@ -7,22 +7,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.Set;
 
 public class Context {
     private Socket socket;
 
-    private final Set<String> rootDirectorys;
+    private final List<String> rootDirectorys;
     private Set<IFile> file;
     private CDSectorSize cdSectorSize;
 
-    public Context(Socket socket, Set<String> rootDirectorys) {
+    public Context(Socket socket, List<String> rootDirectorys) {
         this.rootDirectorys = rootDirectorys;
         this.socket = socket;
         this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
     }
 
-    public Set<String> getRootDirectorys() { return rootDirectorys; }
+    public List<String> getRootDirectorys() { return rootDirectorys; }
 
     public boolean isSocketConnected() { return socket.isConnected(); }
 

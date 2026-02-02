@@ -82,6 +82,7 @@ public class ReadDirCommand extends AbstractCommand {
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
         List<ReadDirEntry> entries = new ArrayList<>();
+        Set<String> addedNames = new java.util.HashSet<>();
         Set<IFile> directories = ctx.getFile();
         if (directories != null) {
             for (IFile file : directories) {
@@ -90,13 +91,15 @@ public class ReadDirCommand extends AbstractCommand {
                     IFile[] files = file.listFiles();
                     for (IFile f : files) {
                         if (entries.size() == MAX_ENTRIES) break;
-                        ReadDirEntry entry = new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), f.getName() != null ? f.getName() : "");
-                        boolean entryExists = false;
-                        for (ReadDirEntry entryAux : entries) {
-                            entryExists = (Arrays.equals(entry.dName, entryAux.dName) && entry.cIsDirectory == entryAux.cIsDirectory);
-                            if (entryExists) break;
+                        String fileName = f.getName() != null ? f.getName() : "";
+                        // If file already added (by name and type), skip it.
+                        // We use a simple Key format: "NAME|IS_DIR" to distinguish if needed, 
+                        // but typically if a file exists with same name in multiple folders, we just take the first one found.
+                        if (!addedNames.contains(fileName + f.isDirectory())) {
+                             ReadDirEntry entry = new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(), f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), fileName);
+                             entries.add(entry);
+                             addedNames.add(fileName + f.isDirectory());
                         }
-                        if (!entryExists) entries.add(entry);
                     }
                 }
             }

@@ -27,6 +27,8 @@ public class FileCustom implements IFile {
     private final PS3RegionInfo[] regionInfos;
     private final byte[] iv = new byte[16];
 
+    public File getRealFile() { return file; }
+
     public FileCustom(File file) throws IOException {
         this.file = file;
         byte[] redumpKey = null;

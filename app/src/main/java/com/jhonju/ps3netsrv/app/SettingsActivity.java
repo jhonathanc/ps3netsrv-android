@@ -14,6 +14,8 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.components.SimpleFileChooser;
 
+import java.util.Collections;
+
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -67,7 +69,8 @@ public class SettingsActivity extends AppCompatActivity {
                                 }
                             }
                             listFolders.add(selectedData.toString());
-                            SettingsService.setFolders(new HashSet<>(listFolders));
+                            listFolders.add(selectedData.toString());
+                            SettingsService.setFolders(listFolders);
                             ((ArrayAdapter) listViewFolders.getAdapter()).notifyDataSetChanged();
                         }
                     }
@@ -325,7 +328,8 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onFileSelected(File file) {
             listFolders.add(file.getAbsolutePath());
-            SettingsService.setFolders(new HashSet<String>(listFolders));
+            listFolders.add(file.getAbsolutePath());
+            SettingsService.setFolders(listFolders);
             ((ArrayAdapter)listViewFolders.getAdapter()).notifyDataSetChanged();
         }
     };
@@ -364,7 +368,7 @@ public class SettingsActivity extends AppCompatActivity {
         hasError = showMessage(view, message) || hasError;
         if (!hasError) {
             SettingsService.setIps(new HashSet<>(listIps));
-            SettingsService.setFolders(new HashSet<>(listFolders));
+            SettingsService.setFolders(listFolders);
             SettingsService.setListType(((RadioGroup) findViewById(R.id.rgIpListType)).getCheckedRadioButtonId());
             showMessage(view, getResources().getString(R.string.saveSuccess));
             return true;

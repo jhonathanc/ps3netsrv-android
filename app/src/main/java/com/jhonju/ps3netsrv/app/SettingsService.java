@@ -3,6 +3,12 @@ package com.jhonju.ps3netsrv.app;
 import android.content.SharedPreferences;
 import android.os.Environment;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import com.jhonju.ps3netsrv.R;
 
 import java.io.File;
@@ -22,12 +28,6 @@ public class SettingsService {
     public static int getPort() { return spPort.getInt(settings, PS3NetSrvApp.getAppContext().getResources().getInteger(R.integer.defaultPort)); }
 
     public static Set<String> getIps() { return spIps.getStringSet(settings, new HashSet<String>()); }
-
-    public static Set<String> getFolders() {
-        HashSet<String> folders = new HashSet<String>();
-        folders.add(spFolder.getString(settings, getDefaultFolder())); //if user has updated to this new version, reuse the settings.
-        return spFolders.getStringSet(settings, folders);
-    }
 
     public static int getListType() { return spListType.getInt(settings, 0); }
 
@@ -55,9 +55,59 @@ public class SettingsService {
         editor.apply();
     }
 
-    public static void setFolders(Set<String> folders) {
+    public static List<String> getFolders() {
+        if (!spFolders.contains(settings)) {
+            // Migration logic: Check if old SET exists
+            if (spFolder.contains(settings)) {
+                // Very old single folder setting
+                List<String> folders = new ArrayList<>();
+                folders.add(spFolder.getString(settings, getDefaultFolder()));
+                setFolders(folders);
+                return folders;
+            }
+             // Check if Set<String> exists in the same preference key (might throw ClassCastException if we change type directly)
+             // To be safe, we use a new key name for the List, or handle the error.
+             // Given SharedPreferences limitations, it's SAFER to use a NEW KEY for the ordered list.
+             // Let's call it "FOLDERS_ORDERED".
+        }
+        
+        String jsonLink = spFolders.getString("FOLDERS_JSON", null);
+        List<String> folders = new ArrayList<>();
+        
+        if (jsonLink == null) {
+             // Try to migrate from the old StringSet if it exists
+             Set<String> oldSet = spFolders.getStringSet(settings, null);
+             if (oldSet != null) {
+                 folders.addAll(oldSet);
+                 setFolders(folders); // Save as JSON
+                 // Optional: remove old key? spFolders.edit().remove(settings).apply();
+             } else {
+                 // Default
+                 folders.add(getDefaultFolder());
+             }
+        } else {
+            try {
+                JSONArray jsonArray = new JSONArray(jsonLink);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    folders.add(jsonArray.getString(i));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                folders.add(getDefaultFolder());
+            }
+        }
+        return folders;
+    }
+
+    public static void setFolders(List<String> folders) {
         SharedPreferences.Editor editor = spFolders.edit();
-        editor.putStringSet(settings, folders);
+        JSONArray jsonArray = new JSONArray();
+        for (String folder : folders) {
+            jsonArray.put(folder);
+        }
+        editor.putString("FOLDERS_JSON", jsonArray.toString());
+        // Also save to the old key for backward compatibility or safety if needed? 
+        // No, let's switch to the new one.
         editor.apply();
     }
 

@@ -6,12 +6,13 @@ import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 import java.util.Set;
 
 public class PS3NetSrvTask implements Runnable {
     private final Thread.UncaughtExceptionHandler exceptionHandler;
     private final int port;
-    private final Set<String> folderPaths;
+    private final List<String> folderPaths;
     private final int maxConnections;
     private final EListType listType;
     private final Set<String> filterAddresses;
@@ -22,7 +23,7 @@ public class PS3NetSrvTask implements Runnable {
         return isRunning;
     }
 
-    public PS3NetSrvTask(int port, Set<String> folderPaths, int maxConnections, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
+    public PS3NetSrvTask(int port, List<String> folderPaths, int maxConnections, Set<String> filterAddresses, EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
         this.port = port;
         this.folderPaths = folderPaths;
         this.maxConnections = maxConnections;

@@ -94,13 +94,29 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
                     return;
                 }
 
-                //TODO: fix file stats
+                // Get file attributes
                 long[] fileTimes = {0, 0};
+                long modifiedTime = fileAux.lastModified() / MILLISECONDS_IN_SECOND;
+                
+                try {
+                     // Try to get BasicFileAttributes if it's a FileCustom (normal Java File)
+                     if (fileAux instanceof com.jhonju.ps3netsrv.server.io.FileCustom) {
+                         java.nio.file.Path path = ((java.io.File) ((com.jhonju.ps3netsrv.server.io.FileCustom) fileAux).getRealFile()).toPath();
+                         java.nio.file.attribute.BasicFileAttributes attrs = java.nio.file.Files.readAttributes(path, java.nio.file.attribute.BasicFileAttributes.class);
+                         fileTimes[0] = attrs.creationTime().toMillis() / MILLISECONDS_IN_SECOND;
+                         fileTimes[1] = attrs.lastAccessTime().toMillis() / MILLISECONDS_IN_SECOND;
+                         modifiedTime = attrs.lastModifiedTime().toMillis() / MILLISECONDS_IN_SECOND;
+                     }
+                } catch (Exception e) {
+                    // Ignore errors, use defaults
+                }
+                
+                if (fileTimes[0] == 0) fileTimes[0] = modifiedTime;
+                if (fileTimes[1] == 0) fileTimes[1] = modifiedTime;
+
                 send(new ReadDirEntryResultV2(
                                 fileAux.isDirectory() ? EMPTY_SIZE : file.length()
-                                , fileAux.lastModified() / MILLISECONDS_IN_SECOND
-//                , fileTimes[0] / MILLISECONDS_IN_SECOND
-//                , fileTimes[1] / MILLISECONDS_IN_SECOND
+                                , modifiedTime
                                 , fileTimes[0]
                                 , fileTimes[1]
                                 , (short) (fileAux.getName() != null ? fileAux.getName().length() : 0)

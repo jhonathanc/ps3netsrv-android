@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -79,14 +80,14 @@ public class FirstFragment extends Fragment {
                     isServerRunning = !isServerRunning;
                     btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);
 
-                    Set<String> folderPaths = SettingsService.getFolders();
+                    List<String> folderPaths = SettingsService.getFolders();
                     Set<String> folderPathsAux = new HashSet<>();
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         for (String folderPath: folderPaths) {
                             folderPathsAux.add(URLDecoder.decode(folderPath, StandardCharsets.UTF_8.displayName()));
                         }
                     } else {
-                        folderPathsAux = folderPaths;
+                        folderPathsAux = new HashSet<>(folderPaths);
                     }
                     int port = SettingsService.getPort();
 

@@ -88,7 +88,7 @@ public class Utils {
                 IvParameterSpec ivParams = new IvParameterSpec(resetIV(iv,startLBA + i));
                 cipher.init(Cipher.DECRYPT_MODE, key, ivParams);
                 int offset = SECTOR_SIZE * i;
-                byte[] decryptedSector = cipher.doFinal(data);
+                byte[] decryptedSector = cipher.doFinal(data, offset, SECTOR_SIZE);
                 System.arraycopy(decryptedSector, 0, data, offset, SECTOR_SIZE);
             }
         } catch (Exception e) {

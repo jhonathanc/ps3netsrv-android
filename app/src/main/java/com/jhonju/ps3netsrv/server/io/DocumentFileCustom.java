@@ -64,7 +64,7 @@ public class DocumentFileCustom implements IFile {
             this.decryptionKey = null;
             this.encryptionType = EEncryptionType.NONE;
         }
-        this.regionInfos = regionInfos;
+        this.regionInfos = regionInfos != null ? regionInfos : new PS3RegionInfo[0];
     }
 
     private static byte[] getRedumpKey(DocumentFile parent, String fileName) throws IOException {

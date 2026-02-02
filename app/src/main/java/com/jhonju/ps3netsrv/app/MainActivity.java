@@ -194,6 +194,9 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
+        } else if (id == R.id.action_about) {
+            startActivity(new Intent(this, AboutActivity.class));
+            return true;
         }
 
         return super.onOptionsItemSelected(item);

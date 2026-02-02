@@ -16,4 +16,8 @@ public class PS3NetSrvApp extends Application {
         return PS3NetSrvApp.context;
     }
 
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(com.jhonju.ps3netsrv.app.utils.LocaleHelper.onAttach(base));
+    }
 }

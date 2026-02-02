@@ -4,6 +4,7 @@
         <item>English</item>
         <item>Español</item>
         <item>Português</item>
+        <item>Ryukyuan</item>
     </string-array>
     <string name="app_name">ps3netsrv</string>
     <string name="action_settings">設定</string>

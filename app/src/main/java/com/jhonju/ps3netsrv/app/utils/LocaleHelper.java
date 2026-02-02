@@ -46,7 +46,7 @@ public class LocaleHelper {
         SharedPreferences preferences = context.getSharedPreferences("language_settings", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(SELECTED_LANGUAGE, language);
-        editor.apply();
+        editor.commit();
     }
 
     @TargetApi(Build.VERSION_CODES.N)

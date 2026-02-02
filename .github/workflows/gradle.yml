@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Check commit message
       run: |
         MESSAGE=$(git log --format=%B -n 1 $GITHUB_SHA)
@@ -24,10 +24,10 @@ jobs:
           exit 0
         fi
     - name: Set up JDK 11
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v4
       with:
         java-version: '11'
-        distribution: 'adopt'
+        distribution: 'temurin'
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Grant execute permission on generateGitProperties
@@ -35,7 +35,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assembleDebug
     - name: Upload files
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ps3netsrv-android
         path: app/build/outputs/apk/debug/app-debug.apk

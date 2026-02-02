@@ -72,6 +72,22 @@ public class SettingsActivity extends AppCompatActivity {
             }
     );
 
+    private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(),
+            new ActivityResultCallback<Boolean>() {
+                @Override
+                public void onActivityResult(Boolean isGranted) {
+                    if (isGranted) {
+                        // Permission granted, automatically click the button again or show message
+                         findViewById(R.id.btnSelectFolder).performClick();
+                    } else {
+                        // Permission denied
+                         Snackbar.make(findViewById(android.R.id.content), R.string.read_external_permission_error, Snackbar.LENGTH_LONG).show();
+                    }
+                }
+            }
+    );
+
     private String savePortValue() {
         TextInputLayout tilPort = findViewById(R.id.tilPort);
         try {
@@ -174,7 +190,7 @@ public class SettingsActivity extends AppCompatActivity {
                         fileDialog.showDialog();
                     }
                 } else {
-                    showMessage(view, getResources().getString(R.string.read_external_permission_error));
+                    requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
                 }
             }
         });

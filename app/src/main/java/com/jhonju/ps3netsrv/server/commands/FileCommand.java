@@ -80,11 +80,10 @@ public abstract class FileCommand extends AbstractCommand {
                 
                 if (!formattedPath.isEmpty()) {
                     String[] paths = formattedPath.split("/");
-                    if (paths.length > 0) {
-                        for (String s : paths) {
-                            documentFile = documentFile.findFile(s);
-                            if (documentFile == null) break;
-                        }
+                    for (String s : paths) {
+                        if (s.isEmpty()) continue;
+                        documentFile = findFileSafely(documentFile, s);
+                        if (documentFile == null) break;
                     }
                 }
                 
@@ -95,9 +94,7 @@ public abstract class FileCommand extends AbstractCommand {
                 // Use Standard File I/O
                 String fullPath = rootDirectory;
                 if (!formattedPath.isEmpty()) {
-                     // java.io.File handles paths with slashes correctly, but we need to verify if formattedPath needs leading slash check
-                     // current getFormattedPath removes leading slash.
-                     // new File(root, relative) works.
+                     // java.io.File handles paths with slashes correctly
                      fullPath = new java.io.File(rootDirectory, formattedPath).getAbsolutePath();
                 }
                 
@@ -109,12 +106,30 @@ public abstract class FileCommand extends AbstractCommand {
         }
         
         if (files.isEmpty()) {
-            // For MakeDir, it is possible the parent also doesn't exist? 
-            // Usually we assume parent exists. If it doesn't, we fail.
-            // But if generic getFile fails, we throw.
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: file not found.");
         }
         return files;
+    }
+
+    private DocumentFile findFileSafely(DocumentFile parent, String name) {
+        if (parent == null) return null;
+        
+        // Fast path: Try direct lookup
+        DocumentFile file = parent.findFile(name);
+        if (file != null && file.exists()) {
+            return file;
+        }
+
+        // Slow path: Iterate to find match (ignoring case)
+        // This handles Android 14 SAF issues where findFile might fail or case differs
+        DocumentFile[] files = parent.listFiles();
+        for (DocumentFile f : files) {
+            String fileName = f.getName();
+            if (fileName != null && fileName.equalsIgnoreCase(name)) {
+                return f;
+            }
+        }
+        return null;
     }
 }

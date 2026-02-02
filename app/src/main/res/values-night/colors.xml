@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PS Blue Desaturated for Dark Mode -->
+    <color name="colorPrimary">#90CAF9</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#64B5F6</color>
+    
+    <!-- Dark High Contrast Backgrounds -->
+    <color name="colorBackground">#121212</color>
+    <color name="colorSurface">#1E1E1E</color>
+    
+    <!-- Text Colors for Dark Backgrounds -->
+    <color name="textColorPrimary">#E0E0E0</color>
+    <color name="textColorSecondary">#B0B0B0</color>
+    
+    <!-- Status Colors -->
+    <color name="colorStatusRun">#81C784</color>
+    <color name="colorStatusStop">#E57373</color>
+</resources>

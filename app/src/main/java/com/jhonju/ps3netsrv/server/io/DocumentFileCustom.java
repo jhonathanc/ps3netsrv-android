@@ -212,4 +212,29 @@ public class DocumentFileCustom implements IFile {
             pfd = null;
         }
     }
+
+    @Override
+    public void write(byte[] buffer) throws IOException {
+        if (documentFile != null && documentFile.isFile()) {
+            try (java.io.OutputStream os = contentResolver.openOutputStream(documentFile.getUri())) {
+                if (os != null) {
+                    os.write(buffer);
+                } else {
+                    throw new IOException("Failed to open output stream");
+                }
+            }
+        } else {
+             throw new IOException("File is not writable or does not exist");
+        }
+    }
+
+    @Override
+    public boolean createDirectory(String name) {
+        return documentFile != null && documentFile.createDirectory(name) != null;
+    }
+
+    @Override
+    public boolean createFile(String name) {
+        return documentFile != null && documentFile.createFile(null, name) != null;
+    }
 }

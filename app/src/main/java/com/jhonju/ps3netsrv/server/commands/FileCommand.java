@@ -38,6 +38,10 @@ public abstract class FileCommand extends AbstractCommand {
     }
 
     protected Set<IFile> getFile() throws IOException, PS3NetSrvException {
+        return getFile(false);
+    }
+
+    protected Set<IFile> getFile(boolean resolveParent) throws IOException, PS3NetSrvException {
         ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), this.filePathLength);
         if (buffer == null) {
             send(ERROR_CODE_BYTEARRAY);
@@ -47,11 +51,24 @@ public abstract class FileCommand extends AbstractCommand {
         String path = new String(buffer.array(), StandardCharsets.UTF_8);
 
         HashSet<IFile> files = new HashSet<>();
-        if (files == null) {
-             files = new HashSet<>();
-        }
         
         String formattedPath = getFormattedPath(path);
+        String childName = "";
+
+        if (resolveParent) {
+            if (formattedPath.endsWith("/")) {
+                formattedPath = formattedPath.substring(0, formattedPath.length() - 1);
+            }
+            int lastSlash = formattedPath.lastIndexOf('/');
+            if (lastSlash >= 0) {
+                childName = formattedPath.substring(lastSlash + 1);
+                formattedPath = formattedPath.substring(0, lastSlash);
+            } else {
+                childName = formattedPath;
+                formattedPath = "";
+            }
+            this.fileName = childName;
+        }
         
         for (String rootDirectory : ctx.getRootDirectorys()) {
             if (rootDirectory.startsWith("content:")) {
@@ -64,7 +81,7 @@ public abstract class FileCommand extends AbstractCommand {
                 if (!formattedPath.isEmpty()) {
                     String[] paths = formattedPath.split("/");
                     if (paths.length > 0) {
-                         for (String s : paths) {
+                        for (String s : paths) {
                             documentFile = documentFile.findFile(s);
                             if (documentFile == null) break;
                         }
@@ -76,7 +93,15 @@ public abstract class FileCommand extends AbstractCommand {
                 }
             } else {
                 // Use Standard File I/O
-                java.io.File javaFile = new java.io.File(rootDirectory, path.replaceAll("\\x00+$", ""));
+                String fullPath = rootDirectory;
+                if (!formattedPath.isEmpty()) {
+                     // java.io.File handles paths with slashes correctly, but we need to verify if formattedPath needs leading slash check
+                     // current getFormattedPath removes leading slash.
+                     // new File(root, relative) works.
+                     fullPath = new java.io.File(rootDirectory, formattedPath).getAbsolutePath();
+                }
+                
+                java.io.File javaFile = new java.io.File(fullPath);
                 if (javaFile.exists()) {
                      files.add(new FileCustom(javaFile));
                 }
@@ -84,6 +109,9 @@ public abstract class FileCommand extends AbstractCommand {
         }
         
         if (files.isEmpty()) {
+            // For MakeDir, it is possible the parent also doesn't exist? 
+            // Usually we assume parent exists. If it doesn't, we fail.
+            // But if generic getFile fails, we throw.
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: file not found.");
         }

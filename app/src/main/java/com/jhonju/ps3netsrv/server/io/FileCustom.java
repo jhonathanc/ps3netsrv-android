@@ -175,6 +175,29 @@ public class FileCustom implements IFile {
 
     @Override
     public void close() throws IOException {
-        randomAccessFile.close();
+        if (randomAccessFile != null) {
+            randomAccessFile.close();
+        }
+    }
+
+    @Override
+    public void write(byte[] buffer) throws IOException {
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+            fos.write(buffer);
+        }
+    }
+
+    @Override
+    public boolean createDirectory(String name) {
+        return new File(file, name).mkdir();
+    }
+
+    @Override
+    public boolean createFile(String name) {
+        try {
+            return new File(file, name).createNewFile();
+        } catch (IOException e) {
+            return false;
+        }
     }
 }

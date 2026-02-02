@@ -54,9 +54,9 @@ public class Context {
         if (files != null) {
             for (IFile file : files) {
                 if (file != null && file.isFile()) {
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                    if (file instanceof File) {
                         readOnlyFile = new RandomAccessFile(((File) file).getFile(), "r");
-                    } else {
+                    } else if (file instanceof DocumentFile) {
                         readOnlyFile = new RandomAccessFileLollipop(PS3NetSrvApp.getAppContext(), ((DocumentFile) file).getDocumentFile(), "r");
                     }
                 }

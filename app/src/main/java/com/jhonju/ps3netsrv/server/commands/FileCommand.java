@@ -43,42 +43,45 @@ public abstract class FileCommand extends AbstractCommand {
         String path = new String(buffer.array(), StandardCharsets.UTF_8);
 
         HashSet<IFile> files = new HashSet<>();
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            for (String rootDirectory : ctx.getRootDirectorys()) {
-                File fileAux = new File(new java.io.File(rootDirectory, path.replaceAll("\\x00+$", "")));
-                if (fileAux.exists()) {
-                    files.add(fileAux);
-                }
-            }
-            if (files.isEmpty()) {
-                send(ERROR_CODE_BYTEARRAY);
-                throw new PS3NetSrvException("ERROR: file not found.");
-            }
-            return files;
+        if (files == null) {
+             files = new HashSet<>();
         }
-
+        
         String formattedPath = getFormattedPath(path);
-
-        String[] paths = formattedPath.split("/");
+        
         for (String rootDirectory : ctx.getRootDirectorys()) {
-            androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(rootDirectory));
-            if (documentFile == null || !documentFile.exists()) {
-                send(ERROR_CODE_BYTEARRAY);
-                throw new PS3NetSrvException("ERROR: wrong path configuration.");
-            }
-            if (!formattedPath.isEmpty()) {
-                if (paths.length > 0) {
-                    if (documentFile != null && documentFile.exists()) {
-                        for (String s : paths) {
+            if (rootDirectory.startsWith("content:")) {
+                // Use SAF (DocumentFile)
+                androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile.fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(rootDirectory));
+                if (documentFile == null || !documentFile.exists()) {
+                    continue;
+                }
+                
+                if (!formattedPath.isEmpty()) {
+                    String[] paths = formattedPath.split("/");
+                    if (paths.length > 0) {
+                         for (String s : paths) {
                             documentFile = documentFile.findFile(s);
                             if (documentFile == null) break;
                         }
                     }
                 }
+                
+                if (documentFile != null && documentFile.exists()) {
+                    files.add(new DocumentFile(documentFile));
+                }
+            } else {
+                // Use Standard File I/O
+                java.io.File javaFile = new java.io.File(rootDirectory, path.replaceAll("\\x00+$", ""));
+                if (javaFile.exists()) {
+                     files.add(new File(javaFile));
+                }
             }
-            if (documentFile != null) {
-                files.add(new DocumentFile(documentFile));
-            }
+        }
+        
+        if (files.isEmpty()) {
+            send(ERROR_CODE_BYTEARRAY);
+            throw new PS3NetSrvException("ERROR: file not found.");
         }
         return files;
     }

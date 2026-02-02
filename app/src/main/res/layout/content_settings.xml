@@ -7,14 +7,34 @@
     android:layout_height="match_parent"
     tools:context=".app.SettingsActivity">
 
+    <TextView
+        android:id="@+id/tvAppLanguage"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:text="@string/select_language"
+        android:gravity="center_vertical"
+        android:layout_marginTop="?attr/actionBarSize"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Spinner
+        android:id="@+id/language_spinner"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:entries="@array/languages"
+        android:prompt="@string/select_language"
+        app:layout_constraintStart_toEndOf="@id/tvAppLanguage"
+        app:layout_constraintTop_toTopOf="@+id/tvAppLanguage"
+        app:layout_constraintBottom_toBottomOf="@+id/tvAppLanguage"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilPort"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="?attr/actionBarSize"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/tvAppLanguage">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPort"
@@ -51,13 +71,19 @@
         app:layout_constraintTop_toTopOf="@+id/tilFolder"
         app:layout_constraintBottom_toBottomOf="@+id/tilFolder"/>
 
+    <ListView
+        android:id="@+id/lvFolders"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        app:layout_constraintTop_toBottomOf="@+id/tilFolder" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilMaximumClientsNumber"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toStartOf="@+id/cbReadOnly"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tilFolder">
+        app:layout_constraintTop_toBottomOf="@id/lvFolders">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etMaximumClientsNumber"

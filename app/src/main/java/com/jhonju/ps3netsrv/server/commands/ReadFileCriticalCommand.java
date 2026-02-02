@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
 
 public class ReadFileCriticalCommand extends ReadFileCommand {
 
@@ -15,10 +14,13 @@ public class ReadFileCriticalCommand extends ReadFileCommand {
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
         byte[] result = new byte[numBytes];
-        IRandomAccessFile file = ctx.getReadOnlyFile();
         try {
-            file.seek(offset);
-            if (file.read(result) < EMPTY_SIZE) {
+            int bytesRead = 0;
+            java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> files = ctx.getFile();
+            if (files != null && !files.isEmpty()) {
+                bytesRead = files.iterator().next().read(result, offset);
+            }
+            if (bytesRead < EMPTY_SIZE) {
                 throw new PS3NetSrvException("Error reading file. EOF");
             }
         } catch (IOException e) {

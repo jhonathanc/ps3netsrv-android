@@ -11,12 +11,13 @@ import java.util.Set;
 
 public class SettingsService {
     private static final String settings = "settings";
-    private static SharedPreferences spPort = PS3NetSrvApp.getAppContext().getSharedPreferences("PORT",0);
-    private static SharedPreferences spFolder = PS3NetSrvApp.getAppContext().getSharedPreferences("FOLDER",0);
-    private static SharedPreferences spFolders = PS3NetSrvApp.getAppContext().getSharedPreferences("FOLDERS",0);
-    private static SharedPreferences spIps = PS3NetSrvApp.getAppContext().getSharedPreferences("IPS",0);
-    private static SharedPreferences spListType = PS3NetSrvApp.getAppContext().getSharedPreferences("LIST_TYPE",0);
-    private static SharedPreferences spMaxConnections = PS3NetSrvApp.getAppContext().getSharedPreferences("MAX_CONNECTIONS",0);
+    private static final SharedPreferences spPort = PS3NetSrvApp.getAppContext().getSharedPreferences("PORT",0);
+    private static final SharedPreferences spFolder = PS3NetSrvApp.getAppContext().getSharedPreferences("FOLDER",0);
+    private static final SharedPreferences spFolders = PS3NetSrvApp.getAppContext().getSharedPreferences("FOLDERS",0);
+    private static final SharedPreferences spIps = PS3NetSrvApp.getAppContext().getSharedPreferences("IPS",0);
+    private static final SharedPreferences spListType = PS3NetSrvApp.getAppContext().getSharedPreferences("LIST_TYPE",0);
+    private static final SharedPreferences spMaxConnections = PS3NetSrvApp.getAppContext().getSharedPreferences("MAX_CONNECTIONS",0);
+    private static final SharedPreferences spReadOnly = PS3NetSrvApp.getAppContext().getSharedPreferences("READ_ONLY",0);
 
     public static int getPort() { return spPort.getInt(settings, PS3NetSrvApp.getAppContext().getResources().getInteger(R.integer.defaultPort)); }
 
@@ -31,6 +32,8 @@ public class SettingsService {
     public static int getListType() { return spListType.getInt(settings, 0); }
 
     public static int getMaxConnections() { return spMaxConnections.getInt(settings, 0); }
+
+    public static boolean isReadOnly() { return spReadOnly.getBoolean(settings, false); }
 
     private static String getDefaultFolder() {
         String state = Environment.getExternalStorageState();

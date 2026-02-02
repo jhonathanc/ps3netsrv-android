@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
@@ -139,7 +140,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
 
                 if (permission == PERMISSION_GRANTED) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
                         startActivityForResult(intent, REQUEST_CODE_PICK_FOLDER);
                     } else {
@@ -228,13 +229,23 @@ public class SettingsActivity extends AppCompatActivity {
         }
     };
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_CODE_PICK_FOLDER && resultCode == RESULT_OK && data != null) {
-            listFolders.add(data.getData().toString());
+            Uri selectedData = data.getData();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                try {
+                    // Persist read/write permissions for the selected URI
+                    getContentResolver().takePersistableUriPermission(selectedData, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                } catch (SecurityException e) {
+                    // Ignore if context doesn't have permission to grant/persist, or if URI is not persistable
+                    Log.e("SettingsActivity", "Failed to persist URI permission: " + e.getMessage());
+                }
+            }
+            listFolders.add(selectedData.toString());
             SettingsService.setFolders(new HashSet<String>(listFolders));
             ((ArrayAdapter)listViewFolders.getAdapter()).notifyDataSetChanged();
         }

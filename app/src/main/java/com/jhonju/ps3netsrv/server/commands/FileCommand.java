@@ -3,11 +3,13 @@ package com.jhonju.ps3netsrv.server.commands;
 import android.net.Uri;
 import android.os.Build;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.io.DocumentFile;
-import com.jhonju.ps3netsrv.server.io.File;
+import com.jhonju.ps3netsrv.server.io.DocumentFileCustom;
+import com.jhonju.ps3netsrv.server.io.FileCustom;
 import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
@@ -20,6 +22,8 @@ import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 
 public abstract class FileCommand extends AbstractCommand {
     protected short filePathLength;
+    protected String fileName;
+    protected DocumentFile currentDirectory;
 
     public FileCommand(Context ctx, short filePathLength) {
         super(ctx);
@@ -68,13 +72,13 @@ public abstract class FileCommand extends AbstractCommand {
                 }
                 
                 if (documentFile != null && documentFile.exists()) {
-                    files.add(new DocumentFile(documentFile));
+                    files.add(new DocumentFileCustom(documentFile));
                 }
             } else {
                 // Use Standard File I/O
                 java.io.File javaFile = new java.io.File(rootDirectory, path.replaceAll("\\x00+$", ""));
                 if (javaFile.exists()) {
-                     files.add(new File(javaFile));
+                     files.add(new FileCustom(javaFile));
                 }
             }
         }

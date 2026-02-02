@@ -1,15 +1,7 @@
 package com.jhonju.ps3netsrv.server;
 
-import android.os.Build;
-
-import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
-import com.jhonju.ps3netsrv.server.io.DocumentFile;
-import com.jhonju.ps3netsrv.server.io.File;
 import com.jhonju.ps3netsrv.server.io.IFile;
-import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
-import com.jhonju.ps3netsrv.server.io.RandomAccessFile;
-import com.jhonju.ps3netsrv.server.io.RandomAccessFileLollipop;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,9 +11,9 @@ import java.util.Set;
 
 public class Context {
     private Socket socket;
+
     private final Set<String> rootDirectorys;
     private Set<IFile> file;
-    private IRandomAccessFile readOnlyFile;
     private CDSectorSize cdSectorSize;
 
     public Context(Socket socket, Set<String> rootDirectorys) {
@@ -48,40 +40,28 @@ public class Context {
         return socket.getOutputStream();
     }
 
-    public void setFile(Set<IFile> files) throws IOException {
+    public void setFile(Set<IFile> files) {
         this.file = files;
-        this.readOnlyFile = null;
-        if (files != null) {
-            for (IFile file : files) {
-                if (file != null && file.isFile()) {
-                    if (file instanceof File) {
-                        readOnlyFile = new RandomAccessFile(((File) file).getFile(), "r");
-                    } else if (file instanceof DocumentFile) {
-                        readOnlyFile = new RandomAccessFileLollipop(PS3NetSrvApp.getAppContext(), ((DocumentFile) file).getDocumentFile(), "r");
-                    }
-                }
-                break;
-            }
-        }
     }
 
     public Set<IFile> getFile() {
         return file;
     }
 
-    public IRandomAccessFile getReadOnlyFile() {
-        return readOnlyFile;
+    public boolean isReadOnly() {
+        return com.jhonju.ps3netsrv.app.SettingsService.isReadOnly();
     }
 
     public void close() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            if (readOnlyFile != null) {
+        if (file != null) {
+            for (IFile f : file) {
                 try {
-                    readOnlyFile.close();
+                    f.close();
                 } catch (IOException e) {
-                    readOnlyFile = null;
+                    // Ignore close errors
                 }
             }
+            file = null;
         }
 
         if (socket != null && !socket.isClosed()) {

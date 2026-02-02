@@ -1,10 +1,7 @@
 package com.jhonju.ps3netsrv.server;
 
-import com.jhonju.ps3netsrv.server.commands.CreateFileCommand;
-import com.jhonju.ps3netsrv.server.commands.DeleteFileCommand;
 import com.jhonju.ps3netsrv.server.commands.GetDirSizeCommand;
 import com.jhonju.ps3netsrv.server.commands.ICommand;
-import com.jhonju.ps3netsrv.server.commands.MakeDirCommand;
 import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;
 import com.jhonju.ps3netsrv.server.commands.OpenFileCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadCD2048Command;
@@ -15,6 +12,9 @@ import com.jhonju.ps3netsrv.server.commands.ReadFileCommand;
 import com.jhonju.ps3netsrv.server.commands.ReadFileCriticalCommand;
 import com.jhonju.ps3netsrv.server.commands.StatFileCommand;
 import com.jhonju.ps3netsrv.server.commands.WriteFileCommand;
+import com.jhonju.ps3netsrv.server.commands.CreateFileCommand;
+import com.jhonju.ps3netsrv.server.commands.MakeDirCommand;
+import com.jhonju.ps3netsrv.server.commands.DeleteFileCommand;
 import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
@@ -110,7 +110,7 @@ public class ContextHandler extends Thread {
                 command = new CreateFileCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));
                 break;
             case NETISO_CMD_WRITE_FILE:
-                command = new WriteFileCommand(ctx, buffer.getInt(IDX_CMD_DATA_2));
+                command = new WriteFileCommand(ctx, buffer.getShort(IDX_CMD_DATA_1), buffer.getInt(IDX_CMD_DATA_2));
                 break;
             case NETISO_CMD_MKDIR:
                 command = new MakeDirCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));

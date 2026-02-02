@@ -17,13 +17,18 @@ public class CreateFileCommand extends FileCommand {
         }
 
         try {
-            if (currentDirectory == null) {
-                send(ERROR_CODE_BYTEARRAY);
-                throw new PS3NetSrvException("ERROR: Current directory should not be null");
+            java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> parents = getFile(true);
+            boolean success = false;
+            
+            for (com.jhonju.ps3netsrv.server.io.IFile parent : parents) {
+                if (parent != null && parent.exists() && parent.isDirectory()) {
+                    if (parent.createFile(fileName)) {
+                        success = true;
+                    }
+                }
             }
-            //ctx.setWriteOnlyFile(null);
-
-            if (currentDirectory.createFile("application/someType", fileName) == null) {
+            
+            if (!success) {
                 throw new IOException("ERROR: create error on " + fileName);
             }
             //ctx.setWriteOnlyFile(file);

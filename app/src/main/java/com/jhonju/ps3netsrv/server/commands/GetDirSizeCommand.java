@@ -6,6 +6,8 @@ import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class GetDirSizeCommand extends FileCommand {
 
@@ -20,15 +22,19 @@ public class GetDirSizeCommand extends FileCommand {
         send(Utils.longToBytesBE(calculateFileSize(getFile())));
     }
 
-    private static long calculateFileSize(IFile file) {
+    private static long calculateFileSize(Set<IFile> files) throws IOException {
         long fileSize = EMPTY_SIZE;
-        if (file.isDirectory()) {
-            IFile[] files = file.listFiles();
-            for (IFile subFile : files) {
-                fileSize += calculateFileSize(subFile);
+        for (IFile file : files) {
+            if (file.isDirectory()) {
+                IFile[] filesAux = file.listFiles();
+                for (IFile subFile : filesAux) {
+                    Set<IFile> subFileAux = new HashSet<>();
+                    subFileAux.add(subFile);
+                    fileSize += calculateFileSize(subFileAux);
+                }
+            } else {
+                fileSize = file.length();
             }
-        } else {
-            fileSize = file.length();
         }
         return fileSize;
     }

@@ -4,8 +4,6 @@ import android.os.Build;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.io.File;
-
 import java.io.IOException;
 
 public class MakeDirCommand extends FileCommand {
@@ -21,10 +19,21 @@ public class MakeDirCommand extends FileCommand {
             throw new PS3NetSrvException("Failed to make dir: server is executing as read only");
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            send(((File)getFile()).mkdir() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
-        } else {
-            send(currentDirectory.createDirectory(fileName) != null ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
+        // Get parents
+        java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> parents = getFile(true);
+        boolean success = false;
+        
+        for (com.jhonju.ps3netsrv.server.io.IFile parent : parents) {
+            if (parent != null && parent.exists() && parent.isDirectory()) {
+                 if (parent.createDirectory(fileName)) {
+                     success = true;
+                     // Assuming we want to create in all matching roots? or just first?
+                     // If we succeed in one, we count it as success? behavior consistency?
+                     // Usually merging implies mirroring. If we create, we assume success.
+                 }
+            }
         }
+        
+        send(success ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
     }
 }

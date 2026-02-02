@@ -20,7 +20,7 @@
     <string name="start_server">Iniciar servidor</string>
     <string name="stop_server">Parar servidor</string>
     <string name="server_stopped">Servidor parado</string>
-    <string name="server_running">Servidor em execução na %s\nporta %d\npasta %s</string>
+    <string name="server_running">Servidor em execução na %s\nporta %d\npastas: %s</string>
     <string name="read_external_permission_error">Você precisa conceder permissões de leitura de armazenamento primeiro</string>
     <string name="listType">Tipo de lista:</string>
     <string name="rbNone">Nenhum</string>
@@ -30,12 +30,15 @@
     <string name="add">Adicionar</string>
     <string name="ipRemoved">IP Removido: </string>
     <string name="undo">Desfazer</string>
-    <string name="select">Selecionar</string>
+    <string name="select">Adicionar pasta</string>
     <string name="empty_response_error">Tentativa de enviar uma resposta vazia para %s (método %s)</string>
     <string name="readOnly">Somente leitura</string>
     <string name="maxConnectedClients">Limite de conexões (0 significa ilimitado):</string>
     <string name="readOnlyDescription">Marque esta opção para evitar que os clientes criem ou excluam arquivos no servidor</string>
     <string name="negativeMaxConnectedClients">Limite de conexões não pode ser negativo.</string>
     <string name="invalidMaxConnectedClients">Limite de conexões inválido</string>
+    <string name="section_general">Geral</string>
+    <string name="section_content">Conteúdo</string>
+    <string name="section_security">Segurança</string>
     <string name="select_language">Idioma da aplicação:</string>
 </resources>

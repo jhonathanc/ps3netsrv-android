@@ -50,7 +50,7 @@ public class PS3NetService extends Service {
         executorService = Executors.newSingleThreadExecutor();
         int idListType = SettingsService.getListType();
         EListType eListType = idListType == R.id.rbNone ? EListType.LIST_TYPE_NONE : idListType == R.id.rbAllowed ? EListType.LIST_TYPE_ALLOWED : EListType.LIST_TYPE_BLOCKED;
-        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolder(), SettingsService.getMaxConnections(), SettingsService.isReadOnly(), SettingsService.getIps(), eListType, exceptionHandler);
+        task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolders(), SettingsService.getMaxConnections(), SettingsService.getIps(), eListType, exceptionHandler);
     }
 
     @Override
@@ -108,4 +108,8 @@ public class PS3NetService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) { return null; }
+
+    public static boolean isRunning() {
+        return task != null && task.isRunning();
+    }
 }

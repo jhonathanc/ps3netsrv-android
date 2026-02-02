@@ -7,10 +7,10 @@ import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
-import com.jhonju.ps3netsrv.server.io.IRandomAccessFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Set;
 
 public class OpenFileCommand extends FileCommand {
 
@@ -49,34 +49,37 @@ public class OpenFileCommand extends FileCommand {
 
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
-        IFile file = getFile();
-        if (file == null) {
+        Set<IFile> files = getFile();
+        if (files == null || files.isEmpty()) {
             ctx.setFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: on OpenFileCommand - file not exists");
         }
-        ctx.setFile(file);
+        ctx.setFile(files);
+        
+        // Use the first file in the set, or iterate if needed. 
+        // For OpenFile, we typically expect one valid file.
+        IFile file = files.iterator().next(); 
 
         try {
-            determineCdSectorSize(ctx.getReadOnlyFile());
+            determineCdSectorSize(file);
         } catch (IOException e) {
             ctx.setFile(null);
             send(new OpenFileResult());
             throw new PS3NetSrvException("Error: not possible to determine CD Sector size");
         }
+        
         send(new OpenFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND));
     }
 
-    private void determineCdSectorSize(IRandomAccessFile file) throws IOException {
+    private void determineCdSectorSize(IFile file) throws IOException {
         if (file.length() < CD_MINIMUM_SIZE || file.length() > CD_MAXIMUM_SIZE) {
             ctx.setCdSectorSize(null);
             return;
         }
         for (CDSectorSize cdSec : CDSectorSize.values()) {
-            long position = (cdSec.cdSectorSize << 4) + BYTES_TO_SKIP;
             byte[] buffer = new byte[20];
-            file.seek(position);
-            file.read(buffer);
+            file.read(buffer, (cdSec.cdSectorSize << 4) + BYTES_TO_SKIP);
             String strBuffer = new String(buffer, StandardCharsets.US_ASCII);
             if (strBuffer.contains(PLAYSTATION_IDENTIFIER) || strBuffer.contains(CD001_IDENTIFIER)) {
                 ctx.setCdSectorSize(cdSec);

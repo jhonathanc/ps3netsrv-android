@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 public class FirstFragment extends Fragment {
 
@@ -77,13 +79,22 @@ public class FirstFragment extends Fragment {
                     isServerRunning = !isServerRunning;
                     btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);
 
-                    String folderPath = SettingsService.getFolder();
+                    Set<String> folderPaths = SettingsService.getFolders();
+                    Set<String> folderPathsAux = new HashSet<>();
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        folderPath = URLDecoder.decode(folderPath, StandardCharsets.UTF_8.displayName());
+                        for (String folderPath: folderPaths) {
+                            folderPathsAux.add(URLDecoder.decode(folderPath, StandardCharsets.UTF_8.displayName()));
+                        }
+                    } else {
+                        folderPathsAux = folderPaths;
                     }
                     int port = SettingsService.getPort();
 
-                    String serverRunningMsg = isServerRunning ? String.format(getResources().getString(R.string.server_running), Utils.getIPAddress(true), port, folderPath) :
+                    StringBuilder sb = new StringBuilder();
+                    for (String item : folderPathsAux) {
+                        sb.append(item).append("\n");
+                    }
+                    String serverRunningMsg = isServerRunning ? String.format(getResources().getString(R.string.server_running), Utils.getIPAddress(true), port, sb.toString()) :
                             getResources().getString(R.string.server_stopped);
 
                     tvServerState.setText(serverRunningMsg);

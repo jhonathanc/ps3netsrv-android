@@ -1,156 +1,238 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/colorBackground"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".app.SettingsActivity">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilPort"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="?attr/actionBarSize"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPort"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:hint="@string/port"
-            android:inputType="number" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilFolder"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toStartOf="@+id/btnSelectFolder"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tilPort">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etFolder"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:enabled="false"
-            android:hint="@string/folder"
-            android:inputType="text" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <Button
-        android:id="@+id/btnSelectFolder"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:text="@string/select"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/tilFolder"
-        app:layout_constraintTop_toTopOf="@+id/tilFolder"
-        app:layout_constraintBottom_toBottomOf="@+id/tilFolder"/>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilMaximumClientsNumber"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toStartOf="@+id/cbReadOnly"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tilFolder">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etMaximumClientsNumber"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:hint="@string/maxConnectedClients"
-            android:inputType="number" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <CheckBox
-        android:id="@+id/cbReadOnly"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:text="@string/readOnly"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/tilMaximumClientsNumber"
-        app:layout_constraintTop_toTopOf="@+id/tilMaximumClientsNumber"
-        app:layout_constraintBottom_toBottomOf="@+id/tilMaximumClientsNumber"/>
-
-    <TextView
-        android:id="@+id/tvListType"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:text="@string/listType"
-        android:gravity="center_vertical"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/rgIpListType"
-        app:layout_constraintTop_toBottomOf="@+id/tilMaximumClientsNumber"/>
-
-    <RadioGroup
-        android:id="@+id/rgIpListType"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:checkedButton="@+id/rbNone"
-        android:orientation="horizontal"
-        app:layout_constraintStart_toEndOf="@id/tvListType"
-        app:layout_constraintTop_toTopOf="@+id/tvListType"
-        app:layout_constraintBottom_toBottomOf="@+id/tvListType"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <RadioButton
-            android:id="@+id/rbNone"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="@string/rbNone" />
-
-        <RadioButton
-            android:id="@+id/rbAllowed"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="@string/rbAllowed" />
-
-        <RadioButton
-            android:id="@+id/rbBlocked"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="@string/rbBlocked" />
-    </RadioGroup>
-
-
-    <EditText
-        android:id="@+id/etIp"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:layout_weight="1"
-        android:inputType="number|numberDecimal"
-        android:digits="0123456789."
-        android:hint="@string/ipAddress"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btnAddIp"
-        app:layout_constraintTop_toBottomOf="@+id/tvListType" />
-
-    <Button
-        android:id="@+id/btnAddIp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/add"
-        app:layout_constraintTop_toTopOf="@+id/etIp"
-        app:layout_constraintBottom_toBottomOf="@+id/etIp"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <ListView
-        android:id="@+id/lvIps"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/etIp" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <Button
-        android:id="@+id/btnSave"
+        <!-- General Settings Section -->
+        <TextView
+            android:id="@+id/tvSectionGeneral"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/section_general"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+    <TextView
+        android:id="@+id/tvAppLanguage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/save"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/lvIps" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:text="@string/select_language"
+        android:textColor="@color/textColorPrimary"
+        android:layout_marginEnd="16dp"/>
+
+            <Spinner
+                android:id="@+id/language_spinner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:entries="@array/languages"/>
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPort"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPort"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/port"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Content Section -->
+        <TextView
+            android:id="@+id/tvSectionContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/section_content"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilFolder"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etFolder"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:enabled="false"
+                    android:hint="@string/folder"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btnSelectFolder"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="@string/add"/>
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/lvFolders"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="@color/colorSurface"
+            android:elevation="2dp"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Security Section -->
+        <TextView
+            android:id="@+id/tvSectionSecurity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/section_security"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilMaximumClientsNumber"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etMaximumClientsNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/maxConnectedClients"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <CheckBox
+            android:id="@+id/cbReadOnly"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/readOnly"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tvListType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/listType"
+            android:textColor="@color/textColorPrimary"
+            android:layout_marginBottom="4dp"/>
+
+        <RadioGroup
+            android:id="@+id/rgIpListType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checkedButton="@+id/rbNone"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <RadioButton
+                android:id="@+id/rbNone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/rbNone" />
+
+            <RadioButton
+                android:id="@+id/rbAllowed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/rbAllowed" />
+
+            <RadioButton
+                android:id="@+id/rbBlocked"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/rbBlocked" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilIp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp">
+                
+                <EditText
+                    android:id="@+id/etIp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number|numberDecimal"
+                    android:digits="0123456789."
+                    android:hint="@string/ipAddress"
+                    android:background="@android:color/transparent"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btnAddIp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="@string/add"/>
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/lvIps"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:background="@color/colorSurface"
+            android:elevation="2dp"
+            android:layout_marginBottom="24dp"/>
+
+        <Button
+            android:id="@+id/btnSave"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="@string/save"
+            android:layout_marginBottom="16dp"/>
+
+    </LinearLayout>
+</ScrollView>

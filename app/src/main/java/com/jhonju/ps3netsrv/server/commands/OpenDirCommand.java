@@ -5,6 +5,7 @@ import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
 
 import java.io.IOException;
+import java.util.Set;
 
 public class OpenDirCommand  extends FileCommand {
 
@@ -12,13 +13,22 @@ public class OpenDirCommand  extends FileCommand {
 
     @Override
     public void executeTask() throws PS3NetSrvException, IOException {
-        IFile file = getFile();
-        if (file.exists()) {
-            ctx.setFile(file);
-            send(file.isDirectory() ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
-        } else {
+        Set<IFile> files = getFile();
+        boolean isDirectory = false;
+        if (files == null) {
             ctx.setFile(null);
             send(ERROR_CODE_BYTEARRAY);
+            return;
         }
+        for (IFile file : files) {
+            if (!file.exists()) {
+                ctx.setFile(null);
+                send(ERROR_CODE_BYTEARRAY);
+                return;
+            }
+            isDirectory = isDirectory || file.isDirectory();
+        }
+        ctx.setFile(files);
+        send(isDirectory ? SUCCESS_CODE_BYTEARRAY : ERROR_CODE_BYTEARRAY);
     }
 }

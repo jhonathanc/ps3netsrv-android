@@ -11,19 +11,22 @@ import java.util.Set;
 
 public class SettingsService {
     private static final String settings = "settings";
-    private static SharedPreferences spPort = PS3NetSrvApp.getAppContext().getSharedPreferences("PORT",0);
-    private static SharedPreferences spFolder = PS3NetSrvApp.getAppContext().getSharedPreferences("FOLDER",0);
-    private static SharedPreferences spIps = PS3NetSrvApp.getAppContext().getSharedPreferences("IPS",0);
-    private static SharedPreferences spListType = PS3NetSrvApp.getAppContext().getSharedPreferences("LIST_TYPE",0);
-    private static SharedPreferences spMaxConnections = PS3NetSrvApp.getAppContext().getSharedPreferences("MAX_CONNECTIONS",0);
-    private static SharedPreferences spReadOnly = PS3NetSrvApp.getAppContext().getSharedPreferences("READ_ONLY",0);
+    private static final SharedPreferences spPort = PS3NetSrvApp.getAppContext().getSharedPreferences("PORT",0);
+    private static final SharedPreferences spFolder = PS3NetSrvApp.getAppContext().getSharedPreferences("FOLDER",0);
+    private static final SharedPreferences spFolders = PS3NetSrvApp.getAppContext().getSharedPreferences("FOLDERS",0);
+    private static final SharedPreferences spIps = PS3NetSrvApp.getAppContext().getSharedPreferences("IPS",0);
+    private static final SharedPreferences spListType = PS3NetSrvApp.getAppContext().getSharedPreferences("LIST_TYPE",0);
+    private static final SharedPreferences spMaxConnections = PS3NetSrvApp.getAppContext().getSharedPreferences("MAX_CONNECTIONS",0);
+    private static final SharedPreferences spReadOnly = PS3NetSrvApp.getAppContext().getSharedPreferences("READ_ONLY",0);
 
     public static int getPort() { return spPort.getInt(settings, PS3NetSrvApp.getAppContext().getResources().getInteger(R.integer.defaultPort)); }
 
     public static Set<String> getIps() { return spIps.getStringSet(settings, new HashSet<String>()); }
 
-    public static String getFolder() {
-        return spFolder.getString(settings, getDefaultFolder());
+    public static Set<String> getFolders() {
+        HashSet<String> folders = new HashSet<String>();
+        folders.add(spFolder.getString(settings, getDefaultFolder())); //if user has updated to this new version, reuse the settings.
+        return spFolders.getStringSet(settings, folders);
     }
 
     public static int getListType() { return spListType.getInt(settings, 0); }
@@ -52,9 +55,9 @@ public class SettingsService {
         editor.apply();
     }
 
-    public static void setFolder(String folder) {
-        SharedPreferences.Editor editor = spFolder.edit();
-        editor.putString(settings, folder);
+    public static void setFolders(Set<String> folders) {
+        SharedPreferences.Editor editor = spFolders.edit();
+        editor.putStringSet(settings, folders);
         editor.apply();
     }
 
@@ -73,12 +76,6 @@ public class SettingsService {
     public static void setMaxConnections(int maxConnections) {
         SharedPreferences.Editor editor = spMaxConnections.edit();
         editor.putInt(settings, maxConnections);
-        editor.apply();
-    }
-
-    public static void setReadOnly(boolean readOnly) {
-        SharedPreferences.Editor editor = spReadOnly.edit();
-        editor.putBoolean(settings, readOnly);
         editor.apply();
     }
 }

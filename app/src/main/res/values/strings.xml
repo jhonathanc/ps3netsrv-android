@@ -4,6 +4,7 @@
         <item>English</item>
         <item>Español</item>
         <item>Português</item>
+        <item>Ryukyuan</item>
     </string-array>
     <string name="app_name">ps3netsrv</string>
     <string name="action_settings">Settings</string>
@@ -28,7 +29,7 @@
     <string name="start_server">Start server</string>
     <string name="stop_server">Stop server</string>
     <string name="server_stopped">Server is stopped</string>
-    <string name="server_running">Server is running at %s\nport %d\nfolder %s</string>
+    <string name="server_running">Server is running at %s\nport %d\nfolders: %s</string>
     <string name="read_external_permission_error">You need to grant permission to read storage first</string>
     <string name="listType">List type:</string>
     <string name="rbNone">None</string>
@@ -38,12 +39,15 @@
     <string name="add">Add</string>
     <string name="ipRemoved">Deleted IP: </string>
     <string name="undo">Undo</string>
-    <string name="select">Select</string>
+    <string name="select">Add folder</string>
     <string name="empty_response_error">Tried to send an empty response to %s (method %s)</string>
     <string name="readOnly">Read only</string>
     <string name="maxConnectedClients">Max connections (0 means unlimited):</string>
     <string name="negativeMaxConnectedClients">Max connections can\'t be negative.</string>
     <string name="invalidMaxConnectedClients">Invalid max connections</string>
     <string name="readOnlyDescription">Check this to prevent clients from creating or deleting files on the server</string>
+    <string name="section_general">General</string>
+    <string name="section_content">Content</string>
+    <string name="section_security">Security</string>
     <string name="select_language">App language:</string>
 </resources>

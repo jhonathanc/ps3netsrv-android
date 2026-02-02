@@ -2,6 +2,7 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Set;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
@@ -57,22 +58,25 @@ public class StatFileCommand extends FileCommand {
     @Override
     public void executeTask() throws IOException, PS3NetSrvException {
         ctx.setFile(null);
-        IFile file = getFile();
-        if (file != null && file.exists()) {
-            ctx.setFile(file);
-            StatFileResult statResult;
-            if (file.isDirectory()) {
-                statResult = new StatFileResult(EMPTY_SIZE, file.lastModified() / MILLISECONDS_IN_SECOND, file.lastModified() / MILLISECONDS_IN_SECOND, 0, true);
-            } else {
-                long[] fileStats = { 0, 0 };
-                //TODO: fix file stats
-                //statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0] / MILLISECONDS_IN_SECOND, fileStats[1] / MILLISECONDS_IN_SECOND, false);
+        Set<IFile> files = getFile();
+        if (files != null) {
+            for (IFile file : files) {
+                if (!file.exists()) break;
+                ctx.setFile(files);
+                StatFileResult statResult;
+                if (file.isDirectory()) {
+                    statResult = new StatFileResult(EMPTY_SIZE, file.lastModified() / MILLISECONDS_IN_SECOND, file.lastModified() / MILLISECONDS_IN_SECOND, 0, true);
+                } else {
+                    long[] fileStats = {0, 0};
+                    //TODO: fix file stats
+                    //statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0] / MILLISECONDS_IN_SECOND, fileStats[1] / MILLISECONDS_IN_SECOND, false);
 
-                statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0], fileStats[1], false);
+                    statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0], fileStats[1], false);
+                }
+                send(statResult);
+                return;
             }
-            send(statResult);
-        } else {
-            send(new StatFileResult());
         }
+        send(new StatFileResult());
     }
 }

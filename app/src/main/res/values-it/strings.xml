@@ -18,7 +18,7 @@
     <string name="start_server">Avviare il server</string>
     <string name="stop_server">Arrestare il server</string>
     <string name="server_stopped">Il server è stato arrestato</string>
-    <string name="server_running">Il server è in esecuzione su %s\nporta %d\ncartella %s</string>
+    <string name="server_running">Il server è in esecuzione su %s\nporta %d\ncartelle: %s</string>
     <string name="read_external_permission_error">È necessario concedere prima i permessi di lettura dello storage</string>
     <string name="listType">Tipo di lista:</string>
     <string name="rbNone">Nessuno</string>
@@ -28,12 +28,15 @@
     <string name="add">Aggiungi</string>
     <string name="ipRemoved">Indirizzo IP rimosso: </string>
     <string name="undo">Disfare</string>
-    <string name="select">Selezionare</string>
+    <string name="select">Aggiungi cartella</string>
     <string name="empty_response_error">Tentativo di inviare una risposta vuota a %s (metodo %s)</string>
     <string name="readOnly">Sola lettura</string>
     <string name="maxConnectedClients">Max connessioni (0 significa illimitato):</string>
     <string name="readOnlyDescription">Seleziona questa opzione per impedire ai client di creare o eliminare file sul server</string>
     <string name="negativeMaxConnectedClients">Max connessioni non può essere negativa.</string>
     <string name="invalidMaxConnectedClients">Max connessioni non valida</string>
+    <string name="section_general">Generale</string>
+    <string name="section_content">Contenuto</string>
+    <string name="section_security">Sicurezza</string>
     <string name="select_language">Lingua app:</string>
 </resources>

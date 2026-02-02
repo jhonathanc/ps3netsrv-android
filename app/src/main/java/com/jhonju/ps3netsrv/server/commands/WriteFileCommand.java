@@ -8,12 +8,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class WriteFileCommand extends AbstractCommand {
+public class WriteFileCommand extends FileCommand {
 
     private final int numBytes;
 
-    public WriteFileCommand(Context ctx, int numBytes) {
-        super(ctx);
+    public WriteFileCommand(Context ctx, short filePathLength, int numBytes) {
+        super(ctx, filePathLength);
         this.numBytes = numBytes;
     }
 
@@ -24,11 +24,11 @@ public class WriteFileCommand extends AbstractCommand {
             throw new PS3NetSrvException("Failed to write file: server is executing as read only");
         }
 
-        if (ctx.getReadOnlyFile() == null) {
-            send(ERROR_CODE_BYTEARRAY);
-            throw new PS3NetSrvException("ERROR: file is null");
-        }
-
+        // Read filename and resolve files
+        // Note: WriteFile usually expects the file to exist (created by CreateFile)
+        // So we use getFile() without parent resolution.
+        java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> files = getFile();
+        
         if (numBytes > BUFFER_SIZE) {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException(String.format("ERROR: data to write (%d) is larger than buffer size (%d)", numBytes, BUFFER_SIZE));
@@ -39,18 +39,12 @@ public class WriteFileCommand extends AbstractCommand {
             send(ERROR_CODE_BYTEARRAY);
             throw new PS3NetSrvException("ERROR: on write file - content is null");
         }
-
-        send(ERROR_CODE_BYTEARRAY); //TODO: fix writeOnlyFile and remove this line
-//        try (FileOutputStream fos = new FileOutputStream(ctx.getWriteOnlyFile())) {
-//            byte[] content;
-//            try {
-//                content = buffer.array();
-//                fos.write(content);
-//            } catch (IOException ex) {
-//                send(ERROR_CODE_BYTEARRAY);
-//                throw new PS3NetSrvException("ERROR: writing file " + ex.getMessage());
-//            }
-//            send(Utils.intToBytesBE(content.length));
-//        }
+        
+        byte[] content = buffer.array();
+        for (com.jhonju.ps3netsrv.server.io.IFile file : files) {
+             file.write(content);
+        }
+        
+        send(Utils.intToBytesBE(content.length));
     }
 }

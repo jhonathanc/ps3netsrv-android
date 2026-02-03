@@ -19,6 +19,8 @@ import java.util.Set;
 
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 
+import com.jhonju.ps3netsrv.R;
+
 public abstract class FileCommand extends AbstractCommand {
   protected short filePathLength;
   protected String fileName;
@@ -46,7 +48,7 @@ public abstract class FileCommand extends AbstractCommand {
     ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), this.filePathLength);
     if (buffer == null) {
       send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException("ERROR: command failed receiving filename.");
+      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_receiving_filename));
     }
 
     String path = new String(buffer.array(), StandardCharsets.UTF_8);

@@ -3,6 +3,8 @@ package com.jhonju.ps3netsrv.server.commands;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.Utils;
+import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
+import com.jhonju.ps3netsrv.R;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,41 +12,42 @@ import java.nio.ByteBuffer;
 
 public class WriteFileCommand extends FileCommand {
 
-    private final int numBytes;
+  private final int numBytes;
 
-    public WriteFileCommand(Context ctx, short filePathLength, int numBytes) {
-        super(ctx, filePathLength);
-        this.numBytes = numBytes;
+  public WriteFileCommand(Context ctx, short filePathLength, int numBytes) {
+    super(ctx, filePathLength);
+    this.numBytes = numBytes;
+  }
+
+  @Override
+  public void executeTask() throws IOException, PS3NetSrvException {
+    if (ctx.isReadOnly()) {
+      send(ERROR_CODE_BYTEARRAY);
+      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_write_file_readonly));
     }
 
-    @Override
-    public void executeTask() throws IOException, PS3NetSrvException {
-        if (ctx.isReadOnly()) {
-            send(ERROR_CODE_BYTEARRAY);
-            throw new PS3NetSrvException("Failed to write file: server is executing as read only");
-        }
+    // Read filename and resolve files
+    // Note: WriteFile usually expects the file to exist (created by CreateFile)
+    // So we use getFile() without parent resolution.
+    java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> files = getFile();
 
-        // Read filename and resolve files
-        // Note: WriteFile usually expects the file to exist (created by CreateFile)
-        // So we use getFile() without parent resolution.
-        java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> files = getFile();
-        
-        if (numBytes > BUFFER_SIZE) {
-            send(ERROR_CODE_BYTEARRAY);
-            throw new PS3NetSrvException(String.format("ERROR: data to write (%d) is larger than buffer size (%d)", numBytes, BUFFER_SIZE));
-        }
-
-        ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), numBytes);
-        if (buffer == null) {
-            send(ERROR_CODE_BYTEARRAY);
-            throw new PS3NetSrvException("ERROR: on write file - content is null");
-        }
-        
-        byte[] content = buffer.array();
-        for (com.jhonju.ps3netsrv.server.io.IFile file : files) {
-             file.write(content);
-        }
-        
-        send(Utils.intToBytesBE(content.length));
+    if (numBytes > BUFFER_SIZE) {
+      send(ERROR_CODE_BYTEARRAY);
+      throw new PS3NetSrvException(
+          PS3NetSrvApp.getAppContext().getString(R.string.error_write_file_size, numBytes, BUFFER_SIZE));
     }
+
+    ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), numBytes);
+    if (buffer == null) {
+      send(ERROR_CODE_BYTEARRAY);
+      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_write_file_null));
+    }
+
+    byte[] content = buffer.array();
+    for (com.jhonju.ps3netsrv.server.io.IFile file : files) {
+      file.write(content);
+    }
+
+    send(Utils.intToBytesBE(content.length));
+  }
 }

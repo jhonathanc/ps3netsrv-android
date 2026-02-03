@@ -50,4 +50,21 @@
     <string name="section_content">コンテンツ</string>
     <string name="section_security">セキュリティ</string>
     <string name="select_language">アプリの言語：</string>
+    <string name="error_receiving_filename">エラー：ファイル名の受信に失敗しました。</string>
+    <string name="error_byte_array_conversion">バイト配列変換エラー</string>
+    <string name="error_empty_byte_array">応答に送信するバイト配列が空です</string>
+    <string name="error_create_file_readonly">ファイルの作成に失敗しました：サーバーは読み取り専用で実行されています</string>
+    <string name="error_create_file_generic">エラー：%1$s の作成エラー</string>
+    <string name="error_delete_file_readonly">ファイルの削除に失敗しました：サーバーは読み取り専用で実行されています</string>
+    <string name="error_make_dir_readonly">ディレクトリの作成に失敗しました：サーバーは読み取り専用で実行されています</string>
+    <string name="error_open_file_not_exists">エラー：OpenFileCommand - ファイルが存在しません</string>
+    <string name="error_cd_sector_size">エラー：CDセクターサイズを特定できません</string>
+    <string name="error_too_many_sectors">読み取られたセクターが多すぎます！</string>
+    <string name="error_file_null">ファイルはnullであってはいけません</string>
+    <string name="error_no_file_open">ファイルが開かれていません</string>
+    <string name="error_read_file_eof">ファイル読み取りエラー：EOF。</string>
+    <string name="error_read_file_generic">ファイル読み取りエラー。</string>
+    <string name="error_write_file_readonly">ファイルの書き込みに失敗しました：サーバーは読み取り専用で実行されています</string>
+    <string name="error_write_file_size">エラー：書き込むデータ (%1$d) がバッファサイズ (%2$d) よりも大きいです</string>
+    <string name="error_write_file_null">エラー：ファイル書き込み時 - コンテンツがnullです</string>
 </resources>

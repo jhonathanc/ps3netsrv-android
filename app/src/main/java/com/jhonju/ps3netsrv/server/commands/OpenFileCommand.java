@@ -6,6 +6,8 @@ import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
+import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.server.io.IFile;
 
 import java.io.ByteArrayOutputStream;
@@ -14,77 +16,78 @@ import java.util.Set;
 
 public class OpenFileCommand extends FileCommand {
 
-    private static final int RESULT_LENGTH = 16;
-    private static final long CD_MINIMUM_SIZE = 0x200000L;
-    private static final long CD_MAXIMUM_SIZE = 0x35000000L;
-    private static final String PLAYSTATION_IDENTIFIER = "PLAYSTATION ";
-    private static final String CD001_IDENTIFIER = "CD001";
+  private static final int RESULT_LENGTH = 16;
+  private static final long CD_MINIMUM_SIZE = 0x200000L;
+  private static final long CD_MAXIMUM_SIZE = 0x35000000L;
+  private static final String PLAYSTATION_IDENTIFIER = "PLAYSTATION ";
+  private static final String CD001_IDENTIFIER = "CD001";
 
-    public OpenFileCommand(Context ctx, short filePathLength) {
-        super(ctx, filePathLength);
+  public OpenFileCommand(Context ctx, short filePathLength) {
+    super(ctx, filePathLength);
+  }
+
+  private static class OpenFileResult implements IResult {
+    private long aFileSize = ERROR_CODE;
+    private long bModifiedTime = ERROR_CODE;
+
+    public OpenFileResult() {
     }
 
-    private static class OpenFileResult implements IResult {
-        private long aFileSize = ERROR_CODE;
-        private long bModifiedTime = ERROR_CODE;
-
-        public OpenFileResult() { }
-
-        public OpenFileResult(long fileSize, long modifiedTime) {
-            this.aFileSize = fileSize;
-            this.bModifiedTime = modifiedTime;
-        }
-
-        public byte[] toByteArray() throws IOException {
-            ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
-            try {
-                out.write(longToBytesBE(this.aFileSize));
-                out.write(longToBytesBE(this.bModifiedTime));
-                return out.toByteArray();
-            } finally {
-                out.close();
-            }
-        }
+    public OpenFileResult(long fileSize, long modifiedTime) {
+      this.aFileSize = fileSize;
+      this.bModifiedTime = modifiedTime;
     }
 
-    @Override
-    public void executeTask() throws IOException, PS3NetSrvException {
-        Set<IFile> files = getFile();
-        if (files == null || files.isEmpty()) {
-            ctx.setFile(null);
-            send(new OpenFileResult());
-            throw new PS3NetSrvException("Error: on OpenFileCommand - file not exists");
-        }
-        ctx.setFile(files);
-        
-        // Use the first file in the set, or iterate if needed. 
-        // For OpenFile, we typically expect one valid file.
-        IFile file = files.iterator().next(); 
+    public byte[] toByteArray() throws IOException {
+      ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
+      try {
+        out.write(longToBytesBE(this.aFileSize));
+        out.write(longToBytesBE(this.bModifiedTime));
+        return out.toByteArray();
+      } finally {
+        out.close();
+      }
+    }
+  }
 
-        try {
-            determineCdSectorSize(file);
-        } catch (IOException e) {
-            ctx.setFile(null);
-            send(new OpenFileResult());
-            throw new PS3NetSrvException("Error: not possible to determine CD Sector size");
-        }
-        
-        send(new OpenFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND));
+  @Override
+  public void executeTask() throws IOException, PS3NetSrvException {
+    Set<IFile> files = getFile();
+    if (files == null || files.isEmpty()) {
+      ctx.setFile(null);
+      send(new OpenFileResult());
+      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_open_file_not_exists));
+    }
+    ctx.setFile(files);
+
+    // Use the first file in the set, or iterate if needed.
+    // For OpenFile, we typically expect one valid file.
+    IFile file = files.iterator().next();
+
+    try {
+      determineCdSectorSize(file);
+    } catch (IOException e) {
+      ctx.setFile(null);
+      send(new OpenFileResult());
+      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_cd_sector_size));
     }
 
-    private void determineCdSectorSize(IFile file) throws IOException {
-        if (file.length() < CD_MINIMUM_SIZE || file.length() > CD_MAXIMUM_SIZE) {
-            ctx.setCdSectorSize(null);
-            return;
-        }
-        for (CDSectorSize cdSec : CDSectorSize.values()) {
-            byte[] buffer = new byte[20];
-            file.read(buffer, (cdSec.cdSectorSize << 4) + BYTES_TO_SKIP);
-            String strBuffer = new String(buffer, StandardCharsets.US_ASCII);
-            if (strBuffer.contains(PLAYSTATION_IDENTIFIER) || strBuffer.contains(CD001_IDENTIFIER)) {
-                ctx.setCdSectorSize(cdSec);
-                break;
-            }
-        }
+    send(new OpenFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND));
+  }
+
+  private void determineCdSectorSize(IFile file) throws IOException {
+    if (file.length() < CD_MINIMUM_SIZE || file.length() > CD_MAXIMUM_SIZE) {
+      ctx.setCdSectorSize(null);
+      return;
     }
+    for (CDSectorSize cdSec : CDSectorSize.values()) {
+      byte[] buffer = new byte[20];
+      file.read(buffer, (cdSec.cdSectorSize << 4) + BYTES_TO_SKIP);
+      String strBuffer = new String(buffer, StandardCharsets.US_ASCII);
+      if (strBuffer.contains(PLAYSTATION_IDENTIFIER) || strBuffer.contains(CD001_IDENTIFIER)) {
+        ctx.setCdSectorSize(cdSec);
+        break;
+      }
+    }
+  }
 }

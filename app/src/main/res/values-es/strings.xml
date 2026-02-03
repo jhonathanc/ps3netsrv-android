@@ -62,4 +62,8 @@
     <string name="error_write_file_readonly">Error al escribir archivo: El servidor está en modo solo lectura</string>
     <string name="error_write_file_size">Error: El tamaño de los datos (%1$d) excede el búfer (%2$d)</string>
     <string name="error_write_file_null">Error al escribir archivo: Contenido nulo</string>
+    <string name="version_format">Versión: %s</string>
+    <string name="action_ok">OK</string>
+    <string name="connection_disabled">La conexión ethernet/wifi está desactivada</string>
+    <string name="error_occurred">Ocurrió un error: %s</string>
 </resources>

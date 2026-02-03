@@ -67,4 +67,8 @@
     <string name="error_write_file_readonly">書き込み失敗：サーバーは読み取り専用です</string>
     <string name="error_write_file_size">書き込みエラー：データサイズ (%1$d) がバッファ (%2$d) を超えています</string>
     <string name="error_write_file_null">書き込みエラー：コンテンツがnullです</string>
+    <string name="version_format">バージョン: %s</string>
+    <string name="action_ok">OK</string>
+    <string name="connection_disabled">イーサネット/Wi-Fi接続が無効です</string>
+    <string name="error_occurred">エラーが発生しました: %s</string>
 </resources>

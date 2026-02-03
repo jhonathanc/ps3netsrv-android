@@ -60,4 +60,8 @@
     <string name="error_write_file_readonly">Impossibile scrivere il file: Server in modalità sola lettura</string>
     <string name="error_write_file_size">Errore: I dati (%1$d) superano la dimensione del buffer (%2$d)</string>
     <string name="error_write_file_null">Errore scrittura file: Contenuto nullo</string>
+    <string name="version_format">Versione: %s</string>
+    <string name="action_ok">OK</string>
+    <string name="connection_disabled">La connessione ethernet/wifi è disabilitata</string>
+    <string name="error_occurred">Si è verificato un errore: %s</string>
 </resources>

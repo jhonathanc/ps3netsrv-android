@@ -73,4 +73,8 @@
     <string name="error_write_file_readonly">Failed to write file: Server is read-only</string>
     <string name="error_write_file_size">Error: Data size (%1$d) exceeds buffer size (%2$d)</string>
     <string name="error_write_file_null">Error writing file: Content is null</string>
+    <string name="version_format">Version: %s</string>
+    <string name="action_ok">OK</string>
+    <string name="connection_disabled">The ethernet/wifi connection is disabled</string>
+    <string name="error_occurred">An error occurred: %s</string>
 </resources>

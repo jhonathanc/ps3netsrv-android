@@ -1,7 +1,6 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import android.net.Uri;
-import android.os.Build;
 
 import androidx.documentfile.provider.DocumentFile;
 
@@ -82,8 +81,12 @@ public abstract class FileCommand extends AbstractCommand {
                     String[] paths = formattedPath.split("/");
                     for (String s : paths) {
                         if (s.isEmpty()) continue;
-                        documentFile = findFileSafely(documentFile, s);
-                        if (documentFile == null) break;
+                        DocumentFile found = findFileSafely(documentFile, s);
+                        if (found == null) {
+                            documentFile = null;
+                            break;
+                        }
+                        documentFile = found;
                     }
                 }
                 
@@ -91,23 +94,13 @@ public abstract class FileCommand extends AbstractCommand {
                     files.add(new DocumentFileCustom(documentFile));
                 }
             } else {
-                // Use Standard File I/O
                 String fullPath = rootDirectory;
                 if (!formattedPath.isEmpty()) {
-                     // java.io.File handles paths with slashes correctly
                      fullPath = new java.io.File(rootDirectory, formattedPath).getAbsolutePath();
-                }
-                
+                }                
                 java.io.File javaFile = new java.io.File(fullPath);
-                if (javaFile.exists()) {
-                     files.add(new FileCustom(javaFile));
-                }
+                files.add(new FileCustom(javaFile));
             }
-        }
-        
-        if (files.isEmpty()) {
-            send(ERROR_CODE_BYTEARRAY);
-            throw new PS3NetSrvException("ERROR: file not found.");
         }
         return files;
     }

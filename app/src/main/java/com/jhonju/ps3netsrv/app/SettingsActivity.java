@@ -152,6 +152,7 @@ public class SettingsActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_settings);
+    setTitle(R.string.title_activity_settings);
     listViewIps = findViewById(R.id.lvIps);
     listViewFolders = findViewById(R.id.lvFolders);
     Toolbar toolbar = findViewById(R.id.toolbar);
@@ -396,6 +397,7 @@ public class SettingsActivity extends AppCompatActivity {
 
   private void updateViewResources(Context context) {
     Resources resources = context.getResources();
+    setTitle(R.string.title_activity_settings);
     ((TextView) findViewById(R.id.tvSectionGeneral)).setText(resources.getString(R.string.section_general));
     ((TextView) findViewById(R.id.tvSectionContent)).setText(resources.getString(R.string.section_content));
     ((TextView) findViewById(R.id.tvSectionSecurity)).setText(resources.getString(R.string.section_security));

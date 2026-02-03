@@ -29,6 +29,7 @@
     <string name="ipAddress">Dirección IP</string>
     <string name="add">Adicionar</string>
     <string name="ipRemoved">IP Removido: </string>
+    <string name="folderRemoved">Carpeta removida: </string>
     <string name="undo">Deshacer</string>
     <string name="select">Adicionar ruta</string>
     <string name="empty_response_error">Intentando enviar una respuesta vacía para %s (método %s)</string>

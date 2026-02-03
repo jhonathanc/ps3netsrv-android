@@ -288,8 +288,8 @@ public class SettingsActivity extends AppCompatActivity {
       }
     });
 
-    listViewIps.setOnItemClickListener(new ListViewItemClickListener(listIps));
-    listViewFolders.setOnItemClickListener(new ListViewItemClickListener(listFolders));
+    listViewIps.setOnItemClickListener(new ListViewItemClickListener(listIps, R.string.ipRemoved));
+    listViewFolders.setOnItemClickListener(new ListViewItemClickListener(listFolders, R.string.folderRemoved));
 
     RadioGroup rgIpListType = findViewById(R.id.rgIpListType);
     rgIpListType.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -352,9 +352,11 @@ public class SettingsActivity extends AppCompatActivity {
 
   private class ListViewItemClickListener implements AdapterView.OnItemClickListener {
     private final List<String> list;
+    private final int removedMessageResId;
 
-    public ListViewItemClickListener(List<String> list) {
+    public ListViewItemClickListener(List<String> list, int removedMessageResId) {
       this.list = list;
+      this.removedMessageResId = removedMessageResId;
     }
 
     @Override
@@ -365,7 +367,7 @@ public class SettingsActivity extends AppCompatActivity {
       list.remove(position);
       adapter.notifyDataSetChanged();
 
-      Snackbar.make(view, getResources().getString(R.string.ipRemoved) + value, Snackbar.LENGTH_SHORT)
+      Snackbar.make(view, getResources().getString(removedMessageResId) + value, Snackbar.LENGTH_SHORT)
           .setAction(getResources().getString(R.string.undo), new View.OnClickListener() {
             @Override
             public void onClick(View view) {

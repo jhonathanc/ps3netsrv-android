@@ -29,6 +29,7 @@
     <string name="ipAddress">Endereço IP</string>
     <string name="add">Adicionar</string>
     <string name="ipRemoved">IP Removido: </string>
+    <string name="folderRemoved">Pasta removida: </string>
     <string name="undo">Desfazer</string>
     <string name="select">Adicionar pasta</string>
     <string name="empty_response_error">Tentativa de enviar uma resposta vazia para %s (método %s)</string>

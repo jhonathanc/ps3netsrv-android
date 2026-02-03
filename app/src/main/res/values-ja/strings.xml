@@ -38,6 +38,7 @@
     <string name="ipAddress">IPアドレス：</string>
     <string name="add">追加</string>
     <string name="ipRemoved">削除されたIP： </string>
+    <string name="folderRemoved">除外されたフォルダー： </string>
     <string name="undo">元に戻す</string>
     <string name="select">選択</string>
     <string name="empty_response_error">%sに空の応答を送信しようとしました（メソッド %s）</string>

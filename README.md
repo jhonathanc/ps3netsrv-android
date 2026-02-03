@@ -3,6 +3,9 @@
 
 This is an Android implementation of the `ps3netsrv` server, allowing you to stream ISOs and other media files to your PlayStation 3 directly from your Android device.
 
+> [!TIP]
+> **Performance Tip:** For the best streaming performance and to avoid lag or stuttering, it is highly recommended to connect your PS3 to the network using a **wired LAN cable** instead of Wi-Fi.
+
 ## Features
 
 - **Serve PS3 ISOs/Games:** Stream your backups over the local network to your console (WebMAN MOD / multiMAN compatible).
@@ -14,7 +17,7 @@ This is an Android implementation of the `ps3netsrv` server, allowing you to str
   - **IP Whitelist/Blacklist:** Restrict access to specific IP addresses.
   - **Read-Only Mode:** Prevent clients from deleting or modifying files on your device.
 - **Persistent Service:** Option to keep the server running in the background with a persistent notification (Android 13+ supported).
-- **Multilingual:** Available in English, Portuguese, Spanish, and Italian.
+- **Multilingual:** Available in English, Portuguese, Spanish, Italian and Ryukyuan.
 
 ## How to Use
 
@@ -34,6 +37,14 @@ This is an Android implementation of the `ps3netsrv` server, allowing you to str
     - The status will update to show the running port and IP address.
 5.  **Connect from PS3:**
     - On your PS3 (running WebMAN MOD or multiMAN), configure the `ps3netsrv` settings to point to your Android device's IP address and the port you configured (default 38008).
+
+## Screenshots
+
+| Main Screen | Settings |
+|:---:|:---:|
+| <img src="screenshots/main.jpg" width="250" /> | <img src="screenshots/settings.jpg" width="250" /> |
+| **Server Status & Folder List** | **Configuration Options** |
+
 
 ## About
 

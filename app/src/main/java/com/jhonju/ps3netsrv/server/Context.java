@@ -10,21 +10,29 @@ import java.net.Socket;
 import java.util.List;
 import java.util.Set;
 
+import android.content.ContentResolver;
+
 public class Context {
   private Socket socket;
+  private final ContentResolver contentResolver;
 
   private final List<String> rootDirectories;
   private Set<IFile> file;
   private CDSectorSize cdSectorSize;
 
-  public Context(Socket socket, List<String> rootDirectories) {
+  public Context(Socket socket, List<String> rootDirectories, ContentResolver contentResolver) {
     this.rootDirectories = rootDirectories;
     this.socket = socket;
+    this.contentResolver = contentResolver;
     this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
   }
 
   public List<String> getRootDirectories() {
     return rootDirectories;
+  }
+
+  public ContentResolver getContentResolver() {
+    return contentResolver;
   }
 
   public boolean isSocketConnected() {

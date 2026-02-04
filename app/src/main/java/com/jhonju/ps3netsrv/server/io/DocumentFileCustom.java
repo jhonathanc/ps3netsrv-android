@@ -33,7 +33,7 @@ public class DocumentFileCustom implements IFile {
   public final DocumentFile documentFile;
   private final SecretKeySpec decryptionKey;
   private final EEncryptionType encryptionType;
-  private static final ContentResolver contentResolver = PS3NetSrvApp.getAppContext().getContentResolver();
+  private final ContentResolver contentResolver;
   private ParcelFileDescriptor pfd;
   private FileInputStream fis;
   private FileChannel fileChannel;
@@ -41,7 +41,12 @@ public class DocumentFileCustom implements IFile {
   private final byte[] iv = new byte[16];
 
   public DocumentFileCustom(DocumentFile documentFile) throws IOException {
+    this(documentFile, PS3NetSrvApp.getAppContext().getContentResolver());
+  }
+
+  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver) throws IOException {
     this.documentFile = documentFile;
+    this.contentResolver = contentResolver;
     byte[] encryptionKey = null;
     EEncryptionType detectedEncryptionType = EEncryptionType.NONE;
     PS3RegionInfo[] regionInfos = null;
@@ -84,7 +89,7 @@ public class DocumentFileCustom implements IFile {
     this.regionInfos = regionInfos != null ? regionInfos : new PS3RegionInfo[0];
   }
 
-  private static byte[] getRedumpKey(DocumentFile parent, String fileName) throws IOException {
+  private byte[] getRedumpKey(DocumentFile parent, String fileName) throws IOException {
     byte[] decryptionKey = null;
     if (parent != null) {
       String parentName = parent.getName();
@@ -111,7 +116,7 @@ public class DocumentFileCustom implements IFile {
     return decryptionKey;
   }
 
-  private static byte[] getKeyFromDocumentFile(DocumentFile file) throws IOException {
+  private byte[] getKeyFromDocumentFile(DocumentFile file) throws IOException {
     InputStream is = contentResolver.openInputStream(file.getUri());
     try {
       return EncryptionKeyHelper.parseKeyFromStream(is);
@@ -167,7 +172,7 @@ public class DocumentFileCustom implements IFile {
     IFile[] files = new IFile[filesAux.length];
     int i = 0;
     for (DocumentFile fileAux : filesAux) {
-      files[i] = new DocumentFileCustom(fileAux);
+      files[i] = new DocumentFileCustom(fileAux, contentResolver);
       i++;
     }
     return files;
@@ -197,7 +202,7 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public IFile findFile(String fileName) throws IOException {
-    return new DocumentFileCustom(documentFile.findFile(fileName));
+    return new DocumentFileCustom(documentFile.findFile(fileName), contentResolver);
   }
 
   public int read(byte[] buffer, long position) throws IOException {

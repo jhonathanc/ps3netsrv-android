@@ -12,6 +12,7 @@ import java.util.Set;
 public class PS3NetSrvTask implements Runnable {
   private final Thread.UncaughtExceptionHandler exceptionHandler;
   private final int port;
+  private final android.content.ContentResolver contentResolver;
   private final List<String> folderPaths;
   private final int maxConnections;
   private final EListType listType;
@@ -24,8 +25,10 @@ public class PS3NetSrvTask implements Runnable {
   }
 
   public PS3NetSrvTask(int port, List<String> folderPaths, int maxConnections, Set<String> filterAddresses,
-      EListType listType, Thread.UncaughtExceptionHandler exceptionHandler) {
+      EListType listType, Thread.UncaughtExceptionHandler exceptionHandler,
+      android.content.ContentResolver contentResolver) {
     this.port = port;
+    this.contentResolver = contentResolver;
     this.folderPaths = folderPaths;
     this.maxConnections = maxConnections;
     this.filterAddresses = filterAddresses;
@@ -50,7 +53,8 @@ public class PS3NetSrvTask implements Runnable {
           }
           continue;
         }
-        new ContextHandler(new Context(clientSocket, folderPaths), maxConnections, exceptionHandler).start();
+        new ContextHandler(new Context(clientSocket, folderPaths, contentResolver), maxConnections, exceptionHandler)
+            .start();
       }
     } catch (IOException e) {
       exceptionHandler.uncaughtException(null, e);

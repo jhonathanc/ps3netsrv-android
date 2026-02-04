@@ -52,7 +52,8 @@ public class PS3NetService extends Service {
     EListType eListType = idListType == R.id.rbNone ? EListType.LIST_TYPE_NONE
         : idListType == R.id.rbAllowed ? EListType.LIST_TYPE_ALLOWED : EListType.LIST_TYPE_BLOCKED;
     task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolders(),
-        SettingsService.getMaxConnections(), SettingsService.getIps(), eListType, exceptionHandler);
+        SettingsService.getMaxConnections(), SettingsService.getIps(), eListType, exceptionHandler,
+        getContentResolver());
   }
 
   @Override

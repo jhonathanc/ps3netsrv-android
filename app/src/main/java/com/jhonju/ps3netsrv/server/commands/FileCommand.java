@@ -97,7 +97,7 @@ public abstract class FileCommand extends AbstractCommand {
         }
 
         if (documentFile != null && documentFile.exists()) {
-          files.add(new DocumentFileCustom(documentFile));
+          files.add(new DocumentFileCustom(documentFile, ctx.getContentResolver()));
         }
       } else {
         // Use Standard File I/O

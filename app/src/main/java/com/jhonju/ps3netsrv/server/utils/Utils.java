@@ -72,11 +72,11 @@ public class Utils {
         int regionCount = Utils.BytesBEToInt(Arrays.copyOf(sec0sec1, 4)) * 2 - 1;
         PS3RegionInfo[] regionInfos = new PS3RegionInfo[regionCount];
         for (int i = 0; i < regionCount; ++i) {
-            int offsetStart = i * INT_CAPACITY + 8;
-            int offsetEnd = INT_CAPACITY + offsetStart;
+            int offset = 12 + (i * INT_CAPACITY);
+            long lastAddr = (Utils.BytesBEToInt(Arrays.copyOfRange(sec0sec1, offset, offset + INT_CAPACITY)) - (i % 2 == 1 ? 1L : 0L)) * SECTOR_SIZE + SECTOR_SIZE - 1L;
             regionInfos[i] = new PS3RegionInfo(i % 2 == 1
                     , i == 0 ? 0L : regionInfos[i - 1].getLastAddress() + 1L
-                    , (Utils.BytesBEToInt(Arrays.copyOfRange(sec0sec1, offsetEnd, offsetEnd + INT_CAPACITY)) - (i % 2 == 1 ? 1L : 0L)) * SECTOR_SIZE + SECTOR_SIZE - 1L);
+                    , lastAddr);
         }
         return regionInfos;
     }
@@ -85,7 +85,7 @@ public class Utils {
         try {
             Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             for (int i = 0; i < sectorCount; ++i) {
-                IvParameterSpec ivParams = new IvParameterSpec(resetIV(iv,startLBA + i));
+                IvParameterSpec ivParams = new IvParameterSpec(resetIV(iv, startLBA + i));
                 cipher.init(Cipher.DECRYPT_MODE, key, ivParams);
                 int offset = SECTOR_SIZE * i;
                 byte[] decryptedSector = cipher.doFinal(data, offset, SECTOR_SIZE);
@@ -98,10 +98,11 @@ public class Utils {
 
     private static byte[] resetIV(byte[] iv, long lba) {
         Arrays.fill(iv, (byte) 0);
-        iv[12] = (byte) ((lba & 0xFF000000) >> 24);
-        iv[13] = (byte) ((lba & 0x00FF0000) >> 16);
-        iv[14] = (byte) ((lba & 0x0000FF00) >> 8);
-        iv[15] = (byte) (lba & 0x000000FF);
+        // Use unsigned right shift (>>>) and mask after shift to avoid sign extension issues
+        iv[12] = (byte) ((lba >>> 24) & 0xFF);
+        iv[13] = (byte) ((lba >>> 16) & 0xFF);
+        iv[14] = (byte) ((lba >>> 8) & 0xFF);
+        iv[15] = (byte) (lba & 0xFF);
         return iv;
     }
 }

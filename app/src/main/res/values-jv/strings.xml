@@ -50,4 +50,9 @@
     <string name="section_content">コンテンツ</string>
     <string name="section_security">セキュリティ</string>
     <string name="select_language">アプリぬ言語：</string>
+    <string name="error_redump_key_invalid">Redumpキーぬ無効やいびーん</string>
+    <string name="error_redump_key_hex_short">Redumpキーぬ16進文字列ぬみじかさー: %1$d</string>
+    <string name="error_redump_key_size_invalid">Redumpキーぬサイズぬ無効やいびーん: %1$d</string>
+    <string name="error_open_output_stream">出力ストリーム開きゆーさびらん</string>
+    <string name="error_file_not_writable">ファイルんかい書き込みゆーさびらんあらんでぃ存在さびらん</string>
 </resources>

@@ -72,4 +72,9 @@
     <string name="action_ok">OK</string>
     <string name="connection_disabled">イーサネット/Wi-Fi接続が無効です</string>
     <string name="error_occurred">エラーが発生しました: %s</string>
+    <string name="error_redump_key_invalid">Redumpキーが無効です</string>
+    <string name="error_redump_key_hex_short">Redumpキーの16進文字列が短すぎます: %1$d</string>
+    <string name="error_redump_key_size_invalid">Redumpキーのサイズが無効です: %1$d</string>
+    <string name="error_open_output_stream">出力ストリームを開けませんでした</string>
+    <string name="error_file_not_writable">ファイルに書き込めないか、存在しません</string>
 </resources>

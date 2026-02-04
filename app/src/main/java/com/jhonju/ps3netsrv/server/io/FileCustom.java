@@ -8,6 +8,8 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.SECTOR_SIZE;
 
+import com.jhonju.ps3netsrv.R;
+import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
 import com.jhonju.ps3netsrv.server.utils.Utils;
 
@@ -81,14 +83,39 @@ public class FileCustom implements IFile {
     private static byte[] getKeyFromDocumentFile(File file) throws IOException {
         FileInputStream fis = new FileInputStream(file);
         try {
-            byte[] key = new byte[16];
-            if (fis.read(key) < 0) {
-                throw new IOException("Redump key is invalid");
+            byte[] buffer = new byte[64];
+            int bytesRead = fis.read(buffer);
+            if (bytesRead < 0) {
+                throw new IOException(PS3NetSrvApp.getAppContext().getString(R.string.error_redump_key_invalid));
             }
-            return key;
+            
+            if (bytesRead == 16) {
+                byte[] key = new byte[16];
+                System.arraycopy(buffer, 0, key, 0, 16);
+                return key;
+            } else if (bytesRead >= 32) {
+                String hexStr = new String(buffer, 0, bytesRead, com.jhonju.ps3netsrv.server.charset.StandardCharsets.US_ASCII).trim();
+                if (hexStr.length() >= 32) {
+                    return hexStringToBytes(hexStr.substring(0, 32));
+                } else {
+                    throw new IOException(PS3NetSrvApp.getAppContext().getString(R.string.error_redump_key_hex_short, hexStr.length()));
+                }
+            } else {
+                throw new IOException(PS3NetSrvApp.getAppContext().getString(R.string.error_redump_key_size_invalid, bytesRead));
+            }
         } finally {
             fis.close();
         }
+    }
+    
+    private static byte[] hexStringToBytes(String hex) {
+        byte[] bytes = new byte[16];
+        for (int i = 0; i < 16; i++) {
+            int index = i * 2;
+            bytes[i] = (byte) ((Character.digit(hex.charAt(index), 16) << 4)
+                             + Character.digit(hex.charAt(index + 1), 16));
+        }
+        return bytes;
     }
 
     public boolean mkdir() {
@@ -170,6 +197,7 @@ public class FileCustom implements IFile {
                     return bytesRead;
                 }
                 Utils.decryptData(decryptionKey, iv, buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
+                return bytesRead;
             }
         }
         return bytesRead;

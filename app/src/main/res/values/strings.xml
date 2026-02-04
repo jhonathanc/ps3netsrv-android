@@ -78,4 +78,9 @@
     <string name="action_ok">OK</string>
     <string name="connection_disabled">The ethernet/wifi connection is disabled</string>
     <string name="error_occurred">An error occurred: %s</string>
+    <string name="error_redump_key_invalid">Redump key is invalid</string>
+    <string name="error_redump_key_hex_short">Redump key hex string too short: %1$d</string>
+    <string name="error_redump_key_size_invalid">Redump key has invalid size: %1$d</string>
+    <string name="error_open_output_stream">Failed to open output stream</string>
+    <string name="error_file_not_writable">File is not writable or does not exist</string>
 </resources>

@@ -65,4 +65,9 @@
     <string name="action_ok">OK</string>
     <string name="connection_disabled">La connessione ethernet/wifi è disabilitata</string>
     <string name="error_occurred">Si è verificato un errore: %s</string>
+    <string name="error_redump_key_invalid">Chiave Redump non valida</string>
+    <string name="error_redump_key_hex_short">Stringa esadecimale chiave Redump troppo corta: %1$d</string>
+    <string name="error_redump_key_size_invalid">Dimensione chiave Redump non valida: %1$d</string>
+    <string name="error_open_output_stream">Impossibile aprire il flusso di output</string>
+    <string name="error_file_not_writable">Il file non è scrivibile o non esiste</string>
 </resources>

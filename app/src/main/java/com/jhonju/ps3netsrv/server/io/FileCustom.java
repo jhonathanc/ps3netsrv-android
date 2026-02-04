@@ -102,42 +102,10 @@ public class FileCustom implements IFile {
   private static byte[] getKeyFromDocumentFile(File file) throws IOException {
     FileInputStream fis = new FileInputStream(file);
     try {
-      byte[] buffer = new byte[64];
-      int bytesRead = fis.read(buffer);
-      if (bytesRead < 0) {
-        throw new IOException(PS3NetSrvApp.getAppContext().getString(R.string.error_redump_key_invalid));
-      }
-
-      if (bytesRead == 16) {
-        byte[] key = new byte[16];
-        System.arraycopy(buffer, 0, key, 0, 16);
-        return key;
-      } else if (bytesRead >= 32) {
-        String hexStr = new String(buffer, 0, bytesRead, com.jhonju.ps3netsrv.server.charset.StandardCharsets.US_ASCII)
-            .trim();
-        if (hexStr.length() >= 32) {
-          return hexStringToBytes(hexStr.substring(0, 32));
-        } else {
-          throw new IOException(
-              PS3NetSrvApp.getAppContext().getString(R.string.error_redump_key_hex_short, hexStr.length()));
-        }
-      } else {
-        throw new IOException(
-            PS3NetSrvApp.getAppContext().getString(R.string.error_redump_key_size_invalid, bytesRead));
-      }
+      return EncryptionKeyHelper.parseKeyFromStream(fis);
     } finally {
       fis.close();
     }
-  }
-
-  private static byte[] hexStringToBytes(String hex) {
-    byte[] bytes = new byte[16];
-    for (int i = 0; i < 16; i++) {
-      int index = i * 2;
-      bytes[i] = (byte) ((Character.digit(hex.charAt(index), 16) << 4)
-          + Character.digit(hex.charAt(index + 1), 16));
-    }
-    return bytes;
   }
 
   private static byte[] get3K3YKey(RandomAccessFile raf) throws IOException {
@@ -149,20 +117,11 @@ public class FileCustom implements IFile {
     raf.seek(_3K3Y_KEY_OFFSET);
     int bytesRead = raf.read(key);
 
-    if (bytesRead != ENCRYPTION_KEY_SIZE || isKeyEmpty(key)) {
+    if (bytesRead != ENCRYPTION_KEY_SIZE || EncryptionKeyHelper.isKeyEmpty(key)) {
       return null;
     }
 
     return key;
-  }
-
-  private static boolean isKeyEmpty(byte[] key) {
-    for (byte b : key) {
-      if (b != 0) {
-        return false;
-      }
-    }
-    return true;
   }
 
   public boolean mkdir() {

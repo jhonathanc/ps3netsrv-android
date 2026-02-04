@@ -24,6 +24,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.os.Environment;
 import android.text.InputFilter;
@@ -36,20 +37,24 @@ import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.CheckBox;
+import android.widget.Spinner;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
 public class SettingsActivity extends AppCompatActivity {
 
+  private SettingsViewModel viewModel;
   private List<String> listIps = new ArrayList<>();
   private List<String> listFolders = new ArrayList<>();
   private ListView listViewIps;
   private ListView listViewFolders;
+  private ArrayAdapter<String> adapterIps;
+  private ArrayAdapter<String> adapterFolders;
 
   private SimpleFileChooser fileDialog;
 
@@ -69,9 +74,8 @@ public class SettingsActivity extends AppCompatActivity {
                   Log.e("SettingsActivity", "Failed to persist URI permission: " + e.getMessage());
                 }
               }
-              listFolders.add(selectedData.toString());
-              SettingsService.setFolders(listFolders);
-              ((ArrayAdapter) listViewFolders.getAdapter()).notifyDataSetChanged();
+              // Add to ViewModel
+              viewModel.addFolder(selectedData.toString());
             }
           }
         }
@@ -94,47 +98,6 @@ public class SettingsActivity extends AppCompatActivity {
         }
       });
 
-  private String savePortValue() {
-    TextInputLayout tilPort = findViewById(R.id.tilPort);
-    try {
-      int port = Integer.parseInt(tilPort.getEditText().getText().toString().trim());
-      if (port <= 1024)
-        return getResources().getString(R.string.negativePortValue);
-      SettingsService.setPort(port);
-      return "";
-    } catch (NumberFormatException nfe) {
-      return getResources().getString(R.string.invalidPortValue);
-    }
-  }
-
-  private String saveMaxConnection() {
-    TextInputLayout tilMaximumClientsNumber = findViewById(R.id.tilMaximumClientsNumber);
-    try {
-      int maxConn = Integer.parseInt(tilMaximumClientsNumber.getEditText().getText().toString().trim());
-      if (maxConn < 0)
-        return getResources().getString(R.string.negativeMaxConnectedClients);
-      SettingsService.setMaxConnections(maxConn);
-      return "";
-    } catch (NumberFormatException nfe) {
-      return getResources().getString(R.string.invalidMaxConnectedClients);
-    }
-  }
-
-  private void loadSettings() {
-    ((TextInputLayout) findViewById(R.id.tilPort)).getEditText().setText(SettingsService.getPort() + "");
-    ((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber)).getEditText()
-        .setText(SettingsService.getMaxConnections() + "");
-    listIps.addAll(SettingsService.getIps());
-    listFolders.addAll(SettingsService.getFolders());
-    int listType = SettingsService.getListType();
-    if (listType > 0) {
-      RadioButton radio = findViewById(listType);
-      if (radio != null)
-        radio.setChecked(true);
-    }
-    ((android.widget.CheckBox) findViewById(R.id.cbReadOnly)).setChecked(SettingsService.isReadOnly());
-  }
-
   private boolean showMessage(View view, String message) {
     if (!message.equals("")) {
       Snackbar.make(view, message, Snackbar.LENGTH_LONG)
@@ -153,6 +116,10 @@ public class SettingsActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_settings);
+
+    // Initialize ViewModel
+    viewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
+
     setTitle(R.string.title_activity_settings);
     listViewIps = findViewById(R.id.lvIps);
     listViewFolders = findViewById(R.id.lvFolders);
@@ -160,21 +127,74 @@ public class SettingsActivity extends AppCompatActivity {
 
     setSupportActionBar(toolbar);
 
-    loadSettings();
+    // Setup Adapters
+    adapterIps = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listIps);
+    adapterFolders = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listFolders);
+
+    listViewIps.setAdapter(adapterIps);
+    listViewFolders.setAdapter(adapterFolders);
+
+    // Observe ViewModel LiveData
+    observeViewModel();
 
     // Fallback for older Android versions
     fileDialog = new SimpleFileChooser(this, Environment.getExternalStorageDirectory(), onFileSelectedListener, true);
 
-    // Language Spinner Setup
-    android.widget.Spinner languageSpinner = findViewById(R.id.language_spinner);
+    setupLanguageSpinner();
+    setupSaveButton();
+    setupAddFolderButton();
+    setupIpControls();
+
+    listViewIps.setOnItemClickListener(new ListViewItemClickListener(true, R.string.ipRemoved));
+    listViewFolders.setOnItemClickListener(new ListViewItemClickListener(false, R.string.folderRemoved));
+  }
+
+  private void observeViewModel() {
+    viewModel.getPort().observe(this, port -> {
+      ((TextInputLayout) findViewById(R.id.tilPort)).getEditText().setText(String.valueOf(port));
+    });
+
+    viewModel.getMaxConnections().observe(this, max -> {
+      ((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber)).getEditText().setText(String.valueOf(max));
+    });
+
+    viewModel.getIps().observe(this, ips -> {
+      listIps.clear();
+      if (ips != null)
+        listIps.addAll(ips);
+      adapterIps.notifyDataSetChanged();
+    });
+
+    viewModel.getFolders().observe(this, folders -> {
+      listFolders.clear();
+      if (folders != null)
+        listFolders.addAll(folders);
+      adapterFolders.notifyDataSetChanged();
+    });
+
+    viewModel.getListType().observe(this, type -> {
+      if (type > 0) {
+        RadioButton radio = findViewById(type);
+        if (radio != null)
+          radio.setChecked(true);
+      }
+    });
+
+    viewModel.getReadOnly().observe(this, readOnly -> {
+      ((CheckBox) findViewById(R.id.cbReadOnly)).setChecked(readOnly);
+    });
+  }
+
+  private void setupLanguageSpinner() {
+    Spinner languageSpinner = findViewById(R.id.language_spinner);
     String currentLanguage = com.jhonju.ps3netsrv.app.utils.LocaleHelper.getLanguage(this);
-    int position = getIndexFromLanguage(currentLanguage);
+    int position = Language.fromCode(currentLanguage).getIndex();
     languageSpinner.setSelection(position);
 
     languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        String selectedLang = getLanguageFromIndex(position);
+        String selectedLang = Language.fromIndex(position).getCode();
         if (!selectedLang.equals(com.jhonju.ps3netsrv.app.utils.LocaleHelper.getLanguage(SettingsActivity.this))) {
           Context localizedContext = com.jhonju.ps3netsrv.app.utils.LocaleHelper.setLocale(SettingsActivity.this,
               selectedLang);
@@ -185,188 +205,165 @@ public class SettingsActivity extends AppCompatActivity {
 
       @Override
       public void onNothingSelected(AdapterView<?> parent) {
-        // Do nothing
       }
     });
+  }
 
+  private void setupSaveButton() {
     Button btnSave = findViewById(R.id.btnSave);
-    btnSave.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View view) {
-        if (PS3NetService.isRunning()) {
-          new androidx.appcompat.app.AlertDialog.Builder(SettingsActivity.this)
-              .setTitle(getString(R.string.title_activity_settings))
-              .setMessage(getString(R.string.server_restart_prompt))
-              .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                if (saveSettings(view)) {
-                  // Restart Service
-                  stopService(new Intent(SettingsActivity.this, PS3NetService.class));
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(new Intent(SettingsActivity.this, PS3NetService.class));
-                  } else {
-                    startService(new Intent(SettingsActivity.this, PS3NetService.class));
-                  }
-                }
-              })
-              .setNegativeButton(android.R.string.no, null)
-              .show();
-        } else {
-          saveSettings(view);
-        }
+    btnSave.setOnClickListener(view -> {
+      if (PS3NetService.isRunning()) {
+        new androidx.appcompat.app.AlertDialog.Builder(SettingsActivity.this)
+            .setTitle(getString(R.string.title_activity_settings))
+            .setMessage(getString(R.string.server_restart_prompt))
+            .setPositiveButton(android.R.string.yes, (dialog, which) -> attemptSave(view))
+            .setNegativeButton(android.R.string.no, null)
+            .show();
+      } else {
+        attemptSave(view);
       }
     });
+  }
 
+  private void attemptSave(View view) {
+    // Validate Inputs
+    TextInputLayout tilPort = findViewById(R.id.tilPort);
+    TextInputLayout tilMaxClients = findViewById(R.id.tilMaximumClientsNumber);
+    String portStr = tilPort.getEditText().getText().toString().trim();
+    String maxConnStr = tilMaxClients.getEditText().getText().toString().trim();
+    int listType = ((RadioGroup) findViewById(R.id.rgIpListType)).getCheckedRadioButtonId();
+    boolean readOnly = ((CheckBox) findViewById(R.id.cbReadOnly)).isChecked();
+
+    // Perform simplistic validation here for UI feedback before calling VM
+    try {
+      int p = Integer.parseInt(portStr);
+      if (p <= 1024) {
+        showMessage(view, getString(R.string.negativePortValue));
+        return;
+      }
+    } catch (NumberFormatException e) {
+      showMessage(view, getString(R.string.invalidPortValue));
+      return;
+    }
+
+    try {
+      int m = Integer.parseInt(maxConnStr);
+      if (m < 0) {
+        showMessage(view, getString(R.string.negativeMaxConnectedClients));
+        return;
+      }
+    } catch (NumberFormatException e) {
+      showMessage(view, getString(R.string.invalidMaxConnectedClients));
+      return;
+    }
+
+    if (viewModel.validateAndSave(portStr, maxConnStr, listType, readOnly)) {
+      showMessage(view, getString(R.string.saveSuccess));
+      // Restart Service
+      if (PS3NetService.isRunning()) {
+        stopService(new Intent(SettingsActivity.this, PS3NetService.class));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          startForegroundService(new Intent(SettingsActivity.this, PS3NetService.class));
+        } else {
+          startService(new Intent(SettingsActivity.this, PS3NetService.class));
+        }
+      }
+    } else {
+      showMessage(view, getString(R.string.invalidPortValue)); // Fallback error
+    }
+  }
+
+  private void setupAddFolderButton() {
     final Button btnSelectFolder = findViewById(R.id.btnSelectFolder);
-    btnSelectFolder.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View view) {
-        // For Lollipop and above, use Storage Access Framework (SAF)
-        // This does NOT require READ_EXTERNAL_STORAGE permission to launch the picker
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-          Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-          folderPickerLauncher.launch(intent);
+    btnSelectFolder.setOnClickListener(view -> {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        folderPickerLauncher.launch(intent);
+      } else {
+        int permission = ContextCompat.checkSelfPermission(SettingsActivity.this,
+            Manifest.permission.READ_EXTERNAL_STORAGE);
+        if (permission == PERMISSION_GRANTED) {
+          fileDialog.showDialog();
         } else {
-          // For legacy devices (Pre-Lollipop), use internal file chooser which requires
-          // permission
-          int permission = ContextCompat.checkSelfPermission(SettingsActivity.this,
-              Manifest.permission.READ_EXTERNAL_STORAGE);
-          if (permission == PERMISSION_GRANTED) {
-            fileDialog.showDialog();
-          } else {
-            requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
-          }
+          requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
         }
       }
     });
+  }
 
-    final ArrayAdapter<String> adapterIps = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listIps);
-    final ArrayAdapter<String> adapterFolders = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
-        listFolders);
-
-    listViewIps.setAdapter(adapterIps);
-    listViewFolders.setAdapter(adapterFolders);
-
+  private void setupIpControls() {
     final EditText editTextIp = findViewById(R.id.etIp);
-
     InputFilter[] filters = new InputFilter[1];
-    filters[0] = new InputFilter() {
-      @Override
-      public CharSequence filter(CharSequence source, int start, int end,
-          android.text.Spanned dest, int dstart, int dend) {
-        if (end > start) {
-          String destTxt = dest.toString();
-          String resultingTxt = destTxt.substring(0, dstart)
-              + source.subSequence(start, end)
-              + destTxt.substring(dend);
-          if (!resultingTxt
-              .matches("^\\d{1,3}(\\.(\\d{1,3}(\\.(\\d{1,3}(\\.(\\d{1,3})?)?)?)?)?)?")) {
-            return "";
-          } else {
-            String[] splits = resultingTxt.split("\\.");
-            for (String split : splits) {
-              if (!split.isEmpty() && Integer.parseInt(split) > 255) {
-                return "";
-              }
+    filters[0] = (source, start, end, dest, dstart, dend) -> {
+      if (end > start) {
+        String destTxt = dest.toString();
+        String resultingTxt = destTxt.substring(0, dstart)
+            + source.subSequence(start, end)
+            + destTxt.substring(dend);
+        if (!resultingTxt.matches("^\\d{1,3}(\\.(\\d{1,3}(\\.(\\d{1,3}(\\.(\\d{1,3})?)?)?)?)?)?")) {
+          return "";
+        } else {
+          String[] splits = resultingTxt.split("\\.");
+          for (String split : splits) {
+            if (!split.isEmpty() && Integer.parseInt(split) > 255) {
+              return "";
             }
           }
         }
-        return null;
       }
-
+      return null;
     };
     editTextIp.setFilters(filters);
 
     final Button btnAddIp = findViewById(R.id.btnAddIp);
-    btnAddIp.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        String newIp = editTextIp.getText().toString();
-
-        if (!newIp.isEmpty()) {
-          listIps.add(newIp);
-          adapterIps.notifyDataSetChanged();
-          editTextIp.setText("");
-        }
+    btnAddIp.setOnClickListener(v -> {
+      String newIp = editTextIp.getText().toString();
+      if (!newIp.isEmpty()) {
+        viewModel.addIp(newIp);
+        editTextIp.setText("");
       }
     });
-
-    listViewIps.setOnItemClickListener(new ListViewItemClickListener(listIps, R.string.ipRemoved));
-    listViewFolders.setOnItemClickListener(new ListViewItemClickListener(listFolders, R.string.folderRemoved));
 
     RadioGroup rgIpListType = findViewById(R.id.rgIpListType);
-    rgIpListType.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-      @Override
-      public void onCheckedChanged(RadioGroup group, int checkedId) {
-        editTextIp.setText("");
-        editTextIp.setEnabled(checkedId != R.id.rbNone);
-        btnAddIp.setEnabled(checkedId != R.id.rbNone);
-      }
+    rgIpListType.setOnCheckedChangeListener((group, checkedId) -> {
+      editTextIp.setText("");
+      editTextIp.setEnabled(checkedId != R.id.rbNone);
+      btnAddIp.setEnabled(checkedId != R.id.rbNone);
     });
-    editTextIp.setEnabled(rgIpListType.getCheckedRadioButtonId() != R.id.rbNone);
-    btnAddIp.setEnabled(rgIpListType.getCheckedRadioButtonId() != R.id.rbNone);
+    // Initial state set by Observer
   }
 
-  private int getIndexFromLanguage(String language) {
-    return Language.fromCode(language).getIndex();
-  }
-
-  private String getLanguageFromIndex(int index) {
-    return Language.fromIndex(index).getCode();
-  }
-
-  // Event when a file is selected on file dialog.
-  private final SimpleFileChooser.FileSelectedListener onFileSelectedListener = new SimpleFileChooser.FileSelectedListener() {
-    @Override
-    public void onFileSelected(File file) {
-      listFolders.add(file.getAbsolutePath());
-      SettingsService.setFolders(listFolders);
-      ((ArrayAdapter) listViewFolders.getAdapter()).notifyDataSetChanged();
-    }
+  // Event when a file is selected on file dialog (Legacy)
+  private final SimpleFileChooser.FileSelectedListener onFileSelectedListener = file -> {
+    viewModel.addFolder(file.getAbsolutePath());
   };
 
   private class ListViewItemClickListener implements AdapterView.OnItemClickListener {
-    private final List<String> list;
+    private final boolean isIpList;
     private final int removedMessageResId;
 
-    public ListViewItemClickListener(List<String> list, int removedMessageResId) {
-      this.list = list;
+    public ListViewItemClickListener(boolean isIpList, int removedMessageResId) {
+      this.isIpList = isIpList;
       this.removedMessageResId = removedMessageResId;
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-      ListView listView = (ListView) parent;
-      final ArrayAdapter adapter = (ArrayAdapter) listView.getAdapter();
-      final String value = list.get(position);
-      list.remove(position);
-      adapter.notifyDataSetChanged();
+      final String value = isIpList ? listIps.get(position) : listFolders.get(position);
+
+      if (isIpList)
+        viewModel.removeIp(position);
+      else
+        viewModel.removeFolder(position);
 
       Snackbar.make(view, getResources().getString(removedMessageResId) + value, Snackbar.LENGTH_SHORT)
-          .setAction(getResources().getString(R.string.undo), new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-              list.add(position, value);
-              adapter.notifyDataSetChanged();
-            }
+          .setAction(getResources().getString(R.string.undo), v -> {
+            if (isIpList)
+              viewModel.undoRemoveIp(position, value);
+            else
+              viewModel.undoRemoveFolder(position, value);
           }).show();
     }
-  }
-
-  private boolean saveSettings(View view) {
-    String message = savePortValue();
-    boolean hasError = showMessage(view, message);
-    hasError = showMessage(view, message) || hasError;
-    message = saveMaxConnection();
-    hasError = showMessage(view, message) || hasError;
-    if (!hasError) {
-      SettingsService.setIps(new HashSet<>(listIps));
-      SettingsService.setFolders(listFolders);
-      SettingsService.setListType(((RadioGroup) findViewById(R.id.rgIpListType)).getCheckedRadioButtonId());
-      SettingsService.setReadOnly(((android.widget.CheckBox) findViewById(R.id.cbReadOnly)).isChecked());
-      showMessage(view, getResources().getString(R.string.saveSuccess));
-      return true;
-    }
-    return false;
   }
 
   private void updateViewResources(Context context) {
@@ -381,7 +378,7 @@ public class SettingsActivity extends AppCompatActivity {
     ((Button) findViewById(R.id.btnSelectFolder)).setText(resources.getString(R.string.add));
     ((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber))
         .setHint(resources.getString(R.string.maxConnectedClients));
-    ((android.widget.CheckBox) findViewById(R.id.cbReadOnly)).setText(resources.getString(R.string.readOnly));
+    ((CheckBox) findViewById(R.id.cbReadOnly)).setText(resources.getString(R.string.readOnly));
     ((TextView) findViewById(R.id.tvListType)).setText(resources.getString(R.string.listType));
     ((RadioButton) findViewById(R.id.rbNone)).setText(resources.getString(R.string.rbNone));
     ((RadioButton) findViewById(R.id.rbAllowed)).setText(resources.getString(R.string.rbAllowed));
@@ -390,5 +387,4 @@ public class SettingsActivity extends AppCompatActivity {
     ((Button) findViewById(R.id.btnAddIp)).setText(resources.getString(R.string.add));
     ((Button) findViewById(R.id.btnSave)).setText(resources.getString(R.string.save));
   }
-
 }

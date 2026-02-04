@@ -10,6 +10,11 @@ import java.util.Properties;
 
 public class AboutActivity extends AppCompatActivity {
 
+  private static final String GIT_PROPERTIES_FILE = "git.properties";
+  private static final String GIT_COMMIT_ID = "git.commit.id";
+  private static final String UNKNOWN = "Unknown";
+  private static final int COMMIT_HASH_LENGTH = 7;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -23,18 +28,18 @@ public class AboutActivity extends AppCompatActivity {
     Properties properties = new Properties();
     InputStream inputStream = null;
     try {
-      inputStream = getAssets().open("git.properties");
+      inputStream = getAssets().open(GIT_PROPERTIES_FILE);
       properties.load(inputStream);
-      String commit = properties.getProperty("git.commit.id");
+      String commit = properties.getProperty(GIT_COMMIT_ID);
       if (commit != null) {
         commit = commit.replaceAll("'", "");
-        if (commit.length() >= 8) {
-          return commit.substring(0, 8);
+        if (commit.length() >= COMMIT_HASH_LENGTH) {
+          return commit.substring(0, COMMIT_HASH_LENGTH);
         }
       }
-      return commit != null ? commit : "Unknown";
+      return commit != null ? commit : UNKNOWN;
     } catch (IOException e) {
-      return "Unknown";
+      return UNKNOWN;
     } finally {
       if (inputStream != null) {
         try {

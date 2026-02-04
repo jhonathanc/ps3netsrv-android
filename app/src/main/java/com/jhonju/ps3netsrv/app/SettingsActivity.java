@@ -132,6 +132,7 @@ public class SettingsActivity extends AppCompatActivity {
       if (radio != null)
         radio.setChecked(true);
     }
+    ((android.widget.CheckBox) findViewById(R.id.cbReadOnly)).setChecked(SettingsService.isReadOnly());
   }
 
   private boolean showMessage(View view, String message) {
@@ -389,6 +390,7 @@ public class SettingsActivity extends AppCompatActivity {
       SettingsService.setIps(new HashSet<>(listIps));
       SettingsService.setFolders(listFolders);
       SettingsService.setListType(((RadioGroup) findViewById(R.id.rgIpListType)).getCheckedRadioButtonId());
+      SettingsService.setReadOnly(((android.widget.CheckBox) findViewById(R.id.cbReadOnly)).isChecked());
       showMessage(view, getResources().getString(R.string.saveSuccess));
       return true;
     }

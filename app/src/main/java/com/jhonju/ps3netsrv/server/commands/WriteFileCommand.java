@@ -2,7 +2,7 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.utils.Utils;
+import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
 
@@ -37,7 +37,7 @@ public class WriteFileCommand extends FileCommand {
           PS3NetSrvApp.getAppContext().getString(R.string.error_write_file_size, numBytes, BUFFER_SIZE));
     }
 
-    ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), numBytes);
+    ByteBuffer buffer = BinaryUtils.readCommandData(ctx.getInputStream(), numBytes);
     if (buffer == null) {
       send(ERROR_CODE_BYTEARRAY);
       throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_write_file_null));
@@ -48,6 +48,6 @@ public class WriteFileCommand extends FileCommand {
       file.write(content);
     }
 
-    send(Utils.intToBytesBE(content.length));
+    send(BinaryUtils.intToBytesBE(content.length));
   }
 }

@@ -2,7 +2,7 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.utils.Utils;
+import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
 
@@ -12,8 +12,8 @@ import java.io.OutputStream;
 public abstract class AbstractCommand implements ICommand {
   protected Context ctx;
   protected static final int ERROR_CODE = -1;
-  protected byte[] ERROR_CODE_BYTEARRAY = Utils.intToBytesBE(ERROR_CODE);
-  protected byte[] SUCCESS_CODE_BYTEARRAY = Utils.intToBytesBE(0);
+  protected byte[] ERROR_CODE_BYTEARRAY = BinaryUtils.intToBytesBE(ERROR_CODE);
+  protected byte[] SUCCESS_CODE_BYTEARRAY = BinaryUtils.intToBytesBE(0);
   protected static final int EMPTY_SIZE = 0;
   protected static final int BUFFER_SIZE = 4 * 1048576; // 4MB
   protected static final int BYTES_TO_SKIP = 24;

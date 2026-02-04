@@ -1,10 +1,10 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import static com.jhonju.ps3netsrv.server.utils.Utils.INT_CAPACITY;
+import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.INT_CAPACITY;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.utils.Utils;
+import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
 
@@ -34,7 +34,7 @@ public class ReadFileCommand extends AbstractCommand {
     public byte[] toByteArray() throws IOException {
       ByteArrayOutputStream out = new ByteArrayOutputStream(INT_CAPACITY + bytesReadLength);
       try {
-        out.write(Utils.intToBytesBE(bytesReadLength));
+        out.write(BinaryUtils.intToBytesBE(bytesReadLength));
         out.write(bytesRead);
         return out.toByteArray();
       } finally {

@@ -17,7 +17,7 @@ import com.jhonju.ps3netsrv.server.commands.MakeDirCommand;
 import com.jhonju.ps3netsrv.server.commands.DeleteFileCommand;
 import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.server.utils.Utils;
+import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -61,10 +61,10 @@ public class ContextHandler extends Thread {
       }
       while (ctx.isSocketConnected()) {
         try {
-          ByteBuffer packet = Utils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
+          ByteBuffer packet = BinaryUtils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
           if (packet == null)
             break;
-          if (Utils.isByteArrayEmpty(packet.array()))
+          if (BinaryUtils.isByteArrayEmpty(packet.array()))
             continue;
           handleContext(ctx, packet);
         } catch (PS3NetSrvException e) {

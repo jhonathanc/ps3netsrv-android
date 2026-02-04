@@ -1,6 +1,6 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import static com.jhonju.ps3netsrv.server.utils.Utils.longToBytesBE;
+import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.longToBytesBE;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;

@@ -10,7 +10,7 @@ import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.DocumentFileCustom;
 import com.jhonju.ps3netsrv.server.io.FileCustom;
 import com.jhonju.ps3netsrv.server.io.IFile;
-import com.jhonju.ps3netsrv.server.utils.Utils;
+import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,7 +45,7 @@ public abstract class FileCommand extends AbstractCommand {
   }
 
   protected Set<IFile> getFile(boolean resolveParent) throws IOException, PS3NetSrvException {
-    ByteBuffer buffer = Utils.readCommandData(ctx.getInputStream(), this.filePathLength);
+    ByteBuffer buffer = BinaryUtils.readCommandData(ctx.getInputStream(), this.filePathLength);
     if (buffer == null) {
       send(ERROR_CODE_BYTEARRAY);
       throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_receiving_filename));

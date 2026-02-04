@@ -14,7 +14,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.jhonju.ps3netsrv.R;
-import com.jhonju.ps3netsrv.app.utils.Utils;
+import com.jhonju.ps3netsrv.app.utils.NetworkUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,7 +49,7 @@ public class FirstFragment extends Fragment {
           if (isServerRunning) {
             requireActivity().stopService(new Intent(getActivity(), PS3NetService.class));
           } else {
-            if (!Utils.isConnectedToLocal()) {
+            if (!NetworkUtils.isConnectedToLocal()) {
               Snackbar.make(view, R.string.connection_disabled, Snackbar.LENGTH_LONG)
                   .setAction(R.string.action_ok, null).show();
               return;
@@ -75,7 +75,7 @@ public class FirstFragment extends Fragment {
             sb.append(item).append("\n");
           }
           String serverRunningMsg = isServerRunning
-              ? String.format(getResources().getString(R.string.server_running), Utils.getIPAddress(true), port,
+              ? String.format(getResources().getString(R.string.server_running), NetworkUtils.getIPAddress(true), port,
                   sb.toString())
               : getResources().getString(R.string.server_stopped);
 

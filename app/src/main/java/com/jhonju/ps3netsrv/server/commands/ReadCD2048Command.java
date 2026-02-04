@@ -3,7 +3,7 @@ package com.jhonju.ps3netsrv.server.commands;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
-import com.jhonju.ps3netsrv.server.utils.Utils;
+import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
 
@@ -11,7 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class ReadCD2048Command extends AbstractCommand {
-  private static final int MAX_SECTORS = BUFFER_SIZE / Utils.SECTOR_SIZE;
+  private static final int MAX_SECTORS = BUFFER_SIZE / BinaryUtils.SECTOR_SIZE;
 
   private final int startSector;
   private final int sectorCount;
@@ -39,10 +39,10 @@ public class ReadCD2048Command extends AbstractCommand {
   private byte[] readSectors(IFile file, long offset, int count) throws IOException {
     final int SECTOR_SIZE = ctx.getCdSectorSize().cdSectorSize;
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream(count * Utils.SECTOR_SIZE);
+    ByteArrayOutputStream out = new ByteArrayOutputStream(count * BinaryUtils.SECTOR_SIZE);
     try {
       for (int i = 0; i < count; i++) {
-        byte[] sectorRead = new byte[Utils.SECTOR_SIZE];
+        byte[] sectorRead = new byte[BinaryUtils.SECTOR_SIZE];
         int bytesLength = file.read(sectorRead, offset + BYTES_TO_SKIP);
         out.write(sectorRead, 0, bytesLength);
         offset += SECTOR_SIZE;

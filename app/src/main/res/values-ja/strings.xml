@@ -77,4 +77,11 @@
     <string name="error_redump_key_size_invalid">Redumpキーのサイズが無効です: %1$d</string>
     <string name="error_open_output_stream">出力ストリームを開けませんでした</string>
     <string name="error_file_not_writable">ファイルに書き込めないか、存在しません</string>
+    <string name="notification_channel_name">PS3NetSrv バックグラウンドサービス</string>
+    <string name="notification_title">PS3NetSrv はバックグラウンドで実行中です</string>
+    <string name="language_changed_dialog_message">言語が変更されました。変更を適用するにはアプリケーションを再起動する必要があります。サーバーは再起動されます。</string>
+    <string name="error_blocked_connection">ブロックされた接続: %s</string>
+    <string name="error_connection_limit_reached">接続制限に達しました</string>
+    <string name="error_invalid_opcode">無効な OpCode: %d</string>
+    <string name="error_opcode_not_implemented">実装されていない OpCode: %s</string>
 </resources>

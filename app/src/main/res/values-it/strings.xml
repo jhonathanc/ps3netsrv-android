@@ -70,4 +70,11 @@
     <string name="error_redump_key_size_invalid">Dimensione chiave Redump non valida: %1$d</string>
     <string name="error_open_output_stream">Impossibile aprire il flusso di output</string>
     <string name="error_file_not_writable">Il file non è scrivibile o non esiste</string>
+    <string name="notification_channel_name">Servizio in background PS3NetSrv</string>
+    <string name="notification_title">PS3NetSrv è in esecuzione in background</string>
+    <string name="language_changed_dialog_message">Lingua cambiata. L\'applicazione deve essere riavviata per applicare le modifiche. Il server verrà riavviato.</string>
+    <string name="error_blocked_connection">Connessione bloccata: %s</string>
+    <string name="error_connection_limit_reached">Limite di connessione raggiunto</string>
+    <string name="error_invalid_opcode">OpCode non valido: %d</string>
+    <string name="error_opcode_not_implemented">OpCode non implementato: %s</string>
 </resources>

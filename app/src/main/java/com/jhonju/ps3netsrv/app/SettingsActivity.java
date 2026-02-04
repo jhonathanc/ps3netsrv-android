@@ -307,37 +307,11 @@ public class SettingsActivity extends AppCompatActivity {
   }
 
   private int getIndexFromLanguage(String language) {
-    switch (language) {
-      case "it":
-        return 0;
-      case "en":
-        return 1;
-      case "es":
-        return 2;
-      case "pt":
-        return 3;
-      case "jv":
-        return 4;
-      default:
-        return 1; // Default to English
-    }
+    return Language.fromCode(language).getIndex();
   }
 
   private String getLanguageFromIndex(int index) {
-    switch (index) {
-      case 0:
-        return "it";
-      case 1:
-        return "en";
-      case 2:
-        return "es";
-      case 3:
-        return "pt";
-      case 4:
-        return "jv";
-      default:
-        return "en";
-    }
+    return Language.fromIndex(index).getCode();
   }
 
   // Event when a file is selected on file dialog.

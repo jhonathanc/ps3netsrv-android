@@ -80,4 +80,6 @@
     <string name="error_connection_limit_reached">Límite de conexión alcanzado</string>
     <string name="error_invalid_opcode">OpCode inválido: %d</string>
     <string name="error_opcode_not_implemented">OpCode no implementado: %s</string>
+    <string name="settings_log_errors">Registrar errores</string>
+    <string name="settings_log_commands">Registrar comandos</string>
 </resources>

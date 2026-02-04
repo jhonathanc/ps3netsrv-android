@@ -145,6 +145,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/readOnly"
+            android:layout_marginBottom="8dp"/>
+
+        <CheckBox
+            android:id="@+id/cbLogErrors"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_log_errors"
+            android:layout_marginBottom="8dp"/>
+
+        <CheckBox
+            android:id="@+id/cbLogCommands"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_log_commands"
             android:layout_marginBottom="16dp"/>
 
         <TextView

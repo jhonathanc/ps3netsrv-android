@@ -2,6 +2,7 @@ package com.jhonju.ps3netsrv.server;
 
 import com.jhonju.ps3netsrv.server.enums.EListType;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -83,7 +84,7 @@ public class PS3NetSrvTask implements Runnable {
       if (serverSocket != null)
         serverSocket.close();
     } catch (IOException e) {
-      System.err.println(e.getMessage());
+      FileLogger.logError(e);
     } finally {
       serverSocket = null;
     }

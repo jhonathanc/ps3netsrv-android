@@ -83,5 +83,7 @@
     <string name="error_blocked_connection">ブロックされた接続: %s</string>
     <string name="error_connection_limit_reached">接続制限に達しました</string>
     <string name="error_invalid_opcode">無効な OpCode: %d</string>
-    <string name="error_opcode_not_implemented">実装されていない OpCode: %s</string>
+    <string name="error_opcode_not_implemented">未実装のオペコード: %s</string>
+    <string name="settings_log_errors">エラーを記録</string>
+    <string name="settings_log_commands">コマンドを記録</string>
 </resources>

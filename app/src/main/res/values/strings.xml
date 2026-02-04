@@ -91,4 +91,6 @@
     <string name="error_connection_limit_reached">Connection limit is reached</string>
     <string name="error_invalid_opcode">Invalid opCode: %d</string>
     <string name="error_opcode_not_implemented">OpCode not implemented: %s</string>
+    <string name="settings_log_errors">Log Errors</string>
+    <string name="settings_log_commands">Log Commands</string>
 </resources>

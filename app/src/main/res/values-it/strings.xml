@@ -78,4 +78,6 @@
     <string name="error_connection_limit_reached">Limite di connessione raggiunto</string>
     <string name="error_invalid_opcode">OpCode non valido: %d</string>
     <string name="error_opcode_not_implemented">OpCode non implementato: %s</string>
+    <string name="settings_log_errors">Registra errori</string>
+    <string name="settings_log_commands">Registra comandi</string>
 </resources>

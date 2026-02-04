@@ -183,6 +183,14 @@ public class SettingsActivity extends AppCompatActivity {
     viewModel.getReadOnly().observe(this, readOnly -> {
       ((CheckBox) findViewById(R.id.cbReadOnly)).setChecked(readOnly);
     });
+
+    viewModel.getLogErrors().observe(this, logErrors -> {
+      ((CheckBox) findViewById(R.id.cbLogErrors)).setChecked(logErrors);
+    });
+
+    viewModel.getLogCommands().observe(this, logCommands -> {
+      ((CheckBox) findViewById(R.id.cbLogCommands)).setChecked(logCommands);
+    });
   }
 
   private void setupLanguageSpinner() {
@@ -233,6 +241,8 @@ public class SettingsActivity extends AppCompatActivity {
     String maxConnStr = tilMaxClients.getEditText().getText().toString().trim();
     int listType = ((RadioGroup) findViewById(R.id.rgIpListType)).getCheckedRadioButtonId();
     boolean readOnly = ((CheckBox) findViewById(R.id.cbReadOnly)).isChecked();
+    boolean logErrors = ((CheckBox) findViewById(R.id.cbLogErrors)).isChecked();
+    boolean logCommands = ((CheckBox) findViewById(R.id.cbLogCommands)).isChecked();
 
     // Perform simplistic validation here for UI feedback before calling VM
     try {
@@ -257,7 +267,7 @@ public class SettingsActivity extends AppCompatActivity {
       return;
     }
 
-    if (viewModel.validateAndSave(portStr, maxConnStr, listType, readOnly)) {
+    if (viewModel.validateAndSave(portStr, maxConnStr, listType, readOnly, logErrors, logCommands)) {
       showMessage(view, getString(R.string.saveSuccess));
       // Restart Service
       if (PS3NetService.isRunning()) {
@@ -379,6 +389,8 @@ public class SettingsActivity extends AppCompatActivity {
     ((TextInputLayout) findViewById(R.id.tilMaximumClientsNumber))
         .setHint(resources.getString(R.string.maxConnectedClients));
     ((CheckBox) findViewById(R.id.cbReadOnly)).setText(resources.getString(R.string.readOnly));
+    ((CheckBox) findViewById(R.id.cbLogErrors)).setText(resources.getString(R.string.settings_log_errors));
+    ((CheckBox) findViewById(R.id.cbLogCommands)).setText(resources.getString(R.string.settings_log_commands));
     ((TextView) findViewById(R.id.tvListType)).setText(resources.getString(R.string.listType));
     ((RadioButton) findViewById(R.id.rbNone)).setText(resources.getString(R.string.rbNone));
     ((RadioButton) findViewById(R.id.rbAllowed)).setText(resources.getString(R.string.rbAllowed));

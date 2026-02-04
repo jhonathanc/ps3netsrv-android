@@ -18,6 +18,7 @@ import com.jhonju.ps3netsrv.server.commands.DeleteFileCommand;
 import com.jhonju.ps3netsrv.server.enums.ENetIsoCommand;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -82,10 +83,12 @@ public class ContextHandler extends Thread {
   private void handleContext(Context ctx, ByteBuffer buffer) throws PS3NetSrvException, IOException {
     final ICommand command;
     ENetIsoCommand opCode = ENetIsoCommand.valueOf(buffer.getShort(IDX_OP_CODE));
+
     if (opCode == null) {
       throw new PS3NetSrvException(com.jhonju.ps3netsrv.app.PS3NetSrvApp.getAppContext()
           .getString(com.jhonju.ps3netsrv.R.string.error_invalid_opcode, buffer.getShort(IDX_OP_CODE)));
     }
+    FileLogger.logCommand(opCode.name(), buffer.array());
     switch (opCode) {
       case NETISO_CMD_OPEN_DIR:
         command = new OpenDirCommand(ctx, buffer.getShort(IDX_CMD_DATA_1));

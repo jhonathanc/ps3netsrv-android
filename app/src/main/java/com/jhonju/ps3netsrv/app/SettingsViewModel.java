@@ -18,6 +18,8 @@ public class SettingsViewModel extends ViewModel {
   private final MutableLiveData<List<String>> folders = new MutableLiveData<>(new ArrayList<>());
   private final MutableLiveData<Integer> listType = new MutableLiveData<>();
   private final MutableLiveData<Boolean> readOnly = new MutableLiveData<>();
+  private final MutableLiveData<Boolean> logErrors = new MutableLiveData<>();
+  private final MutableLiveData<Boolean> logCommands = new MutableLiveData<>();
 
   // Validation messages or events could be handled via LiveData (e.g.
   // SingleLiveEvent),
@@ -35,6 +37,8 @@ public class SettingsViewModel extends ViewModel {
     folders.setValue(SettingsService.getFolders());
     listType.setValue(SettingsService.getListType());
     readOnly.setValue(SettingsService.isReadOnly());
+    logErrors.setValue(SettingsService.isLogErrors());
+    logCommands.setValue(SettingsService.isLogCommands());
   }
 
   public LiveData<Integer> getPort() {
@@ -59,6 +63,14 @@ public class SettingsViewModel extends ViewModel {
 
   public LiveData<Boolean> getReadOnly() {
     return readOnly;
+  }
+
+  public LiveData<Boolean> getLogErrors() {
+    return logErrors;
+  }
+
+  public LiveData<Boolean> getLogCommands() {
+    return logCommands;
   }
 
   public void addIp(String ip) {
@@ -113,7 +125,8 @@ public class SettingsViewModel extends ViewModel {
     }
   }
 
-  public boolean validateAndSave(String portStr, String maxConnectionsStr, int listTypeVal, boolean readOnlyVal) {
+  public boolean validateAndSave(String portStr, String maxConnectionsStr, int listTypeVal, boolean readOnlyVal,
+      boolean logErrorsVal, boolean logCommandsVal) {
     // Parse and Validate
     int parsedPort;
     try {
@@ -138,6 +151,8 @@ public class SettingsViewModel extends ViewModel {
     SettingsService.setMaxConnections(parsedMaxConn);
     SettingsService.setListType(listTypeVal);
     SettingsService.setReadOnly(readOnlyVal);
+    SettingsService.setLogErrors(logErrorsVal);
+    SettingsService.setLogCommands(logCommandsVal);
 
     List<String> currentIps = ips.getValue();
     SettingsService.setIps(new HashSet<>(currentIps != null ? currentIps : new ArrayList<>()));

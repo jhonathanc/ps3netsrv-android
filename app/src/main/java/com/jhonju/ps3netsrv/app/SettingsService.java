@@ -25,6 +25,7 @@ public class SettingsService {
   private static final SharedPreferences spMaxConnections = PS3NetSrvApp.getAppContext()
       .getSharedPreferences("MAX_CONNECTIONS", 0);
   private static final SharedPreferences spReadOnly = PS3NetSrvApp.getAppContext().getSharedPreferences("READ_ONLY", 0);
+  private static final SharedPreferences spLog = PS3NetSrvApp.getAppContext().getSharedPreferences("LOG", 0);
 
   public static int getPort() {
     return spPort.getInt(settings, PS3NetSrvApp.getAppContext().getResources().getInteger(R.integer.defaultPort));
@@ -145,6 +146,26 @@ public class SettingsService {
   public static void setMaxConnections(int maxConnections) {
     SharedPreferences.Editor editor = spMaxConnections.edit();
     editor.putInt(settings, maxConnections);
+    editor.apply();
+  }
+
+  public static boolean isLogErrors() {
+    return spLog.getBoolean("LOG_ERRORS", false);
+  }
+
+  public static void setLogErrors(boolean logErrors) {
+    SharedPreferences.Editor editor = spLog.edit();
+    editor.putBoolean("LOG_ERRORS", logErrors);
+    editor.apply();
+  }
+
+  public static boolean isLogCommands() {
+    return spLog.getBoolean("LOG_COMMANDS", false);
+  }
+
+  public static void setLogCommands(boolean logCommands) {
+    SharedPreferences.Editor editor = spLog.edit();
+    editor.putBoolean("LOG_COMMANDS", logCommands);
     editor.apply();
   }
 }

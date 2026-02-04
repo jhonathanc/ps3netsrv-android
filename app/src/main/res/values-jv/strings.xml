@@ -56,4 +56,6 @@
     <string name="error_open_output_stream">出力ストリーム開きゆーさびらん</string>
     <string name="error_file_not_writable">ファイルんかい書き込みゆーさびらんあらんでぃ存在さびらん</string>
     <string name="server_restart_prompt">サーバーや実行中やいびーん。変更ず適用するんでぃ再起動さびーんな？</string>
+    <string name="settings_log_errors">エラーを記録</string>
+    <string name="settings_log_commands">コマンドを記録</string>
 </resources>

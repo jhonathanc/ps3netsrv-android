@@ -37,29 +37,6 @@ public class FirstFragment extends Fragment {
     return inflater.inflate(R.layout.fragment_first, container, false);
   }
 
-  private void showVersion(View view) {
-    Properties properties = new Properties();
-    InputStream inputStream = null;
-    try {
-      inputStream = requireActivity().getAssets().open("git.properties");
-      properties.load(inputStream);
-    } catch (IOException e) {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        } catch (IOException ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-      throw new RuntimeException(e);
-    }
-    String commitCode = properties.getProperty("git.commit.id");
-    Snackbar
-        .make(view, String.format(getString(R.string.version_format), commitCode.substring(0, 8).replaceAll("'", "")),
-            Snackbar.LENGTH_LONG)
-        .setAction(R.string.action_ok, null).show();
-  }
-
   public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
@@ -72,7 +49,6 @@ public class FirstFragment extends Fragment {
           if (isServerRunning) {
             requireActivity().stopService(new Intent(getActivity(), PS3NetService.class));
           } else {
-            showVersion(view);
             if (!Utils.isConnectedToLocal()) {
               Snackbar.make(view, R.string.connection_disabled, Snackbar.LENGTH_LONG)
                   .setAction(R.string.action_ok, null).show();

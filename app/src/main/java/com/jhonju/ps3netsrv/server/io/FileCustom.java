@@ -7,6 +7,8 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.SECTOR_SIZE;
+import static com.jhonju.ps3netsrv.server.utils.Utils._3K3Y_KEY_OFFSET;
+import static com.jhonju.ps3netsrv.server.utils.Utils.ENCRYPTION_KEY_SIZE;
 
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
@@ -33,17 +35,32 @@ public class FileCustom implements IFile {
 
     public FileCustom(File file) throws IOException {
         this.file = file;
-        byte[] redumpKey = null;
+        byte[] encryptionKey = null;
+        EEncryptionType detectedEncryptionType = EEncryptionType.NONE;
         RandomAccessFile randomAccessFile = null;
         PS3RegionInfo[] regionInfos = null;
+        
         if (file != null && file.isFile()) {
             randomAccessFile = new RandomAccessFile(file, READ_ONLY_MODE);
-            redumpKey = getRedumpKey(file.getParentFile(), file.getAbsolutePath(), file.getName());
+            
+            // First try to get Redump key from external .dkey file
+            encryptionKey = getRedumpKey(file.getParentFile(), file.getAbsolutePath(), file.getName());
+            if (encryptionKey != null) {
+                detectedEncryptionType = EEncryptionType.REDUMP;
+            } else {
+                // If no Redump key, try to get embedded 3k3y key from ISO
+                encryptionKey = get3K3YKey(randomAccessFile);
+                if (encryptionKey != null) {
+                    detectedEncryptionType = EEncryptionType._3K3Y;
+                }
+            }
         }
+        
         this.randomAccessFile = randomAccessFile;
-        if (redumpKey != null) {
-            this.decryptionKey = new SecretKeySpec(redumpKey, "AES");
-            this.encryptionType = EEncryptionType.REDUMP;
+        
+        if (encryptionKey != null) {
+            this.decryptionKey = new SecretKeySpec(encryptionKey, "AES");
+            this.encryptionType = detectedEncryptionType;
 
             int sec0Sec1Length = SECTOR_SIZE * 2;
             if (file.length() >= sec0Sec1Length) {
@@ -116,6 +133,31 @@ public class FileCustom implements IFile {
                              + Character.digit(hex.charAt(index + 1), 16));
         }
         return bytes;
+    }
+
+    private static byte[] get3K3YKey(RandomAccessFile raf) throws IOException {
+        if (raf == null || raf.length() < _3K3Y_KEY_OFFSET + ENCRYPTION_KEY_SIZE) {
+            return null;
+        }
+        
+        byte[] key = new byte[ENCRYPTION_KEY_SIZE];
+        raf.seek(_3K3Y_KEY_OFFSET);
+        int bytesRead = raf.read(key);
+        
+        if (bytesRead != ENCRYPTION_KEY_SIZE || isKeyEmpty(key)) {
+            return null;
+        }
+        
+        return key;
+    }
+
+    private static boolean isKeyEmpty(byte[] key) {
+        for (byte b : key) {
+            if (b != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean mkdir() {

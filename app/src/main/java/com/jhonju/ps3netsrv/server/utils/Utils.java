@@ -26,6 +26,8 @@ public class Utils {
     public static final String REDKEY_FOLDER_NAME = "REDKEY";
     public static final String ISO_EXTENSION = ".iso";
     public static final String READ_ONLY_MODE = "r";
+    public static final int _3K3Y_KEY_OFFSET = 0xF80;
+    public static final int ENCRYPTION_KEY_SIZE = 16;
 
     public static byte[] charArrayToByteArray(char[] chars) {
         CharBuffer charBuffer = CharBuffer.wrap(chars);

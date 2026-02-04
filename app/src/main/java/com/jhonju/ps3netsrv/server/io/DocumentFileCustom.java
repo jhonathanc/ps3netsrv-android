@@ -7,6 +7,8 @@ import static com.jhonju.ps3netsrv.server.utils.Utils.PS3ISO_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.Utils.REDKEY_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.Utils.SECTOR_SIZE;
+import static com.jhonju.ps3netsrv.server.utils.Utils._3K3Y_KEY_OFFSET;
+import static com.jhonju.ps3netsrv.server.utils.Utils.ENCRYPTION_KEY_SIZE;
 
 import android.content.ContentResolver;
 import android.os.ParcelFileDescriptor;
@@ -40,17 +42,31 @@ public class DocumentFileCustom implements IFile {
 
     public DocumentFileCustom(DocumentFile documentFile) throws IOException {
         this.documentFile = documentFile;
-        byte[] redumpKey = null;
+        byte[] encryptionKey = null;
+        EEncryptionType detectedEncryptionType = EEncryptionType.NONE;
         PS3RegionInfo[] regionInfos = null;
+        
         if (documentFile != null && documentFile.isFile()) {
             this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
             this.fis = new FileInputStream(pfd.getFileDescriptor());
             this.fileChannel = fis.getChannel();
-            redumpKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
+            
+            // First try to get Redump key from external .dkey file
+            encryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
+            if (encryptionKey != null) {
+                detectedEncryptionType = EEncryptionType.REDUMP;
+            } else {
+                // If no Redump key, try to get embedded 3k3y key from ISO
+                encryptionKey = get3K3YKey(fileChannel, documentFile.length());
+                if (encryptionKey != null) {
+                    detectedEncryptionType = EEncryptionType._3K3Y;
+                }
+            }
         }
-        if (redumpKey != null) {
-            this.decryptionKey = new SecretKeySpec(redumpKey, "AES");
-            this.encryptionType = EEncryptionType.REDUMP;
+        
+        if (encryptionKey != null) {
+            this.decryptionKey = new SecretKeySpec(encryptionKey, "AES");
+            this.encryptionType = detectedEncryptionType;
 
             int sec0Sec1Length = SECTOR_SIZE * 2;
             if (documentFile.length() >= sec0Sec1Length) {
@@ -130,6 +146,31 @@ public class DocumentFileCustom implements IFile {
                              + Character.digit(hex.charAt(index + 1), 16));
         }
         return bytes;
+    }
+
+    private static byte[] get3K3YKey(FileChannel channel, long fileLength) throws IOException {
+        if (channel == null || fileLength < _3K3Y_KEY_OFFSET + ENCRYPTION_KEY_SIZE) {
+            return null;
+        }
+        
+        byte[] key = new byte[ENCRYPTION_KEY_SIZE];
+        channel.position(_3K3Y_KEY_OFFSET);
+        int bytesRead = channel.read(ByteBuffer.wrap(key));
+        
+        if (bytesRead != ENCRYPTION_KEY_SIZE || isKeyEmpty(key)) {
+            return null;
+        }
+        
+        return key;
+    }
+
+    private static boolean isKeyEmpty(byte[] key) {
+        for (byte b : key) {
+            if (b != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

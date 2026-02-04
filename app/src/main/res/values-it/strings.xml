@@ -73,6 +73,7 @@
     <string name="notification_channel_name">Servizio in background PS3NetSrv</string>
     <string name="notification_title">PS3NetSrv è in esecuzione in background</string>
     <string name="language_changed_dialog_message">Lingua cambiata. L\'applicazione deve essere riavviata per applicare le modifiche. Il server verrà riavviato.</string>
+    <string name="server_restart_prompt">Il server è in esecuzione. Riavviare per applicare le modifiche?</string>
     <string name="error_blocked_connection">Connessione bloccata: %s</string>
     <string name="error_connection_limit_reached">Limite di connessione raggiunto</string>
     <string name="error_invalid_opcode">OpCode non valido: %d</string>

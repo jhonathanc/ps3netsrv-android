@@ -86,6 +86,7 @@
     <string name="notification_channel_name">PS3NetSrv Background Service</string>
     <string name="notification_title">PS3NetSrv is running in background</string>
     <string name="language_changed_dialog_message">Language changed. Application needs to restart to apply changes. The server will be restarted.</string>
+    <string name="server_restart_prompt">Server is running. Restart to apply changes?</string>
     <string name="error_blocked_connection">Blocked connection: %s</string>
     <string name="error_connection_limit_reached">Connection limit is reached</string>
     <string name="error_invalid_opcode">Invalid opCode: %d</string>

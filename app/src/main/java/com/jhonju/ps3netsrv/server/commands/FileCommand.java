@@ -73,7 +73,7 @@ public abstract class FileCommand extends AbstractCommand {
       this.fileName = childName;
     }
 
-    for (String rootDirectory : ctx.getRootDirectorys()) {
+    for (String rootDirectory : ctx.getRootDirectories()) {
       if (rootDirectory.startsWith("content:")) {
         // Use SAF (DocumentFile)
         androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile

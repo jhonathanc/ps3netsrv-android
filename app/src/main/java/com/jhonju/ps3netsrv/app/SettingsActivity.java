@@ -196,7 +196,7 @@ public class SettingsActivity extends AppCompatActivity {
         if (PS3NetService.isRunning()) {
           new androidx.appcompat.app.AlertDialog.Builder(SettingsActivity.this)
               .setTitle(getString(R.string.title_activity_settings))
-              .setMessage("Server is running. Restart to apply changes?")
+              .setMessage(getString(R.string.server_restart_prompt))
               .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                 if (saveSettings(view)) {
                   // Restart Service
@@ -317,8 +317,6 @@ public class SettingsActivity extends AppCompatActivity {
       case "pt":
         return 3;
       case "jv":
-        return 4;
-      case "ja":
         return 4;
       default:
         return 1; // Default to English

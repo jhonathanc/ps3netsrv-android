@@ -75,6 +75,7 @@
     <string name="notification_channel_name">Serviço em segundo plano do PS3NetSrv</string>
     <string name="notification_title">PS3NetSrv está rodando em segundo plano</string>
     <string name="language_changed_dialog_message">Idioma alterado. O aplicativo precisa ser reiniciado para aplicar as alterações. O servidor será reiniciado.</string>
+    <string name="server_restart_prompt">O servidor está em execução. Reiniciar para aplicar as alterações?</string>
     <string name="error_blocked_connection">Conexão bloqueada: %s</string>
     <string name="error_connection_limit_reached">Limite de conexões atingido</string>
     <string name="error_invalid_opcode">OpCode inválido: %d</string>

@@ -5,6 +5,7 @@ import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -19,8 +20,23 @@ public class VirtualIsoFile implements IFile {
   private static final int MAX_DIRECTORY_BUFFER_SIZE = 64 * 1024;
   private static final int PATH_TABLE_ENTRY_ESTIMATE = 32;
 
+  // Multi-extent support - max size per extent (~4GB, sector-aligned)
+  private static final long MULTIEXTENT_PART_SIZE = 0xFFFFF800L;
+
+  // ISO 9660 file flags
+  private static final byte ISO_FILE = 0x00;
+  private static final byte ISO_DIRECTORY = 0x02;
+  private static final byte ISO_MULTIEXTENT = (byte) 0x80;
+
+  // Multipart file pattern (.66600, .66601, etc.)
+  private static final String MULTIPART_SUFFIX_PATTERN = ".66600";
+
   private final IFile rootFile;
   private final String volumeName;
+
+  // PS3 Mode fields
+  private final boolean ps3Mode;
+  private final String titleId;
 
   private ByteBuffer fsBuf;
   private int fsBufSize;
@@ -36,9 +52,15 @@ public class VirtualIsoFile implements IFile {
     String name;
     long size;
     int rlba;
-    IFile file; // Abstraction
     long startOffset;
     long endOffset;
+
+    // Multipart support - list of file parts
+    List<IFile> fileParts = new ArrayList<>();
+    boolean isMultipart;
+
+    // Multi-extent support - number of extent parts for files > 4GB
+    int extentParts = 1;
   }
 
   private static class DirList {
@@ -53,7 +75,17 @@ public class VirtualIsoFile implements IFile {
 
   public VirtualIsoFile(IFile rootDir) throws IOException {
     this.rootFile = rootDir;
-    this.volumeName = rootDir.getName() != null ? rootDir.getName().toUpperCase() : "PS3VOLUME";
+
+    // Detect PS3 mode by checking for PS3_GAME/PARAM.SFO
+    String detectedTitleId = ParamSfoParser.getTitleId(rootDir);
+    this.ps3Mode = (detectedTitleId != null);
+    this.titleId = detectedTitleId;
+
+    if (ps3Mode) {
+      this.volumeName = "PS3VOLUME";
+    } else {
+      this.volumeName = rootDir.getName() != null ? rootDir.getName().toUpperCase() : "DVDVIDEO";
+    }
 
     build();
   }
@@ -78,6 +110,11 @@ public class VirtualIsoFile implements IFile {
         int sectors = (int) ((file.size + SECTOR_SIZE - 1) / SECTOR_SIZE);
         currentFileSectorOffset += sectors;
         allFiles.add(file);
+
+        // Calculate extent parts for multi-extent support
+        if (file.size > MULTIEXTENT_PART_SIZE) {
+          file.extentParts = (int) ((file.size + MULTIEXTENT_PART_SIZE - 1) / MULTIEXTENT_PART_SIZE);
+        }
       }
     }
     int filesSizeSectors = currentFileSectorOffset;
@@ -130,6 +167,13 @@ public class VirtualIsoFile implements IFile {
       dir.content = generateDirectoryContent(dir, allDirs, filesStartLba);
     }
 
+    // Add padding at end (aligned to 0x20 sectors like C++ version)
+    int volumeSize = filesStartLba + filesSizeSectors;
+    int padSectors = 0x20;
+    if ((volumeSize & 0x1F) != 0) {
+      padSectors += (0x20 - (volumeSize & 0x1F));
+    }
+
     // 7. Build fsBuf
     fsBufSize = filesStartLba * SECTOR_SIZE;
     fsBuf = ByteBuffer.allocate(fsBufSize);
@@ -137,7 +181,12 @@ public class VirtualIsoFile implements IFile {
 
     Arrays.fill(fsBuf.array(), (byte) 0);
 
-    writePVD(fsBuf, 16 * SECTOR_SIZE, pathTableSize, pathTableL_LBA, pathTableM_LBA, rootList, filesStartLba);
+    // Write PS3-specific sectors 0 and 1 if in PS3 mode
+    if (ps3Mode) {
+      writePS3Sectors(fsBuf, volumeSize + padSectors);
+    }
+
+    writePVD(fsBuf, 16 * SECTOR_SIZE, pathTableSize, pathTableL_LBA, pathTableM_LBA, rootList, volumeSize + padSectors);
 
     // Terminator
     fsBuf.put(17 * SECTOR_SIZE, (byte) 255);
@@ -159,7 +208,7 @@ public class VirtualIsoFile implements IFile {
       fsBuf.put(dir.content);
     }
 
-    totalSize = (long) filesStartLba * SECTOR_SIZE + (long) filesSizeSectors * SECTOR_SIZE;
+    totalSize = (long) (filesStartLba + filesSizeSectors + padSectors) * SECTOR_SIZE;
 
     // Update file entry cached offsets
     long filesAreaStartOffset = (long) filesStartLba * SECTOR_SIZE;
@@ -167,6 +216,64 @@ public class VirtualIsoFile implements IFile {
       f.startOffset = filesAreaStartOffset + ((long) f.rlba * SECTOR_SIZE);
       f.endOffset = f.startOffset + f.size;
     }
+  }
+
+  /**
+   * Write PS3-specific sectors 0 and 1.
+   * Sector 0: DiscRangesSector - unencrypted sector ranges
+   * Sector 1: DiscInfoSector - "PlayStation3" + product ID
+   */
+  private void writePS3Sectors(ByteBuffer bb, int volumeSizeSectors) {
+    // Sector 0: DiscRangesSector
+    bb.position(0);
+    bb.order(ByteOrder.BIG_ENDIAN);
+    bb.putInt(1); // numRanges
+    bb.putInt(0); // zero
+    // Range 0: entire disc is unencrypted
+    bb.putInt(0); // startSector
+    bb.putInt(volumeSizeSectors - 1); // endSector
+
+    // Sector 1: DiscInfoSector
+    bb.position(SECTOR_SIZE);
+    // Console ID: "PlayStation3\0\0\0\0"
+    byte[] consoleId = "PlayStation3".getBytes(StandardCharsets.US_ASCII);
+    bb.put(consoleId);
+    for (int i = consoleId.length; i < 0x10; i++) {
+      bb.put((byte) 0);
+    }
+
+    // Product ID: "XXXX-XXXXX " format (32 bytes, space-padded)
+    byte[] productId = new byte[0x20];
+    Arrays.fill(productId, (byte) ' ');
+    if (titleId != null && titleId.length() >= 9) {
+      // Format: "BCES-00104" -> "BCES-00104 "
+      byte[] tid = titleId.getBytes(StandardCharsets.US_ASCII);
+      // Copy first 4 chars
+      System.arraycopy(tid, 0, productId, 0, Math.min(4, tid.length));
+      productId[4] = '-';
+      // Copy remaining chars (typically 5)
+      if (tid.length > 4) {
+        System.arraycopy(tid, 4, productId, 5, Math.min(tid.length - 4, 5));
+      }
+    }
+    bb.put(productId);
+
+    // Zeros (0x10 bytes)
+    for (int i = 0; i < 0x10; i++) {
+      bb.put((byte) 0);
+    }
+
+    // Info (0x1B0 bytes) - random data
+    byte[] info = new byte[0x1B0];
+    new SecureRandom().nextBytes(info);
+    bb.put(info);
+
+    // Hash (0x10 bytes) - random data (we don't compute real hash)
+    byte[] hash = new byte[0x10];
+    new SecureRandom().nextBytes(hash);
+    bb.put(hash);
+
+    bb.order(ByteOrder.LITTLE_ENDIAN);
   }
 
   // Abstracted scanDirectory to use IFile
@@ -188,6 +295,9 @@ public class VirtualIsoFile implements IFile {
       }
     });
 
+    // Track multipart base names to avoid duplicates
+    List<String> processedMultiparts = new ArrayList<>();
+
     for (IFile f : files) {
       String name = f.getName();
       if (name == null)
@@ -200,13 +310,83 @@ public class VirtualIsoFile implements IFile {
         allDirs.add(child);
         scanDirectory(f, child, allDirs);
       } else {
-        FileEntry fe = new FileEntry();
-        fe.name = name;
-        fe.size = f.length();
-        fe.file = f;
-        dirEntry.files.add(fe);
+        // Check for multipart files (.66600, .66601, etc.)
+        if (isMultipartFile(name)) {
+          // Skip non-first parts (.66601, .66602, etc.)
+          if (!name.endsWith(MULTIPART_SUFFIX_PATTERN)) {
+            continue;
+          }
+
+          // This is the first part (.66600), process the whole set
+          String baseName = name.substring(0, name.length() - 6); // Remove ".66600"
+          if (processedMultiparts.contains(baseName)) {
+            continue;
+          }
+          processedMultiparts.add(baseName);
+
+          FileEntry fe = createMultipartFileEntry(dir, baseName, f);
+          if (fe != null) {
+            dirEntry.files.add(fe);
+          }
+        } else {
+          // Regular single file
+          FileEntry fe = new FileEntry();
+          fe.name = name;
+          fe.size = f.length();
+          fe.fileParts.add(f);
+          fe.isMultipart = false;
+          dirEntry.files.add(fe);
+        }
       }
     }
+  }
+
+  /**
+   * Check if a filename matches the multipart pattern (.666XX)
+   */
+  private boolean isMultipartFile(String name) {
+    if (name == null || name.length() < 7) {
+      return false;
+    }
+    // Check for .666XX pattern (XX = 00-99)
+    int dotPos = name.length() - 6;
+    if (name.charAt(dotPos) != '.' ||
+        name.charAt(dotPos + 1) != '6' ||
+        name.charAt(dotPos + 2) != '6' ||
+        name.charAt(dotPos + 3) != '6') {
+      return false;
+    }
+    char d1 = name.charAt(dotPos + 4);
+    char d2 = name.charAt(dotPos + 5);
+    return Character.isDigit(d1) && Character.isDigit(d2);
+  }
+
+  /**
+   * Create a FileEntry for multipart files, merging all parts (.66600, .66601,
+   * etc.)
+   */
+  private FileEntry createMultipartFileEntry(IFile dir, String baseName, IFile firstPart) throws IOException {
+    FileEntry fe = new FileEntry();
+    fe.name = baseName;
+    fe.isMultipart = true;
+    fe.size = 0;
+
+    // Add first part
+    fe.fileParts.add(firstPart);
+    fe.size += firstPart.length();
+
+    // Find and add subsequent parts
+    for (int i = 1; i < 100; i++) {
+      String partName = baseName + String.format(".666%02d", i);
+      IFile part = dir.findFile(partName);
+      if (part == null || !part.exists() || !part.isFile()) {
+        break;
+      }
+      fe.fileParts.add(part);
+      fe.size += part.length();
+    }
+
+    return fe;
   }
 
   private int getDepth(DirList d) {
@@ -324,6 +504,13 @@ public class VirtualIsoFile implements IFile {
   }
 
   private void writeFileRecord(ByteBuffer bb, FileEntry f, int filesStartLba) {
+    // For multi-extent files (>4GB), we need to write multiple records
+    if (f.extentParts > 1) {
+      writeMultiExtentFileRecords(bb, f, filesStartLba);
+      return;
+    }
+
+    // Standard single-extent file record
     String name = f.name;
     int nameLen = name.length() + 2;
     int recordLen = 33 + nameLen;
@@ -343,11 +530,12 @@ public class VirtualIsoFile implements IFile {
     int lba = filesStartLba + f.rlba;
     putBothEndianInt(bb, lba);
 
+    // Use int cast for size (works for files <= 4GB)
     putBothEndianInt(bb, (int) f.size);
 
     putDate(bb);
 
-    bb.put((byte) 0);
+    bb.put(ISO_FILE);
     bb.put((byte) 0);
     bb.put((byte) 0);
     putBothEndianShort(bb, (short) 1);
@@ -359,6 +547,69 @@ public class VirtualIsoFile implements IFile {
 
     if ((33 + nameLen) % 2 != 0)
       bb.put((byte) 0);
+  }
+
+  /**
+   * Write multiple directory records for a multi-extent file (>4GB).
+   * Each extent is limited to MULTIEXTENT_PART_SIZE bytes.
+   */
+  private void writeMultiExtentFileRecords(ByteBuffer bb, FileEntry f, int filesStartLba) {
+    String name = f.name;
+    int nameLen = name.length() + 2;
+    int recordLen = 33 + nameLen;
+    if (recordLen % 2 != 0)
+      recordLen++;
+
+    int lba = filesStartLba + f.rlba;
+    long remainingSize = f.size;
+
+    for (int part = 0; part < f.extentParts; part++) {
+      int pos = bb.position();
+      if ((pos % SECTOR_SIZE) + recordLen > (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE)) {
+        int pad = (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE) - pos;
+        for (int i = 0; i < pad; i++)
+          bb.put((byte) 0);
+      }
+
+      bb.put((byte) recordLen);
+      bb.put((byte) 0);
+
+      putBothEndianInt(bb, lba);
+
+      // Calculate size for this extent
+      long extentSize;
+      byte fileFlags;
+      if (part == f.extentParts - 1) {
+        // Last extent - use remaining size and normal file flag
+        extentSize = remainingSize;
+        fileFlags = ISO_FILE;
+      } else {
+        // Not last extent - use max extent size and multi-extent flag
+        extentSize = MULTIEXTENT_PART_SIZE;
+        fileFlags = ISO_MULTIEXTENT;
+      }
+
+      putBothEndianInt(bb, (int) extentSize);
+
+      putDate(bb);
+
+      bb.put(fileFlags);
+      bb.put((byte) 0);
+      bb.put((byte) 0);
+      putBothEndianShort(bb, (short) 1);
+
+      bb.put((byte) nameLen);
+      bb.put(name.toUpperCase().getBytes(StandardCharsets.US_ASCII));
+      bb.put((byte) ';');
+      bb.put((byte) '1');
+
+      if ((33 + nameLen) % 2 != 0)
+        bb.put((byte) 0);
+
+      // Update for next extent
+      lba += (int) ((extentSize + SECTOR_SIZE - 1) / SECTOR_SIZE);
+      remainingSize -= extentSize;
+    }
   }
 
   // Helpers
@@ -390,7 +641,7 @@ public class VirtualIsoFile implements IFile {
   }
 
   private void writePVD(ByteBuffer bb, int offset, int pathTableSize, int ptL, int ptM, DirList root,
-      int filesStartLba) {
+      int volumeSizeSectors) {
     bb.position(offset);
     bb.put((byte) 1);
     bb.put("CD001".getBytes(StandardCharsets.US_ASCII));
@@ -405,8 +656,7 @@ public class VirtualIsoFile implements IFile {
 
     pad(bb, 8);
 
-    int volSize = (int) (totalSize / SECTOR_SIZE);
-    putBothEndianInt(bb, totalSize > 0 ? volSize : 0);
+    putBothEndianInt(bb, volumeSizeSectors);
 
     pad(bb, 32);
 
@@ -555,6 +805,10 @@ public class VirtualIsoFile implements IFile {
     while (remaining > 0 && position < totalSize) {
       int fileIdx = findFileEntryIndex(position);
       if (fileIdx < 0) {
+        // In padding area at end - return zeros
+        int toRead = (int) Math.min(totalSize - position, remaining);
+        Arrays.fill(buffer, bufOffset, bufOffset + toRead, (byte) 0);
+        r += toRead;
         break;
       }
 
@@ -563,16 +817,23 @@ public class VirtualIsoFile implements IFile {
 
       // In this file's allocated area
       if (position < f.endOffset) {
-        // Real data - read directly into buffer
+        // Real data - read from file parts
         long offsetInFile = position - f.startOffset;
         int toRead = (int) Math.min(f.endOffset - position, remaining);
 
-        // Create a view into the target buffer for reading
-        byte[] readTarget = new byte[toRead];
-        int readCount = f.file.read(readTarget, offsetInFile);
+        int readCount;
+        if (f.isMultipart) {
+          readCount = readFromMultipartFile(f, offsetInFile, buffer, bufOffset, toRead);
+        } else {
+          // Single file - read directly
+          byte[] readTarget = new byte[toRead];
+          readCount = f.fileParts.get(0).read(readTarget, offsetInFile);
+          if (readCount > 0) {
+            System.arraycopy(readTarget, 0, buffer, bufOffset, readCount);
+          }
+        }
 
         if (readCount > 0) {
-          System.arraycopy(readTarget, 0, buffer, bufOffset, readCount);
           r += readCount;
           remaining -= readCount;
           bufOffset += readCount;
@@ -594,6 +855,48 @@ public class VirtualIsoFile implements IFile {
     return r;
   }
 
+  /**
+   * Read from a multipart file (.66600, .66601, etc.), handling boundaries.
+   */
+  private int readFromMultipartFile(FileEntry f, long offsetInFile, byte[] buffer, int bufOffset, int toRead)
+      throws IOException {
+    int totalRead = 0;
+    long currentOffset = offsetInFile;
+    int currentBufOffset = bufOffset;
+    int remainingToRead = toRead;
+
+    // Find first part containing the offset
+    long partStartOffset = 0;
+    for (int partIdx = 0; partIdx < f.fileParts.size() && remainingToRead > 0; partIdx++) {
+      IFile part = f.fileParts.get(partIdx);
+      long partSize = part.length();
+      long partEndOffset = partStartOffset + partSize;
+
+      if (currentOffset >= partStartOffset && currentOffset < partEndOffset) {
+        // Read from this part
+        long offsetInPart = currentOffset - partStartOffset;
+        int bytesToReadFromPart = (int) Math.min(partEndOffset - currentOffset, remainingToRead);
+
+        byte[] readTarget = new byte[bytesToReadFromPart];
+        int readCount = part.read(readTarget, offsetInPart);
+
+        if (readCount > 0) {
+          System.arraycopy(readTarget, 0, buffer, currentBufOffset, readCount);
+          totalRead += readCount;
+          currentOffset += readCount;
+          currentBufOffset += readCount;
+          remainingToRead -= readCount;
+        } else {
+          break; // Read error
+        }
+      }
+
+      partStartOffset = partEndOffset;
+    }
+
+    return totalRead;
+  }
+
   @Override
   public void close() throws IOException {
     synchronized (fsBufLock) {
@@ -603,11 +906,13 @@ public class VirtualIsoFile implements IFile {
     // Close all nested file handles to prevent resource leaks
     if (allFiles != null) {
       for (FileEntry f : allFiles) {
-        if (f.file != null) {
-          try {
-            f.file.close();
-          } catch (IOException e) {
-            // Log but continue closing other files
+        if (f.fileParts != null) {
+          for (IFile part : f.fileParts) {
+            try {
+              part.close();
+            } catch (IOException e) {
+              // Log but continue closing other files
+            }
           }
         }
       }

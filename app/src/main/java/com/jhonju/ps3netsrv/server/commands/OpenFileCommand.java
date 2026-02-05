@@ -10,6 +10,7 @@ import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.server.io.IFile;
 
+import com.jhonju.ps3netsrv.server.io.VirtualIsoFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Set;
@@ -58,11 +59,23 @@ public class OpenFileCommand extends FileCommand {
       send(new OpenFileResult());
       throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_open_file_not_exists));
     }
-    ctx.setFile(files);
 
     // Use the first file in the set, or iterate if needed.
     // For OpenFile, we typically expect one valid file.
     IFile file = files.iterator().next();
+
+    boolean isGamesFolder = requestedPath != null &&
+        (requestedPath.toUpperCase().startsWith("/GAMES/") || requestedPath.toUpperCase().startsWith("GAMES/"));
+
+    if (isGamesFolder && file.isDirectory()) {
+      file = new VirtualIsoFile(file);
+
+      Set<IFile> newFiles = new java.util.HashSet<>();
+      newFiles.add(file);
+      files = newFiles;
+    }
+
+    ctx.setFile(files);
 
     try {
       determineCdSectorSize(file);

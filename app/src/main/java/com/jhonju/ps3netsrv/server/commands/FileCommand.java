@@ -24,6 +24,7 @@ import com.jhonju.ps3netsrv.R;
 public abstract class FileCommand extends AbstractCommand {
   protected short filePathLength;
   protected String fileName;
+  protected String requestedPath;
   protected DocumentFile currentDirectory;
 
   public FileCommand(Context ctx, short filePathLength) {
@@ -52,6 +53,7 @@ public abstract class FileCommand extends AbstractCommand {
     }
 
     String path = new String(buffer.array(), StandardCharsets.UTF_8);
+    this.requestedPath = path;
 
     HashSet<IFile> files = new HashSet<>();
 

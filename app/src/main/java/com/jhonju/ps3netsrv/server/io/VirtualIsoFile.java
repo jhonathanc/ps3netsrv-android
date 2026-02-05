@@ -1,6 +1,5 @@
 package com.jhonju.ps3netsrv.server.io;
 
-import android.content.ContentResolver;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 
 import java.io.IOException;
@@ -17,6 +16,8 @@ import java.util.TimeZone;
 public class VirtualIsoFile implements IFile {
 
   private static final int SECTOR_SIZE = 2048;
+  private static final int MAX_DIRECTORY_BUFFER_SIZE = 64 * 1024;
+  private static final int PATH_TABLE_ENTRY_ESTIMATE = 32;
 
   private final IFile rootFile;
   private final String volumeName;
@@ -27,6 +28,9 @@ public class VirtualIsoFile implements IFile {
 
   private DirList rootList;
   private List<FileEntry> allFiles;
+
+  // Lock object for thread-safe access to fsBuf
+  private final Object fsBufLock = new Object();
 
   private static class FileEntry {
     String name;
@@ -51,12 +55,10 @@ public class VirtualIsoFile implements IFile {
     this.rootFile = rootDir;
     this.volumeName = rootDir.getName() != null ? rootDir.getName().toUpperCase() : "PS3VOLUME";
 
-    if (!build()) {
-      throw new IOException("Failed to build virtual ISO structure");
-    }
+    build();
   }
 
-  private boolean build() throws IOException {
+  private void build() throws IOException {
     allFiles = new ArrayList<>();
     rootList = new DirList();
     rootList.name = "";
@@ -165,8 +167,6 @@ public class VirtualIsoFile implements IFile {
       f.startOffset = filesAreaStartOffset + ((long) f.rlba * SECTOR_SIZE);
       f.endOffset = f.startOffset + f.size;
     }
-
-    return true;
   }
 
   // Abstracted scanDirectory to use IFile
@@ -219,8 +219,7 @@ public class VirtualIsoFile implements IFile {
   }
 
   private byte[] generatePathTable(List<DirList> dirs, boolean msb) {
-    // ... Same logic as before ...
-    ByteBuffer bb = ByteBuffer.allocate(dirs.size() * 32);
+    ByteBuffer bb = ByteBuffer.allocate(dirs.size() * PATH_TABLE_ENTRY_ESTIMATE);
     bb.order(msb ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
 
     for (DirList d : dirs) {
@@ -258,14 +257,13 @@ public class VirtualIsoFile implements IFile {
   }
 
   private byte[] generateDirectoryContent(DirList dir, List<DirList> allDirs, int filesStartLba) {
-    // ... Same logic as before ...
     List<DirList> subDirs = new ArrayList<>();
     for (DirList d : allDirs) {
       if (d.parent == dir && d != dir && d != rootList)
         subDirs.add(d);
     }
 
-    ByteBuffer bb = ByteBuffer.allocate(64 * 1024);
+    ByteBuffer bb = ByteBuffer.allocate(MAX_DIRECTORY_BUFFER_SIZE);
     bb.order(ByteOrder.LITTLE_ENDIAN);
 
     writeDirRecord(bb, dir, ".", 0);
@@ -283,7 +281,6 @@ public class VirtualIsoFile implements IFile {
   }
 
   private void writeDirRecord(ByteBuffer bb, DirList target, String name, int flags) {
-    // ... Same logic as before ...
     int nameLen = name.equals(".") || name.equals("..") ? 1 : name.length();
     int recordLen = 33 + nameLen;
     if (recordLen % 2 != 0)
@@ -327,7 +324,6 @@ public class VirtualIsoFile implements IFile {
   }
 
   private void writeFileRecord(ByteBuffer bb, FileEntry f, int filesStartLba) {
-    // ... Same logic as before ...
     String name = f.name;
     int nameLen = name.length() + 2;
     int recordLen = 33 + nameLen;
@@ -395,7 +391,6 @@ public class VirtualIsoFile implements IFile {
 
   private void writePVD(ByteBuffer bb, int offset, int pathTableSize, int ptL, int ptM, DirList root,
       int filesStartLba) {
-    // ... Same logic as before ...
     bb.position(offset);
     bb.put((byte) 1);
     bb.put("CD001".getBytes(StandardCharsets.US_ASCII));
@@ -443,6 +438,36 @@ public class VirtualIsoFile implements IFile {
   private void pad(ByteBuffer bb, int count) {
     for (int i = 0; i < count; i++)
       bb.put((byte) 0);
+  }
+
+  /**
+   * Binary search to find the file entry containing the given position.
+   * Returns the index of the file entry, or -1 if not found in file data area.
+   */
+  private int findFileEntryIndex(long position) {
+    if (allFiles == null || allFiles.isEmpty()) {
+      return -1;
+    }
+
+    int low = 0;
+    int high = allFiles.size() - 1;
+
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      FileEntry entry = allFiles.get(mid);
+      long fileAreaEnd = entry.startOffset + ((entry.size + SECTOR_SIZE - 1) / SECTOR_SIZE) * SECTOR_SIZE;
+
+      if (position < entry.startOffset) {
+        high = mid - 1;
+      } else if (position >= fileAreaEnd) {
+        low = mid + 1;
+      } else {
+        // Position is within this file's allocated area
+        return mid;
+      }
+    }
+
+    return -1;
   }
 
   @Override
@@ -504,15 +529,18 @@ public class VirtualIsoFile implements IFile {
     if (position >= totalSize)
       return 0;
 
-    // 1. Read from metadata buffer
+    // 1. Read from metadata buffer (thread-safe)
     if (position < fsBufSize) {
       int toRead = (int) Math.min(fsBufSize - position, remaining);
       // Safety check
       if (position + toRead > fsBuf.capacity())
         toRead = fsBuf.capacity() - (int) position;
 
-      fsBuf.position((int) position);
-      fsBuf.get(buffer, bufOffset, toRead);
+      // Thread-safe read using synchronization
+      synchronized (fsBufLock) {
+        fsBuf.position((int) position);
+        fsBuf.get(buffer, bufOffset, toRead);
+      }
 
       remaining -= toRead;
       r += toRead;
@@ -523,48 +551,43 @@ public class VirtualIsoFile implements IFile {
     if (remaining == 0 || position >= totalSize)
       return r;
 
-    // 2. Read from files
-    for (FileEntry f : allFiles) {
-      if (position < f.startOffset) {
-        continue;
+    // 2. Read from files using binary search
+    while (remaining > 0 && position < totalSize) {
+      int fileIdx = findFileEntryIndex(position);
+      if (fileIdx < 0) {
+        break;
       }
 
+      FileEntry f = allFiles.get(fileIdx);
       long fileAreaEnd = f.startOffset + ((f.size + SECTOR_SIZE - 1) / SECTOR_SIZE) * SECTOR_SIZE;
 
-      if (position < fileAreaEnd) {
-        // In this file's allocated area
-        if (position < f.endOffset) {
-          // Real data
-          long offsetInFile = position - f.startOffset;
-          int toRead = (int) Math.min(f.endOffset - position, remaining);
+      // In this file's allocated area
+      if (position < f.endOffset) {
+        // Real data - read directly into buffer
+        long offsetInFile = position - f.startOffset;
+        int toRead = (int) Math.min(f.endOffset - position, remaining);
 
-          // Read from abstracted IFile into temp buffer
-          // We use a temp buffer because IFile.read(buffer, pos) might not support
-          // reading into an offset of the buffer
-          byte[] tempBuf = new byte[toRead];
-          int readCount = f.file.read(tempBuf, offsetInFile);
+        // Create a view into the target buffer for reading
+        byte[] readTarget = new byte[toRead];
+        int readCount = f.file.read(readTarget, offsetInFile);
 
-          if (readCount > 0) {
-            System.arraycopy(tempBuf, 0, buffer, bufOffset, readCount);
-            r += readCount;
-            remaining -= readCount;
-            bufOffset += readCount;
-            position += readCount;
-          }
+        if (readCount > 0) {
+          System.arraycopy(readTarget, 0, buffer, bufOffset, readCount);
+          r += readCount;
+          remaining -= readCount;
+          bufOffset += readCount;
+          position += readCount;
         }
+      }
 
-        // Padding
-        if (remaining > 0 && position < fileAreaEnd) {
-          int pad = (int) Math.min(fileAreaEnd - position, remaining);
-          Arrays.fill(buffer, bufOffset, bufOffset + pad, (byte) 0);
-          r += pad;
-          remaining -= pad;
-          bufOffset += pad;
-          position += pad;
-        }
-
-        if (remaining == 0)
-          return r;
+      // Padding (zeros after file content to sector boundary)
+      if (remaining > 0 && position >= f.endOffset && position < fileAreaEnd) {
+        int pad = (int) Math.min(fileAreaEnd - position, remaining);
+        Arrays.fill(buffer, bufOffset, bufOffset + pad, (byte) 0);
+        r += pad;
+        remaining -= pad;
+        bufOffset += pad;
+        position += pad;
       }
     }
 
@@ -573,7 +596,23 @@ public class VirtualIsoFile implements IFile {
 
   @Override
   public void close() throws IOException {
-    fsBuf = null;
+    synchronized (fsBufLock) {
+      fsBuf = null;
+    }
+
+    // Close all nested file handles to prevent resource leaks
+    if (allFiles != null) {
+      for (FileEntry f : allFiles) {
+        if (f.file != null) {
+          try {
+            f.file.close();
+          } catch (IOException e) {
+            // Log but continue closing other files
+          }
+        }
+      }
+      allFiles = null;
+    }
   }
 
   @Override

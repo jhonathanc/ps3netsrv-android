@@ -27,7 +27,28 @@ public class BinaryUtils {
   public static final String ISO_EXTENSION = ".iso";
   public static final String READ_ONLY_MODE = "r";
   public static final int _3K3Y_KEY_OFFSET = 0xF80;
+  public static final int _3K3Y_WATERMARK_OFFSET = 0xF70;
   public static final int ENCRYPTION_KEY_SIZE = 16;
+  
+  // 3k3y watermarks: "Encrypted 3K BLD" and "Dncrypted 3K BLD"
+  public static final byte[] _3K3Y_ENCRYPTED_WATERMARK = {
+      0x45, 0x6E, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65, 
+      0x64, 0x20, 0x33, 0x4B, 0x20, 0x42, 0x4C, 0x44
+  };
+  public static final byte[] _3K3Y_DECRYPTED_WATERMARK = {
+      0x44, 0x6E, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65, 
+      0x64, 0x20, 0x33, 0x4B, 0x20, 0x42, 0x4C, 0x44
+  };
+  
+  // Keys for D1 to decryption key conversion
+  public static final byte[] _3K3Y_D1_KEY = {
+      0x38, 0x0B, (byte) 0xCF, 0x0B, 0x53, 0x45, 0x5B, 0x3C, 
+      0x78, 0x17, (byte) 0xAB, 0x4F, (byte) 0xA3, (byte) 0xBA, (byte) 0x90, (byte) 0xED
+  };
+  public static final byte[] _3K3Y_D1_IV = {
+      0x69, 0x47, 0x47, 0x72, (byte) 0xAF, 0x6F, (byte) 0xDA, (byte) 0xB3, 
+      0x42, 0x74, 0x3A, (byte) 0xEF, (byte) 0xAA, 0x18, 0x62, (byte) 0x87
+  };
 
   public static byte[] charArrayToByteArray(char[] chars) {
     CharBuffer charBuffer = CharBuffer.wrap(chars);
@@ -123,4 +144,62 @@ public class BinaryUtils {
     }
     return new String(hexChars);
   }
+
+  /**
+   * Check if the sec0sec1 data contains the 3k3y encrypted watermark at offset 0xF70.
+   * This watermark is "Encrypted 3K BLD".
+   */
+  public static boolean has3K3YEncryptedWatermark(byte[] sec0sec1) {
+    if (sec0sec1 == null || sec0sec1.length < _3K3Y_KEY_OFFSET + ENCRYPTION_KEY_SIZE) {
+      return false;
+    }
+    for (int i = 0; i < ENCRYPTION_KEY_SIZE; i++) {
+      if (sec0sec1[_3K3Y_WATERMARK_OFFSET + i] != _3K3Y_ENCRYPTED_WATERMARK[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Check if the sec0sec1 data contains the 3k3y decrypted watermark at offset 0xF70.
+   * This watermark is "Dncrypted 3K BLD" (already decrypted, no key needed).
+   */
+  public static boolean has3K3YDecryptedWatermark(byte[] sec0sec1) {
+    if (sec0sec1 == null || sec0sec1.length < _3K3Y_WATERMARK_OFFSET + ENCRYPTION_KEY_SIZE) {
+      return false;
+    }
+    for (int i = 0; i < ENCRYPTION_KEY_SIZE; i++) {
+      if (sec0sec1[_3K3Y_WATERMARK_OFFSET + i] != _3K3Y_DECRYPTED_WATERMARK[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Extract the D1 key from sec0sec1 data and convert it to the actual decryption key.
+   * The D1 value at offset 0xF80 needs to be encrypted with a specific key/IV to get the real key.
+   */
+  public static byte[] convertD1ToKey(byte[] sec0sec1) throws IOException {
+    if (sec0sec1 == null || sec0sec1.length < _3K3Y_KEY_OFFSET + ENCRYPTION_KEY_SIZE) {
+      return null;
+    }
+    
+    // Extract D1 from offset 0xF80
+    byte[] d1 = new byte[ENCRYPTION_KEY_SIZE];
+    System.arraycopy(sec0sec1, _3K3Y_KEY_OFFSET, d1, 0, ENCRYPTION_KEY_SIZE);
+    
+    // Convert D1 to decryption key using AES encryption with the magic key/IV
+    try {
+      Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
+      SecretKeySpec keySpec = new SecretKeySpec(_3K3Y_D1_KEY, "AES");
+      IvParameterSpec ivSpec = new IvParameterSpec(_3K3Y_D1_IV);
+      cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
+      return cipher.doFinal(d1);
+    } catch (Exception e) {
+      throw new IOException("Failed to convert D1 to key", e);
+    }
+  }
+
 }

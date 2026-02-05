@@ -7,8 +7,7 @@ import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.PS3ISO_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.REDKEY_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.SECTOR_SIZE;
-import static com.jhonju.ps3netsrv.server.utils.BinaryUtils._3K3Y_KEY_OFFSET;
-import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.ENCRYPTION_KEY_SIZE;
+
 
 import android.content.ContentResolver;
 import android.os.ParcelFileDescriptor;
@@ -50,38 +49,48 @@ public class DocumentFileCustom implements IFile {
     byte[] encryptionKey = null;
     EEncryptionType detectedEncryptionType = EEncryptionType.NONE;
     PS3RegionInfo[] regionInfos = null;
+    byte[] sec0sec1 = null;
 
     if (documentFile != null && documentFile.isFile()) {
       this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
       this.fis = new FileInputStream(pfd.getFileDescriptor());
       this.fileChannel = fis.getChannel();
 
+      boolean isInPS3ISOFolder = documentFile.getParentFile() != null 
+          && documentFile.getParentFile().getName() != null
+          && documentFile.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
+
+      // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
+      int sec0Sec1Length = SECTOR_SIZE * 2;
+      if (isInPS3ISOFolder && documentFile.length() >= sec0Sec1Length) {
+        sec0sec1 = new byte[sec0Sec1Length];
+        fileChannel.position(0);
+        if (fileChannel.read(ByteBuffer.wrap(sec0sec1)) != sec0Sec1Length) {
+          sec0sec1 = null;
+        }
+      }
+
       // First try to get Redump key from external .dkey file
       encryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
       if (encryptionKey != null) {
         detectedEncryptionType = EEncryptionType.REDUMP;
-      } else {
-        // If no Redump key, try to get embedded 3k3y key from ISO
-        encryptionKey = get3K3YKey(fileChannel, documentFile.length());
+      } else if (sec0sec1 != null && BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
+        // If no Redump key, check for 3k3y watermark and extract key if found
+        encryptionKey = BinaryUtils.convertD1ToKey(sec0sec1);
         if (encryptionKey != null) {
           detectedEncryptionType = EEncryptionType._3K3Y;
         }
+      }
+      
+      // Parse region info from sec0sec1 if we have encryption
+      if (encryptionKey != null && sec0sec1 != null) {
+        regionInfos = BinaryUtils.getRegionInfos(sec0sec1);
       }
     }
 
     if (encryptionKey != null) {
       this.decryptionKey = new SecretKeySpec(encryptionKey, "AES");
       this.encryptionType = detectedEncryptionType;
-
-      int sec0Sec1Length = SECTOR_SIZE * 2;
-      if (documentFile.length() >= sec0Sec1Length) {
-        byte[] sec0sec1 = new byte[sec0Sec1Length];
-
-        fileChannel.position(0);
-        if (fileChannel.read(ByteBuffer.wrap(sec0sec1)) == sec0Sec1Length) {
-          regionInfos = BinaryUtils.getRegionInfos(sec0sec1);
-        }
-      }
     } else {
       this.decryptionKey = null;
       this.encryptionType = EEncryptionType.NONE;
@@ -125,21 +134,6 @@ public class DocumentFileCustom implements IFile {
     }
   }
 
-  private static byte[] get3K3YKey(FileChannel channel, long fileLength) throws IOException {
-    if (channel == null || fileLength < _3K3Y_KEY_OFFSET + ENCRYPTION_KEY_SIZE) {
-      return null;
-    }
-
-    byte[] key = new byte[ENCRYPTION_KEY_SIZE];
-    channel.position(_3K3Y_KEY_OFFSET);
-    int bytesRead = channel.read(ByteBuffer.wrap(key));
-
-    if (bytesRead != ENCRYPTION_KEY_SIZE || EncryptionKeyHelper.isKeyEmpty(key)) {
-      return null;
-    }
-
-    return key;
-  }
 
   @Override
   public boolean exists() {

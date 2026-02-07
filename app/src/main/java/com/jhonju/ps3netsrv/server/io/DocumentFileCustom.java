@@ -30,14 +30,19 @@ import javax.crypto.spec.SecretKeySpec;
 public class DocumentFileCustom implements IFile {
 
   public final DocumentFile documentFile;
-  private final SecretKeySpec decryptionKey;
-  private final EEncryptionType encryptionType;
+  private SecretKeySpec decryptionKey;
+  private EEncryptionType encryptionType;
   private final ContentResolver contentResolver;
   private ParcelFileDescriptor pfd;
   private FileInputStream fis;
   private FileChannel fileChannel;
-  private final PS3RegionInfo[] regionInfos;
+  private PS3RegionInfo[] regionInfos;
   private final byte[] iv = new byte[16];
+
+  private String cachedName;
+  private Long cachedSize;
+  private Boolean cachedIsDir;
+  private boolean isInitialized = false;
 
   public DocumentFileCustom(DocumentFile documentFile) throws IOException {
     this(documentFile, PS3NetSrvApp.getAppContext().getContentResolver());
@@ -46,9 +51,35 @@ public class DocumentFileCustom implements IFile {
   public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver) throws IOException {
     this.documentFile = documentFile;
     this.contentResolver = contentResolver;
+    init();
+  }
+
+  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, String name, long size, boolean isDir) {
+    this(documentFile, contentResolver, name, size, isDir, false);
+  }
+
+  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, String name, long size, boolean isDir, boolean initNow) {
+     this.documentFile = documentFile;
+     this.contentResolver = contentResolver;
+     this.cachedName = name;
+     this.cachedSize = size;
+     this.cachedIsDir = isDir;
+     this.isInitialized = false;
+     if (initNow) {
+         try {
+             init();
+         } catch (IOException e) {
+             com.jhonju.ps3netsrv.server.utils.FileLogger.logError(e);
+         }
+     }
+  }
+
+  private void init() throws IOException {
+    if (isInitialized) return;
+    
     byte[] encryptionKey = null;
     EEncryptionType detectedEncryptionType = EEncryptionType.NONE;
-    PS3RegionInfo[] regionInfos = null;
+    PS3RegionInfo[] regions = null;
     byte[] sec0sec1 = null;
 
     if (documentFile != null && documentFile.isFile()) {
@@ -84,7 +115,7 @@ public class DocumentFileCustom implements IFile {
       
       // Parse region info from sec0sec1 if we have encryption
       if (encryptionKey != null && sec0sec1 != null) {
-        regionInfos = BinaryUtils.getRegionInfos(sec0sec1);
+        regions = BinaryUtils.getRegionInfos(sec0sec1);
       }
     }
 
@@ -95,7 +126,8 @@ public class DocumentFileCustom implements IFile {
       this.decryptionKey = null;
       this.encryptionType = EEncryptionType.NONE;
     }
-    this.regionInfos = regionInfos != null ? regionInfos : new PS3RegionInfo[0];
+    this.regionInfos = regions != null ? regions : new PS3RegionInfo[0];
+    this.isInitialized = true;
   }
 
   private byte[] getRedumpKey(DocumentFile parent, String fileName) throws IOException {
@@ -142,11 +174,13 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public boolean isFile() {
-    return documentFile.isFile();
+      if (cachedIsDir != null) return !cachedIsDir;
+      return documentFile.isFile();
   }
 
   @Override
   public boolean isDirectory() {
+    if (cachedIsDir != null) return cachedIsDir;
     return documentFile.isDirectory();
   }
 
@@ -157,11 +191,13 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public long length() {
+    if (cachedSize != null) return cachedSize;
     return documentFile.length();
   }
 
   @Override
   public IFile[] listFiles() throws IOException {
+    init(); // Ensure initialized for listFiles (though we try to avoid using this method)
     DocumentFile[] filesAux = documentFile.listFiles();
     IFile[] files = new IFile[filesAux.length];
     int i = 0;
@@ -179,6 +215,7 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public String getName() {
+    if (cachedName != null) return cachedName;
     return documentFile.getName();
   }
 
@@ -200,6 +237,7 @@ public class DocumentFileCustom implements IFile {
   }
 
   public int read(byte[] buffer, long position) throws IOException {
+    if (!isInitialized) init();
     fileChannel.position(position);
     int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
     if (encryptionType != EEncryptionType.NONE) {

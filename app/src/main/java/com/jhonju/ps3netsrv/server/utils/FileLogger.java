@@ -46,6 +46,12 @@ public class FileLogger {
     writeLog(COMMAND_LOG_FILE, "[" + opcodeName + "] " + dataHex);
   }
 
+  public static void logPath(String tag, String path) {
+    if (!SettingsService.isLogCommands())
+      return;
+    writeLog(COMMAND_LOG_FILE, "[" + tag + "] " + path);
+  }
+
   private static synchronized void writeLog(String fileName, String content) {
     File logFile = getLogFile(fileName);
     if (logFile == null)

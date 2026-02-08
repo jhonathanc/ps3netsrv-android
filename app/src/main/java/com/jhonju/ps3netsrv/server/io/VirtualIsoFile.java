@@ -682,17 +682,6 @@ public class VirtualIsoFile implements IFile {
       });
       
       for (FileEntry file : sortedFiles) {
-          // Alignment Logic:
-          // Check if file is critical (EBOOT.BIN or PARAM.SFO) or in a critical directory
-          boolean isCritical = file.name.equalsIgnoreCase("EBOOT.BIN") || file.name.equalsIgnoreCase("PARAM.SFO") 
-              || dir.name.equalsIgnoreCase("USRDIR") || dir.name.equalsIgnoreCase("PS3_GAME");
-          
-          if (isCritical) {
-              if ((currentSectorOffset & 0x1F) != 0) {
-                  currentSectorOffset = (currentSectorOffset + 0x1F) & ~0x1F;
-              }
-          }
-
           file.rlba = currentSectorOffset;
           int sectors = (int) ((file.size + SECTOR_SIZE - 1) / SECTOR_SIZE);
 

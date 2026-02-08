@@ -8,7 +8,9 @@ This is an Android implementation of the `ps3netsrv` server, allowing you to str
 
 ## Features
 
-- **Serve PS3 ISOs/Games:** Stream your backups over the local network to your console (WebMAN MOD / multiMAN compatible).
+- **Digital Media Streaming:** Stream PS3 ISOs and media files over the local network (WebMAN MOD / multiMAN compatible).
+- **Virtual ISO Support:** Stream game folders (JB format) directly as virtual ISOs. The server dynamically generates the ISO 9660 structure.
+- **Multipart ISO Support:** Seamlessly handle split ISO files (e.g., .iso.66600, .iso.66601) as a single file.
 - **Multiple Folders:** Support for serving files from multiple directories on your device.
 - **Ordered Priority:** If a file exists in multiple folders, the one in the first listed folder takes priority.
 - **Port Configuration:** Customizable server port (Default: 38008).
@@ -37,6 +39,51 @@ This is an Android implementation of the `ps3netsrv` server, allowing you to str
     - The status will update to show the running port and IP address.
 5.  **Connect from PS3:**
     - On your PS3 (running WebMAN MOD or multiMAN), configure the `ps3netsrv` settings to point to your Android device's IP address and the port you configured (default 38008).
+
+## Tutorial & Folder Structure
+
+To ensure your games are recognized correctly, you must organize them into specific folders within your shared directories.
+
+### Supported Folders
+
+| Folder | Content Type | Supported Formats |
+| :--- | :--- | :--- |
+| **`PS3ISO`** | PS3 Games | `.iso` |
+| **`GAMES`** / **`GAMEZ`** | PS3 Games (JB Folder) | Folder containing `PS3_GAME` |
+| **`PS2ISO`** | PS2 Games | `.iso` |
+| **`PSXISO`** | PS1 Games | `.iso`, `.bin/.cue` |
+| **`PSPISO`** | PSP Games | `.iso` |
+| **`BDISO`** | Blu-ray Movies | `.iso` |
+| **`DVDISO`** | DVD Movies | `.iso` |
+| **`PKG`** | Application Packages | `.pkg` |
+| **`GAMEI`** | PSN Content | Local game data |
+
+### Advanced Features
+
+#### Virtual ISO (JB Folders)
+You don't need to convert your "JB format" folders (the ones with `PS3_GAME` inside) to ISO. Just place them in the `GAMES` folder. PS3NetSrv for Android will automatically present them to the PS3 as virtual ISOs.
+
+#### Multipart ISOs (Split Files)
+If you have large ISO files split into parts (e.g., to fit on FAT32), the server handles them automatically. Ensure they follow this naming convention:
+- `GameName.iso.66600`
+- `GameName.iso.66601`
+- ...and so on.
+The console will see and mount them as a single, complete ISO.
+
+### Setting Up Your PS3
+
+1.  **Get Device IP:** Note the IP address displayed on the app's main screen after starting the server.
+2.  **WebMAN MOD:**
+    - Go to **webMAN Setup** -> **PS3 webMAN [Setup]**.
+    - Scroll down to **Scan for games** and check the **Scan for LAN games/videos** option.
+    - Enter your Android device's IP and Port (default `38008`) in the server slots.
+    - Click **Save** and restart your console.
+3.  **MultiMAN:**
+    - Go to the **Network** column.
+    - Select **Network Servers**.
+    - Configure a new server with your Android IP and Port.
+
+---
 
 ## Screenshots
 

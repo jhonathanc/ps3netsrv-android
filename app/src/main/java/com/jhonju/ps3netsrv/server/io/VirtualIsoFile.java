@@ -191,24 +191,28 @@ public class VirtualIsoFile implements IFile {
     int pathTableSectors = (pathTableSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
 
     // 5. Calculate Layout
-    int lba = 16; // PVD
-    lba++; // Terminator
-    lba++; // Skip Terminator sector (17) so Path Table starts at 18
-    
-    // Align Path Table L
-    if ((lba & 0x1F) != 0) lba = (lba + 0x1F) & ~0x1F;
+    // PS3 ISO Layout (based on makeps3iso.c):
+    // 0-15: System Area / Unused
+    // 16: PVD
+    // 17-19: Unused / Terminator (17)
+    // 20: Path Table L
+    // ..: Path Table M
+    // >=32: Directories
+
+    int lba = 20; // Force Path Table L at LBA 20
     int pathTableL_LBA = lba;
     lba += pathTableSectors;
 
-    // Align Path Table M
-    if ((lba & 0x1F) != 0) lba = (lba + 0x1F) & ~0x1F;
+    // Path Table M follows immediately
     int pathTableM_LBA = lba;
     lba += pathTableSectors;
+    
+    // Directories start after Path Tables, but at least at LBA 32
+    if (lba < 32) {
+        lba = 32;
+    }
 
-    for (DirList dir : allDirs) {
-      // Align each directory to 32 sectors
-      if ((lba & 0x1F) != 0) lba = (lba + 0x1F) & ~0x1F;
-      
+    for (DirList dir : allDirs) {      
       dir.lba = lba;
       byte[] content = generateDirectoryContent(dir, allDirs, 0);
       dir.content = content;
@@ -218,11 +222,6 @@ public class VirtualIsoFile implements IFile {
     }
 
     int filesStartLba = lba;
-    
-    // CRITICAL: Align filesStartLba to 32 sectors (64KB) for PS3 compatibility
-    if ((filesStartLba & 0x1F) != 0) {
-        filesStartLba = (filesStartLba + 0x1F) & ~0x1F;
-    }
 
     // 7. Fixup Directory Records
     for (DirList dir : allDirs) {

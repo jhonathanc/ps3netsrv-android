@@ -74,33 +74,23 @@ public class VirtualIsoFile implements IFile {
   }
 
   public VirtualIsoFile(IFile rootDir) throws IOException {
-    try {
-      this.rootFile = rootDir;
-      com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile ctor start for: " + (rootDir != null ? rootDir.getName() : "null"));
+    this.rootFile = rootDir;
 
-      // Detect PS3 mode by checking for PS3_GAME/PARAM.SFO
-      String detectedTitleId = ParamSfoParser.getTitleId(rootDir);
-      this.ps3Mode = (detectedTitleId != null);
-      this.titleId = detectedTitleId;
-      com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile ps3Mode: " + ps3Mode + ", titleId: " + titleId);
+    // Detect PS3 mode by checking for PS3_GAME/PARAM.SFO
+    String detectedTitleId = ParamSfoParser.getTitleId(rootDir);
+    this.ps3Mode = (detectedTitleId != null);
+    this.titleId = detectedTitleId;
 
-      if (ps3Mode) {
-        this.volumeName = "PS3VOLUME";
-      } else {
-        this.volumeName = rootDir.getName() != null ? rootDir.getName().toUpperCase() : "DVDVIDEO";
-      }
-
-      build();
-      com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile ctor end");
-    } catch (Throwable e) {
-      com.jhonju.ps3netsrv.server.utils.FileLogger.logError(new RuntimeException("Error in VirtualIsoFile ctor", e));
-      throw new IOException("Error creating VirtualIsoFile", e);
+    if (ps3Mode) {
+      this.volumeName = "PS3VOLUME";
+    } else {
+      this.volumeName = rootDir.getName() != null ? rootDir.getName().toUpperCase() : "DVDVIDEO";
     }
+
+    build();
   }
 
   private void build() throws IOException {
-    try {
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile: build() start");
     allFiles = new ArrayList<>();
     rootList = new DirList();
     rootList.name = "";
@@ -110,37 +100,10 @@ public class VirtualIsoFile implements IFile {
     List<DirList> allDirs = new ArrayList<>();
     allDirs.add(rootList);
 
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile: scanDirectory start");
     scanDirectory(rootFile, rootList, allDirs);
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile: scanDirectory end. Dirs found: " + allDirs.size());
 
-    // 2. Calculate sizes and assign Relative LBAs for files
-    int currentFileSectorOffset = 0;
-    for (DirList dir : allDirs) {
-      for (FileEntry file : dir.files) {
-        file.rlba = currentFileSectorOffset;
-        int sectors = (int) ((file.size + SECTOR_SIZE - 1) / SECTOR_SIZE);
-        currentFileSectorOffset += sectors;
-        allFiles.add(file);
-
-        // Calculate extent parts for multi-extent support
-        if (file.size > MULTIEXTENT_PART_SIZE) {
-          file.extentParts = (int) ((file.size + MULTIEXTENT_PART_SIZE - 1) / MULTIEXTENT_PART_SIZE);
-        }
-      }
-    }
-    int filesSizeSectors = currentFileSectorOffset;
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile: Sizes calculated. Files found: " + allFiles.size());
-
-    // 4. Generate Path Tables
-    
-    // ISO 9660 requires Path Table to be sorted by:
-    // 1. Parent Directory Number (Ascending)
-    // 2. Directory Identifier (Ascending)
-    // To achieve this, we must traverse the directory tree in Level Order (BFS),
-    // and sort siblings by name.
-    
-    // First, map parents to their children
+    // 1.5. Map parents to children for DFS/BFS traversals
+    // This is needed for both DFS file layout (Phase 2) and BFS Path Table (Phase 4)
     java.util.Map<DirList, List<DirList>> childrenMap = new java.util.HashMap<>();
     for (DirList dir : allDirs) {
         if (dir.parent != null && dir != rootList) {
@@ -152,6 +115,30 @@ public class VirtualIsoFile implements IFile {
             children.add(dir);
         }
     }
+
+    // 2. Calculate sizes and assign Relative LBAs for files
+    // Use DFS Traversal to match C++ makeps3iso behavior (recursive walk)
+    // This ensures physical file order matches the reference implementation.
+    // NOTE: passing 'filesStartLba' not possible here as it is not calculated yet.
+    // However, rlba must be aligned relative to filesStartLba.
+    // We can assume filesStartLba will be aligned to 32 sectors (Phase 5).
+    // So if we align rlba to 32 sectors, the absolute lba will also be aligned.
+    int currentFileSectorOffset = 0;
+    allFiles = new ArrayList<>();
+    currentFileSectorOffset = scanFilesDFS(rootList, currentFileSectorOffset, allFiles, childrenMap);
+    
+    int filesSizeSectors = currentFileSectorOffset;
+
+    // 4. Generate Path Tables
+    
+    // ISO 9660 requires Path Table to be sorted by:
+    // 1. Parent Directory Number (Ascending)
+    // 2. Directory Identifier (Ascending)
+    // To achieve this, we must traverse the directory tree in Level Order (BFS),
+    // and sort siblings by name.
+    
+    // childrenMap is already built in Phase 1.5
+
     
     // Now perform BFS to rebuild allDirs in correct order
     List<DirList> sortedDirs = new ArrayList<>();
@@ -202,20 +189,26 @@ public class VirtualIsoFile implements IFile {
 
     int pathTableSize = pathTableL.length;
     int pathTableSectors = (pathTableSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile: Path tables generated. Size: " + pathTableSize);
 
     // 5. Calculate Layout
     int lba = 16; // PVD
     lba++; // Terminator
     lba++; // Skip Terminator sector (17) so Path Table starts at 18
-
+    
+    // Align Path Table L
+    if ((lba & 0x1F) != 0) lba = (lba + 0x1F) & ~0x1F;
     int pathTableL_LBA = lba;
     lba += pathTableSectors;
 
+    // Align Path Table M
+    if ((lba & 0x1F) != 0) lba = (lba + 0x1F) & ~0x1F;
     int pathTableM_LBA = lba;
     lba += pathTableSectors;
 
     for (DirList dir : allDirs) {
+      // Align each directory to 32 sectors
+      if ((lba & 0x1F) != 0) lba = (lba + 0x1F) & ~0x1F;
+      
       dir.lba = lba;
       byte[] content = generateDirectoryContent(dir, allDirs, 0);
       dir.content = content;
@@ -225,23 +218,31 @@ public class VirtualIsoFile implements IFile {
     }
 
     int filesStartLba = lba;
+    
+    // CRITICAL: Align filesStartLba to 32 sectors (64KB) for PS3 compatibility
+    if ((filesStartLba & 0x1F) != 0) {
+        filesStartLba = (filesStartLba + 0x1F) & ~0x1F;
+    }
 
-    // 6. Fixup Directory Records
+    // 7. Fixup Directory Records
     for (DirList dir : allDirs) {
       dir.content = generateDirectoryContent(dir, allDirs, filesStartLba);
     }
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile: Layout calculated. filesStartLba: " + filesStartLba);
 
-    // Add padding at end (aligned to 0x20 sectors like C++ version)
     int volumeSize = filesStartLba + filesSizeSectors;
     int padSectors = 0x20;
     if ((volumeSize & 0x1F) != 0) {
       padSectors += (0x20 - (volumeSize & 0x1F));
     }
+    
+    // Ensure total size is a multiple of 32
+    int finalVolumeSize = volumeSize + padSectors;
+    if ((finalVolumeSize & 0x1F) != 0) {
+        finalVolumeSize = (finalVolumeSize + 0x1F) & ~0x1F;
+    }
 
     // 7. Build fsBuf
     fsBufSize = filesStartLba * SECTOR_SIZE;
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile: Allocating fsBuf: " + fsBufSize);
     fsBuf = ByteBuffer.allocate(fsBufSize);
     fsBuf.order(ByteOrder.LITTLE_ENDIAN);
 
@@ -249,10 +250,10 @@ public class VirtualIsoFile implements IFile {
 
     // Write PS3-specific sectors 0 and 1 if in PS3 mode
     if (ps3Mode) {
-      writePS3Sectors(fsBuf, volumeSize + padSectors);
+      writePS3Sectors(fsBuf, finalVolumeSize);
     }
 
-    writePVD(fsBuf, 16 * SECTOR_SIZE, pathTableSize, pathTableL_LBA, pathTableM_LBA, rootList, volumeSize + padSectors);
+    writePVD(fsBuf, 16 * SECTOR_SIZE, pathTableSize, pathTableL_LBA, pathTableM_LBA, rootList, finalVolumeSize);
 
     // Terminator
     fsBuf.put(17 * SECTOR_SIZE, (byte) 255);
@@ -263,8 +264,6 @@ public class VirtualIsoFile implements IFile {
     fsBuf.put(17 * SECTOR_SIZE + 5, (byte) '1');
     fsBuf.put(17 * SECTOR_SIZE + 6, (byte) 1);
 
-    // CRITICAL FIX: Regenerate Path Tables now that LBAs are assigned (Phase 5)
-    // The previous generation (Phase 4) used LBA=0 for all dirs.
     pathTableL = generatePathTable(allDirs, false);
     pathTableM = generatePathTable(allDirs, true);
 
@@ -279,8 +278,7 @@ public class VirtualIsoFile implements IFile {
       fsBuf.put(dir.content);
     }
 
-    totalSize = (long) (filesStartLba + filesSizeSectors + padSectors) * SECTOR_SIZE;
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile: fsBuf populated. totalSize: " + totalSize);
+    totalSize = (long) finalVolumeSize * SECTOR_SIZE;
 
     // Update file entry cached offsets
     long filesAreaStartOffset = (long) filesStartLba * SECTOR_SIZE;
@@ -288,15 +286,7 @@ public class VirtualIsoFile implements IFile {
       f.startOffset = filesAreaStartOffset + ((long) f.rlba * SECTOR_SIZE);
       f.endOffset = f.startOffset + f.size;
     }
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "VirtualIsoFile: build() complete");
-  } catch (IOException e) {
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logError(e);
-    throw e;
-  } catch (Exception e) {
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logError(new RuntimeException("Error building VirtualIsoFile", e));
-    throw new IOException("Error building VirtualIsoFile", e);
   }
-}
 
   /**
    * Write PS3-specific sectors 0 and 1.
@@ -366,13 +356,10 @@ public class VirtualIsoFile implements IFile {
       return;
     }
 
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "scanDirectory: " + (dir != null ? dir.getName() : "null"));
     IFile[] files = dir.listFiles();
     if (files == null) {
-      com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "scanDirectory: listFiles returned null for " + (dir != null ? dir.getName() : "null"));
       return;
     }
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "scanDirectory: found " + files.length + " files in " + dir.getName());
 
     Arrays.sort(files, new Comparator<IFile>() {
       @Override
@@ -449,12 +436,9 @@ public class VirtualIsoFile implements IFile {
     String dirDocId = android.provider.DocumentsContract.getDocumentId(currentUri);
     
     if (visitedDocIds.contains(dirDocId)) {
-        com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "scanDirectoryOptimized: Cycle detected for " + dir.getName() + " (" + dirDocId + ")");
         return;
     }
     visitedDocIds.add(dirDocId);
-
-    // com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "scanDirectoryOptimized: Scanning " + dir.getName());
     
     android.content.Context context = com.jhonju.ps3netsrv.app.PS3NetSrvApp.getAppContext();
     android.content.ContentResolver resolver = context.getContentResolver();
@@ -503,7 +487,6 @@ public class VirtualIsoFile implements IFile {
         }
       }
     } catch (Exception e) {
-      com.jhonju.ps3netsrv.server.utils.FileLogger.logError(new RuntimeException("Error in scanDirectoryOptimized", e));
     }
 
     // Sort files
@@ -516,7 +499,7 @@ public class VirtualIsoFile implements IFile {
       }
     });
 
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "scanDirectoryOptimized: found " + filesList.size() + " items in " + dir.getName());
+
     
     // Track multipart base names
     List<String> processedMultiparts = new ArrayList<>();
@@ -607,7 +590,10 @@ public class VirtualIsoFile implements IFile {
         parentIdx = 1;
       bb.putShort(parentIdx);
 
-      if (d == rootList)
+
+
+
+    if (d == rootList)
         bb.put((byte) 0);
       else
         // Enforce US Locale
@@ -635,46 +621,44 @@ public class VirtualIsoFile implements IFile {
     writeDirRecord(bb, dir, ".", 0);
     writeDirRecord(bb, dir.parent, "..", 0);
 
-    // ISO 9660 requires ALL entries (files and directories) to be sorted alphabetically by name.
-    // We must merge subdirectories and files into a single list and sort them.
-    List<Object> entries = new ArrayList<>();
-    entries.addAll(subDirs);
-    entries.addAll(dir.files);
+    // ISO 9660: Strict Alphabetical Order (Files and Dirs mixed)
+    // PS3 likely relies on this for binary search.
+    // Previous "Files First" attempt violated this for EBOOT.BIN (E) vs DOWNLOADED (D).
+    
+    List<Object> allEntries = new ArrayList<>();
+    allEntries.addAll(dir.files);
+    for (DirList d : allDirs) {
+      if (d.parent == dir && d != dir && d != rootList)
+        allEntries.add(d);
+    }
 
-    Collections.sort(entries, new Comparator<Object>() {
+    Collections.sort(allEntries, new Comparator<Object>() {
         @Override
         public int compare(Object o1, Object o2) {
-            String n1 = getName(o1);
-            String n2 = getName(o2);
-            if (n1 == null) return -1;
-            if (n2 == null) return 1;
-            // Enforce US Locale for sorting
+            String n1 = (o1 instanceof FileEntry) ? ((FileEntry)o1).name : ((DirList)o1).name;
+            String n2 = (o2 instanceof FileEntry) ? ((FileEntry)o2).name : ((DirList)o2).name;
             return n1.toUpperCase(java.util.Locale.US).compareTo(n2.toUpperCase(java.util.Locale.US));
-        }
-
-        private String getName(Object o) {
-            if (o instanceof DirList) return ((DirList) o).name;
-            if (o instanceof FileEntry) return ((FileEntry) o).name;
-            return "";
         }
     });
 
-    for (Object entry : entries) {
-        String name = getName(entry);
-        if (entry instanceof DirList) {
-            DirList sub = (DirList) entry;
-            if (dir.name.equalsIgnoreCase("PS3_GAME") || dir.name.equalsIgnoreCase("USRDIR") || dir.name.equals("")) {
-                 com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", 
-                     String.format(java.util.Locale.US, "DIR_CONTENT [%s]: folder=%s LBA=%d", dir.name, name, sub.lba));
-            }
-            writeDirRecord(bb, sub, sub.name, 0);
-        } else if (entry instanceof FileEntry) {
-            FileEntry f = (FileEntry) entry;
-            if (dir.name.equalsIgnoreCase("PS3_GAME") || dir.name.equalsIgnoreCase("USRDIR") || dir.name.equals("")) {
-                 com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", 
-                     String.format(java.util.Locale.US, "DIR_CONTENT [%s]: file=%s LBA=%d size=%d", dir.name, name, filesStartLba + f.rlba, f.size));
-            }
+    for (Object o : allEntries) {
+        if (o instanceof FileEntry) {
+            FileEntry f = (FileEntry) o;
             writeFileRecord(bb, f, filesStartLba);
+        } else {
+            DirList sub = (DirList) o;
+            writeDirRecord(bb, sub, sub.name, 0);
+        }
+    }
+
+    // Pad the directory content to the nearest sector boundary (2048 bytes)
+    // makeps3iso sets directory size to a multiple of 2048. PS3 likely expects this.
+    int size = bb.position();
+    int remainder = size % SECTOR_SIZE;
+    if (remainder != 0) {
+        int pad = SECTOR_SIZE - remainder;
+        for (int i = 0; i < pad; i++) {
+            bb.put((byte) 0);
         }
     }
 
@@ -683,14 +667,74 @@ public class VirtualIsoFile implements IFile {
     bb.get(res);
     return res;
   }
+  
+  /**
+   * Recursive helper to populate allFiles in DFS order and assign LBAs.
+   */
+  private int scanFilesDFS(DirList dir, int currentSectorOffset, List<FileEntry> fileList, java.util.Map<DirList, List<DirList>> childrenMap) {
+      // Process Files in THIS directory first (alphabetical order)
+      List<FileEntry> sortedFiles = new ArrayList<>(dir.files);
+      Collections.sort(sortedFiles, new Comparator<FileEntry>() {
+        @Override
+        public int compare(FileEntry o1, FileEntry o2) {
+            return o1.name.toUpperCase(java.util.Locale.US).compareTo(o2.name.toUpperCase(java.util.Locale.US));
+        }
+      });
+      
+      for (FileEntry file : sortedFiles) {
+          // Alignment Logic:
+          // Check if file is critical (EBOOT.BIN or PARAM.SFO) or in a critical directory
+          boolean isCritical = file.name.equalsIgnoreCase("EBOOT.BIN") || file.name.equalsIgnoreCase("PARAM.SFO") 
+              || dir.name.equalsIgnoreCase("USRDIR") || dir.name.equalsIgnoreCase("PS3_GAME");
+          
+          if (isCritical) {
+              if ((currentSectorOffset & 0x1F) != 0) {
+                  currentSectorOffset = (currentSectorOffset + 0x1F) & ~0x1F;
+              }
+          }
+
+          file.rlba = currentSectorOffset;
+          int sectors = (int) ((file.size + SECTOR_SIZE - 1) / SECTOR_SIZE);
+          
+
+
+          currentSectorOffset += sectors;
+          fileList.add(file);
+          
+          if (file.size > MULTIEXTENT_PART_SIZE) {
+            file.extentParts = (int) ((file.size + MULTIEXTENT_PART_SIZE - 1) / MULTIEXTENT_PART_SIZE);
+          }
+      }
+      
+      // Then recurse into subdirectories (alphabetical order)
+      List<DirList> children = childrenMap.get(dir);
+      if (children != null) {
+          List<DirList> sortedChildren = new ArrayList<>(children);
+          Collections.sort(sortedChildren, new Comparator<DirList>() {
+            @Override
+            public int compare(DirList o1, DirList o2) {
+                return o1.name.toUpperCase(java.util.Locale.US).compareTo(o2.name.toUpperCase(java.util.Locale.US));
+            }
+          });
+          
+          for (DirList child : sortedChildren) {
+              currentSectorOffset = scanFilesDFS(child, currentSectorOffset, fileList, childrenMap);
+          }
+      }
+      
+      return currentSectorOffset;
+  }
 
   private void writeDirRecord(ByteBuffer bb, DirList target, String name, int flags) {
     // ISO 9660: '.' and '..' are 1 byte (0x00 and 0x01).
     int nameLen = (name.equals(".") || name.equals("..")) ? 1 : name.length();
     
-    int recordLen = 33 + nameLen;
-    if (recordLen % 2 != 0)
-      recordLen++;
+    // makeps3iso compatibility: +6 bytes overhead
+    int padOverhead = 6;
+    int recordLen = 33 + nameLen + padOverhead;
+    if (recordLen % 2 != 0) {
+        recordLen++;
+    }
 
     int pos = bb.position();
     if ((pos % SECTOR_SIZE) + recordLen > (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE)) {
@@ -726,8 +770,12 @@ public class VirtualIsoFile implements IFile {
       // Enforce US ASCII for consistency
       bb.put(name.toUpperCase(java.util.Locale.US).getBytes(StandardCharsets.US_ASCII));
 
-    if ((33 + nameLen) % 2 != 0)
-      bb.put((byte) 0);
+    // Fill remaining bytes with 0 padding
+    int bytesWritten = 33 + nameLen;
+    while (bytesWritten < recordLen) {
+        bb.put((byte) 0);
+        bytesWritten++;
+    }
   }
 
   private void writeFileRecord(ByteBuffer bb, FileEntry f, int filesStartLba) {
@@ -739,10 +787,17 @@ public class VirtualIsoFile implements IFile {
 
     // Standard single-extent file record
     String name = f.name;
-    int nameLen = name.length() + 2;
-    int recordLen = 33 + nameLen;
-    if (recordLen % 2 != 0)
-      recordLen++;
+    // PS3 compatibility: makeps3iso logic.
+    int nameLen = name.length();
+    int nameLenWithSuffix = nameLen + 2; // +2 for ";1"
+    
+    // makeps3iso compatibility: +6 bytes overhead
+    int padOverhead = 6;
+    int recordLen = 33 + nameLenWithSuffix + padOverhead;
+    
+    if (recordLen % 2 != 0) {
+        recordLen++;
+    }
 
     int pos = bb.position();
     if ((pos % SECTOR_SIZE) + recordLen > (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE)) {
@@ -756,12 +811,7 @@ public class VirtualIsoFile implements IFile {
 
     int lba = filesStartLba + f.rlba;
     
-    // DEBUG: Log LBA for EBOOT.BIN
-    if (f.name.equalsIgnoreCase("EBOOT.BIN")) {
-        com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", 
-            String.format(java.util.Locale.US, "writeFileRecord EBOOT.BIN: rlba=%d, filesStartLba=%d, finalLba=%d (0x%X), size=%d", 
-                f.rlba, filesStartLba, lba, lba * 2048L, f.size));
-    }
+
     
     putBothEndianInt(bb, lba);
 
@@ -775,13 +825,18 @@ public class VirtualIsoFile implements IFile {
     bb.put((byte) 0);
     putBothEndianShort(bb, (short) 1);
 
-    bb.put((byte) nameLen);
+    // Length of File Identifier includes suffix
+    bb.put((byte) nameLenWithSuffix); 
     bb.put(name.toUpperCase().getBytes(StandardCharsets.US_ASCII));
     bb.put((byte) ';');
     bb.put((byte) '1');
-
-    if ((33 + nameLen) % 2 != 0)
-      bb.put((byte) 0);
+    
+    // Fill remaining bytes with 0 padding
+    int bytesWritten = 33 + nameLenWithSuffix;
+    while (bytesWritten < recordLen) {
+        bb.put((byte) 0);
+        bytesWritten++;
+    }
   }
 
   /**
@@ -790,60 +845,61 @@ public class VirtualIsoFile implements IFile {
    */
   private void writeMultiExtentFileRecords(ByteBuffer bb, FileEntry f, int filesStartLba) {
     String name = f.name;
-    int nameLen = name.length() + 2;
-    int recordLen = 33 + nameLen;
-    if (recordLen % 2 != 0)
-      recordLen++;
+    int nameLenWithSuffix = name.length() + 2;
+    
+    // makeps3iso logic (+6 byte overhead)
+    int padOverhead = 6;
+    int recordLen = 33 + nameLenWithSuffix + padOverhead;
+    
+    if (recordLen % 2 != 0) {
+        recordLen++;
+    }
 
     int lba = filesStartLba + f.rlba;
     long remainingSize = f.size;
 
     for (int part = 0; part < f.extentParts; part++) {
-      int pos = bb.position();
-      if ((pos % SECTOR_SIZE) + recordLen > (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE)) {
-        int pad = (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE) - pos;
-        for (int i = 0; i < pad; i++)
-          bb.put((byte) 0);
-      }
-
-      bb.put((byte) recordLen);
-      bb.put((byte) 0);
-
-      putBothEndianInt(bb, lba);
-
-      // Calculate size for this extent
-      long extentSize;
-      byte fileFlags;
-      if (part == f.extentParts - 1) {
-        // Last extent - use remaining size and normal file flag
-        extentSize = remainingSize;
-        fileFlags = ISO_FILE;
-      } else {
-        // Not last extent - use max extent size and multi-extent flag
-        extentSize = MULTIEXTENT_PART_SIZE;
-        fileFlags = ISO_MULTIEXTENT;
-      }
-
-      putBothEndianInt(bb, (int) extentSize);
-
-      putDate(bb);
-
-      bb.put(fileFlags);
-      bb.put((byte) 0);
-      bb.put((byte) 0);
-      putBothEndianShort(bb, (short) 1);
-
-      bb.put((byte) nameLen);
-      bb.put(name.toUpperCase().getBytes(StandardCharsets.US_ASCII));
-      bb.put((byte) ';');
-      bb.put((byte) '1');
-
-      if ((33 + nameLen) % 2 != 0)
+        long currentSize = Math.min(remainingSize, MULTIEXTENT_PART_SIZE);
+        
+        // Alignment check (same as single record)
+        int pos = bb.position();
+        if ((pos % SECTOR_SIZE) + recordLen > (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE)) {
+            int pad = (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE) - pos;
+            for (int i = 0; i < pad; i++)
+                bb.put((byte) 0);
+        }
+        
+        bb.put((byte) recordLen);
         bb.put((byte) 0);
-
-      // Update for next extent
-      lba += (int) ((extentSize + SECTOR_SIZE - 1) / SECTOR_SIZE);
-      remainingSize -= extentSize;
+        
+        putBothEndianInt(bb, lba);
+        putBothEndianInt(bb, (int) currentSize);
+        putDate(bb);
+        
+        byte flags = ISO_FILE;
+        if (part < f.extentParts - 1) {
+            flags |= ISO_MULTIEXTENT;
+        }
+        
+        bb.put(flags);
+        bb.put((byte) 0);
+        bb.put((byte) 0);
+        putBothEndianShort(bb, (short) 1);
+        
+        bb.put((byte) nameLenWithSuffix);
+        bb.put(name.toUpperCase().getBytes(StandardCharsets.US_ASCII));
+        bb.put((byte) ';');
+        bb.put((byte) '1');
+        
+        // Fill remaining bytes with 0 padding
+        int bytesWritten = 33 + nameLenWithSuffix;
+        while (bytesWritten < recordLen) {
+            bb.put((byte) 0);
+            bytesWritten++;
+        }
+            
+        lba += (int) ((currentSize + SECTOR_SIZE - 1) / SECTOR_SIZE);
+        remainingSize -= currentSize;
     }
   }
 
@@ -1050,12 +1106,7 @@ public class VirtualIsoFile implements IFile {
       FileEntry f = allFiles.get(fileIdx);
       long fileAreaEnd = f.startOffset + ((f.size + SECTOR_SIZE - 1) / SECTOR_SIZE) * SECTOR_SIZE;
 
-      // DEBUG: Log ALL matches in the file area to track PS3 progress
-      if (position == f.startOffset || position % (64 * 1024) == 0) {
-          com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", 
-              String.format(java.util.Locale.US, "FILE_MATCH: pos=0x%X -> %s (start=0x%X end=0x%X size=%d)", 
-                  position, f.name, f.startOffset, f.endOffset, f.size));
-      }
+
 
       // In this file's allocated area
       if (position < f.endOffset) {
@@ -1072,19 +1123,6 @@ public class VirtualIsoFile implements IFile {
           readCount = f.fileParts.get(0).read(readTarget, offsetInFile);
           if (readCount > 0) {
             System.arraycopy(readTarget, 0, buffer, bufOffset, readCount);
-            
-            // DIAGNOSTIC LOGGING FOR CRITICAL FILES
-            if (f.name.equalsIgnoreCase("PARAM.SFO") || f.name.equalsIgnoreCase("EBOOT.BIN") || f.name.endsWith(".BIN")) {
-                String hexSnippet = "";
-                if (readCount > 0) {
-                    int dumpLen = Math.min(readCount, 16);
-                    StringBuilder sb = new StringBuilder();
-                    for (int i=0; i<dumpLen; i++) sb.append(String.format("%02X ", readTarget[i]));
-                    hexSnippet = sb.toString();
-                }
-                com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", 
-                    String.format(java.util.Locale.US, "READ %s: off=%d len=%d read=%d | Data: %s", f.name, offsetInFile, toRead, readCount, hexSnippet));
-            }
           }
         }
 
@@ -1095,9 +1133,6 @@ public class VirtualIsoFile implements IFile {
           position += readCount;
         } else {
           // EOF or Read Error - break to avoid infinite loop
-          if (readCount < 0) {
-             com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("DEBUG", "READ EOF/Error: file=" + f.name + " off=" + offsetInFile);
-          }
           break;
         }
       }

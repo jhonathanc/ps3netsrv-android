@@ -695,10 +695,9 @@ public class VirtualIsoFile implements IFile {
 
           file.rlba = currentSectorOffset;
           int sectors = (int) ((file.size + SECTOR_SIZE - 1) / SECTOR_SIZE);
-          
-
 
           currentSectorOffset += sectors;
+
           fileList.add(file);
           
           if (file.size > MULTIEXTENT_PART_SIZE) {
@@ -737,7 +736,8 @@ public class VirtualIsoFile implements IFile {
     }
 
     int pos = bb.position();
-    if ((pos % SECTOR_SIZE) + recordLen > (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE)) {
+    // Strict sector boundary check: if (current_offset + record_len > 2048)
+    if ((pos % SECTOR_SIZE) + recordLen > SECTOR_SIZE) {
       int pad = (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE) - pos;
       for (int i = 0; i < pad; i++)
         bb.put((byte) 0);
@@ -800,7 +800,8 @@ public class VirtualIsoFile implements IFile {
     }
 
     int pos = bb.position();
-    if ((pos % SECTOR_SIZE) + recordLen > (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE)) {
+    // Strict sector boundary check
+    if ((pos % SECTOR_SIZE) + recordLen > SECTOR_SIZE) {
       int pad = (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE) - pos;
       for (int i = 0; i < pad; i++)
         bb.put((byte) 0);
@@ -863,7 +864,8 @@ public class VirtualIsoFile implements IFile {
         
         // Alignment check (same as single record)
         int pos = bb.position();
-        if ((pos % SECTOR_SIZE) + recordLen > (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE)) {
+        // Strict sector boundary check
+        if ((pos % SECTOR_SIZE) + recordLen > SECTOR_SIZE) {
             int pad = (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE) - pos;
             for (int i = 0; i < pad; i++)
                 bb.put((byte) 0);
@@ -1123,6 +1125,10 @@ public class VirtualIsoFile implements IFile {
           readCount = f.fileParts.get(0).read(readTarget, offsetInFile);
           if (readCount > 0) {
             System.arraycopy(readTarget, 0, buffer, bufOffset, readCount);
+
+            if (readCount > 0) {
+              System.arraycopy(readTarget, 0, buffer, bufOffset, readCount);
+            }
           }
         }
 

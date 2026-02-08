@@ -236,17 +236,23 @@ public class DocumentFileCustom implements IFile {
     return new DocumentFileCustom(documentFile.findFile(fileName), contentResolver);
   }
 
+  @Override
   public int read(byte[] buffer, long position) throws IOException {
+    return read(buffer, 0, buffer.length, position);
+  }
+
+  @Override
+  public int read(byte[] buffer, int offset, int length, long position) throws IOException {
     if (!isInitialized) init();
     fileChannel.position(position);
-    int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer));
+    int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer, offset, length));
     if (encryptionType != EEncryptionType.NONE) {
       for (PS3RegionInfo regionInfo : regionInfos) {
         if ((position >= regionInfo.getFirstAddress()) && (position <= regionInfo.getLastAddress())) {
           if (!regionInfo.isEncrypted()) {
             return bytesRead;
           }
-          BinaryUtils.decryptData(decryptionKey, iv, buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
+          BinaryUtils.decryptData(decryptionKey, iv, buffer, offset, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
           return bytesRead;
         }
       }

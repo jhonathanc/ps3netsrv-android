@@ -1065,9 +1065,14 @@ public class VirtualIsoFile implements IFile {
 
   @Override
   public int read(byte[] buffer, long position) throws IOException {
-    long remaining = buffer.length;
+    return read(buffer, 0, buffer.length, position);
+  }
+
+  @Override
+  public int read(byte[] buffer, int offset, int length, long position) throws IOException {
+    long remaining = length;
     int r = 0;
-    int bufOffset = 0;
+    int bufOffset = offset;
 
     if (position >= totalSize)
       return 0;
@@ -1108,8 +1113,6 @@ public class VirtualIsoFile implements IFile {
       FileEntry f = allFiles.get(fileIdx);
       long fileAreaEnd = f.startOffset + ((f.size + SECTOR_SIZE - 1) / SECTOR_SIZE) * SECTOR_SIZE;
 
-
-
       // In this file's allocated area
       if (position < f.endOffset) {
         // Real data - read from file parts
@@ -1120,16 +1123,8 @@ public class VirtualIsoFile implements IFile {
         if (f.isMultipart) {
           readCount = readFromMultipartFile(f, offsetInFile, buffer, bufOffset, toRead);
         } else {
-          // Single file - read directly
-          byte[] readTarget = new byte[toRead];
-          readCount = f.fileParts.get(0).read(readTarget, offsetInFile);
-          if (readCount > 0) {
-            System.arraycopy(readTarget, 0, buffer, bufOffset, readCount);
-
-            if (readCount > 0) {
-              System.arraycopy(readTarget, 0, buffer, bufOffset, readCount);
-            }
-          }
+          // Single file - read directly using zero-copy
+          readCount = f.fileParts.get(0).read(buffer, bufOffset, toRead, offsetInFile);
         }
 
         if (readCount > 0) {
@@ -1179,11 +1174,10 @@ public class VirtualIsoFile implements IFile {
         long offsetInPart = currentOffset - partStartOffset;
         int bytesToReadFromPart = (int) Math.min(partEndOffset - currentOffset, remainingToRead);
 
-        byte[] readTarget = new byte[bytesToReadFromPart];
-        int readCount = part.read(readTarget, offsetInPart);
+        // Direct zero-copy read
+        int readCount = part.read(buffer, currentBufOffset, bytesToReadFromPart, offsetInPart);
 
         if (readCount > 0) {
-          System.arraycopy(readTarget, 0, buffer, currentBufOffset, readCount);
           totalRead += readCount;
           currentOffset += readCount;
           currentBufOffset += readCount;

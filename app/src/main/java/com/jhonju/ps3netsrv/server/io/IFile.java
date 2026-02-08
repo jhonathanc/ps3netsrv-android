@@ -14,6 +14,7 @@ public interface IFile {
     String[] list();
     IFile findFile(String fileName) throws IOException;
     int read(byte[] buffer, long position) throws IOException;
+    int read(byte[] buffer, int offset, int length, long position) throws IOException;
     void close() throws IOException;
     void write(byte[] buffer) throws IOException;
     boolean createDirectory(String name);

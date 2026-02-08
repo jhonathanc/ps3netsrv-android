@@ -184,8 +184,13 @@ public class FileCustom implements IFile {
 
   @Override
   public int read(byte[] buffer, long position) throws IOException {
+    return read(buffer, 0, buffer.length, position);
+  }
+
+  @Override
+  public int read(byte[] buffer, int offset, int length, long position) throws IOException {
     randomAccessFile.seek(position);
-    int bytesRead = randomAccessFile.read(buffer);
+    int bytesRead = randomAccessFile.read(buffer, offset, length);
 
     if (encryptionType == EEncryptionType.NONE) {
       return bytesRead;
@@ -196,7 +201,7 @@ public class FileCustom implements IFile {
         if (!regionInfo.isEncrypted()) {
           return bytesRead;
         }
-        BinaryUtils.decryptData(decryptionKey, iv, buffer, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
+        BinaryUtils.decryptData(decryptionKey, iv, buffer, offset, bytesRead / SECTOR_SIZE, position / SECTOR_SIZE);
         return bytesRead;
       }
     }

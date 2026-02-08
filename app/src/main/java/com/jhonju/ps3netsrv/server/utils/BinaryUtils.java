@@ -104,14 +104,14 @@ public class BinaryUtils {
     return regionInfos;
   }
 
-  public static void decryptData(SecretKeySpec key, byte[] iv, byte[] data, int sectorCount, long startLBA)
+  public static void decryptData(SecretKeySpec key, byte[] iv, byte[] data, int dataOffset, int sectorCount, long startLBA)
       throws IOException {
     try {
       Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
       for (int i = 0; i < sectorCount; ++i) {
         IvParameterSpec ivParams = new IvParameterSpec(resetIV(iv, startLBA + i));
         cipher.init(Cipher.DECRYPT_MODE, key, ivParams);
-        int offset = SECTOR_SIZE * i;
+        int offset = dataOffset + (SECTOR_SIZE * i);
         byte[] decryptedSector = cipher.doFinal(data, offset, SECTOR_SIZE);
         System.arraycopy(decryptedSector, 0, data, offset, SECTOR_SIZE);
       }

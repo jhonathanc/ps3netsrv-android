@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="PS3NetSrv Android Logo" width="200"/>
+</p>
+
 # PS3NetSrv for Android
 ![Android CI](https://github.com/jhonathanc/ps3netsrv-android/actions/workflows/gradle.yml/badge.svg)
 
@@ -49,14 +53,15 @@ To ensure your games are recognized correctly, you must organize them into speci
 | Folder | Content Type | Supported Formats |
 | :--- | :--- | :--- |
 | **`PS3ISO`** | PS3 Games | `.iso` |
-| **`GAMES`** / **`GAMEZ`** | PS3 Games (JB Folder) | Folder containing `PS3_GAME` |
+| **`GAMES`** | PS3 Games (JB Folder) | Folders containing `PS3_GAME` (Virtual ISO) |
+| **`GAMEZ`** | PS3 Games | Simulates games installed inside the PS3 (needs write permissions) |
 | **`PS2ISO`** | PS2 Games | `.iso` |
 | **`PSXISO`** | PS1 Games | `.iso`, `.bin/.cue` |
 | **`PSPISO`** | PSP Games | `.iso` |
 | **`BDISO`** | Blu-ray Movies | `.iso` |
 | **`DVDISO`** | DVD Movies | `.iso` |
 | **`PKG`** | Application Packages | `.pkg` |
-| **`GAMEI`** | PSN Content | Local game data |
+| **`GAMEI`** | PSN Content | Folder to store PSN games extracted from packages |
 
 ### Advanced Features
 

@@ -14,7 +14,7 @@ This is an Android implementation of the `ps3netsrv` server, allowing you to str
 
 - **Digital Media Streaming:** Stream PS3 ISOs and media files over the local network (WebMAN MOD / multiMAN compatible).
 - **Virtual ISO Support:** Stream game folders (JB format) directly as virtual ISOs. The server dynamically generates the ISO 9660 structure.
-- **Multipart ISO Support:** Seamlessly handle split ISO files (e.g., .iso.66600, .iso.66601) as a single file.
+- **Multipart ISO Support:** Seamlessly handle split ISO files (e.g., .iso.0, .iso.1) as a single file.
 - **Multiple Folders:** Support for serving files from multiple directories on your device.
 - **Ordered Priority:** If a file exists in multiple folders, the one in the first listed folder takes priority.
 - **Port Configuration:** Customizable server port (Default: 38008).

@@ -70,8 +70,8 @@ You don't need to convert your "JB format" folders (the ones with `PS3_GAME` ins
 
 #### Multipart ISOs (Split Files)
 If you have large ISO files split into parts (e.g., to fit on FAT32), the server handles them automatically. Ensure they follow this naming convention:
-- `GameName.iso.66600`
-- `GameName.iso.66601`
+- `GameName.iso.0`
+- `GameName.iso.1`
 - ...and so on.
 The console will see and mount them as a single, complete ISO.
 

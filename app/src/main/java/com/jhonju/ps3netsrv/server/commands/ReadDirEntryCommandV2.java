@@ -3,11 +3,16 @@ package com.jhonju.ps3netsrv.server.commands;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.FileCustom;
 import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
 public class ReadDirEntryCommandV2 extends AbstractCommand {
@@ -100,24 +105,20 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
         long modifiedTime = fileAux.lastModified() / MILLISECONDS_IN_SECOND;
 
         try {
-          // Try to get BasicFileAttributes if it's a FileCustom (normal Java File)
-          if (fileAux instanceof com.jhonju.ps3netsrv.server.io.FileCustom) {
-            java.nio.file.Path path = ((java.io.File) ((com.jhonju.ps3netsrv.server.io.FileCustom) fileAux)
-                .getRealFile()).toPath();
-            java.nio.file.attribute.BasicFileAttributes attrs = java.nio.file.Files.readAttributes(path,
-                java.nio.file.attribute.BasicFileAttributes.class);
+          // Try to get BasicFileAttributes if it's a FileCustom
+          if (fileAux instanceof FileCustom) {
+            Path path = ((java.io.File) ((FileCustom) fileAux).getRealFile()).toPath();
+            BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
             fileTimes[0] = attrs.creationTime().toMillis() / MILLISECONDS_IN_SECOND;
             fileTimes[1] = attrs.lastAccessTime().toMillis() / MILLISECONDS_IN_SECOND;
             modifiedTime = attrs.lastModifiedTime().toMillis() / MILLISECONDS_IN_SECOND;
           }
         } catch (Exception e) {
-          // Ignore errors, use defaults
+          FileLogger.logError(e);
         }
 
-        if (fileTimes[0] == 0)
-          fileTimes[0] = modifiedTime;
-        if (fileTimes[1] == 0)
-          fileTimes[1] = modifiedTime;
+        if (fileTimes[0] == 0) fileTimes[0] = modifiedTime;
+        if (fileTimes[1] == 0) fileTimes[1] = modifiedTime;
 
         send(new ReadDirEntryResultV2(
             fileAux.isDirectory() ? EMPTY_SIZE : file.length(), modifiedTime, fileTimes[0], fileTimes[1],

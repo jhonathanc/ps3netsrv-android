@@ -3,9 +3,11 @@ package com.jhonju.ps3netsrv.server.commands;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
+import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.R;
 
 import java.io.IOException;
+import java.util.Set;
 
 public class CreateFileCommand extends FileCommand {
 
@@ -21,10 +23,10 @@ public class CreateFileCommand extends FileCommand {
     }
 
     try {
-      java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> parents = getFile(true);
+      Set<IFile> parents = getFile(true);
       boolean success = false;
 
-      for (com.jhonju.ps3netsrv.server.io.IFile parent : parents) {
+      for (IFile parent : parents) {
         if (parent != null && parent.exists() && parent.isDirectory()) {
           if (parent.createFile(fileName)) {
             success = true;

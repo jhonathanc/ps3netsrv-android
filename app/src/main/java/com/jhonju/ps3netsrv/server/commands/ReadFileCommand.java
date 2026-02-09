@@ -4,7 +4,9 @@ import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.INT_CAPACITY;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
+
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
 
@@ -48,9 +50,9 @@ public class ReadFileCommand extends AbstractCommand {
     byte[] readFileResult = new byte[numBytes];
     try {
       int bytesRead = 0;
-      java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> files = ctx.getFile();
+      java.util.Set<IFile> files = ctx.getFile();
       if (files != null && !files.isEmpty()) {
-        com.jhonju.ps3netsrv.server.io.IFile file = files.iterator().next();
+        IFile file = files.iterator().next();
         bytesRead = file.read(readFileResult, offset);
       } else {
         throw new IOException(PS3NetSrvApp.getAppContext().getString(R.string.error_no_file_open));

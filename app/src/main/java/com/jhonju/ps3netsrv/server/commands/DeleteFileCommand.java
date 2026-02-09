@@ -4,8 +4,11 @@ import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
+import com.jhonju.ps3netsrv.server.io.IFile;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.IOException;
+import java.util.Set;
 
 public class DeleteFileCommand extends FileCommand {
 
@@ -20,11 +23,13 @@ public class DeleteFileCommand extends FileCommand {
       throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_delete_file_readonly));
     }
 
-    java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> files = getFile();
+    Set<IFile> files = getFile();
     boolean success = false;
-    for (com.jhonju.ps3netsrv.server.io.IFile file : files) {
+    for (IFile file : files) {
       if (file.delete()) {
         success = true;
+      } else {
+        FileLogger.logError("Failed to delete file: " + file.getName());
       }
     }
 

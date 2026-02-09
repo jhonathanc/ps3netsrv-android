@@ -2,13 +2,14 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Set;
 
 public class WriteFileCommand extends FileCommand {
 
@@ -29,7 +30,7 @@ public class WriteFileCommand extends FileCommand {
     // Read filename and resolve files
     // Note: WriteFile usually expects the file to exist (created by CreateFile)
     // So we use getFile() without parent resolution.
-    java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> files = getFile();
+    Set<IFile> files = getFile();
 
     if (numBytes > BUFFER_SIZE) {
       send(ERROR_CODE_BYTEARRAY);
@@ -44,7 +45,7 @@ public class WriteFileCommand extends FileCommand {
     }
 
     byte[] content = buffer.array();
-    for (com.jhonju.ps3netsrv.server.io.IFile file : files) {
+    for (IFile file : files) {
       file.write(content);
     }
 

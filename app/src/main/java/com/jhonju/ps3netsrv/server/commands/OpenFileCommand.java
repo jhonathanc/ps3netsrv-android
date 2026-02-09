@@ -6,11 +6,12 @@ import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.IFile;
+import com.jhonju.ps3netsrv.server.io.VirtualIsoFile;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
-import com.jhonju.ps3netsrv.server.io.IFile;
 
-import com.jhonju.ps3netsrv.server.io.VirtualIsoFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Set;
@@ -80,7 +81,7 @@ public class OpenFileCommand extends FileCommand {
     try {
       determineCdSectorSize(file);
     } catch (IOException e) {
-      com.jhonju.ps3netsrv.server.utils.FileLogger.logError(e);
+      FileLogger.logError(e);
       ctx.setFile(null);
       send(new OpenFileResult());
       throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_cd_sector_size));

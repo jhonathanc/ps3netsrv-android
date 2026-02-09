@@ -53,15 +53,10 @@ public abstract class FileCommand extends AbstractCommand {
     }
 
     String path = new String(buffer.array(), StandardCharsets.UTF_8);
-    com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("RAW_PATH", path);
 
     // Strip Virtual ISO prefixes if present (based on C++ ps3netsrv implementation)
-    if (path.startsWith("/***PS3***/")) {
+    if (path.startsWith("/***PS3***/") || path.startsWith("/***DVD***/")) {
       path = path.substring(10);
-      com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("STRIPPED_PS3", path);
-    } else if (path.startsWith("/***DVD***/")) {
-      path = path.substring(10);
-      com.jhonju.ps3netsrv.server.utils.FileLogger.logPath("STRIPPED_DVD", path);
     }
     this.requestedPath = path;
 

@@ -3,11 +3,16 @@ package com.jhonju.ps3netsrv.server.commands;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Set;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
+import com.jhonju.ps3netsrv.server.io.FileCustom;
 import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 public class StatFileCommand extends FileCommand {
 
@@ -71,13 +76,23 @@ public class StatFileCommand extends FileCommand {
               file.lastModified() / MILLISECONDS_IN_SECOND, 0, true);
         } else {
           long[] fileStats = { 0, 0 };
-          // TODO: fix file stats
-          // statResult = new StatFileResult(file.length(), file.lastModified() /
-          // MILLISECONDS_IN_SECOND, fileStats[0] / MILLISECONDS_IN_SECOND, fileStats[1] /
-          // MILLISECONDS_IN_SECOND, false);
+          long modifiedTime = file.lastModified() / MILLISECONDS_IN_SECOND;
 
-          statResult = new StatFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND, fileStats[0],
-              fileStats[1], false);
+          try {
+            if (file instanceof FileCustom) {
+               Path path = ((java.io.File) ((FileCustom) file).getRealFile()).toPath();
+               BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
+               fileStats[0] = attrs.creationTime().toMillis() / MILLISECONDS_IN_SECOND;
+               fileStats[1] = attrs.lastAccessTime().toMillis() / MILLISECONDS_IN_SECOND;
+            }
+          } catch (Exception e) {
+             FileLogger.logError(e);
+          }
+
+          if (fileStats[0] == 0) fileStats[0] = modifiedTime;
+          if (fileStats[1] == 0) fileStats[1] = modifiedTime;
+
+          statResult = new StatFileResult(file.length(), modifiedTime, fileStats[0], fileStats[1], false);
         }
         send(statResult);
         return;

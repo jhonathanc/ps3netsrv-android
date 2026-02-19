@@ -80,4 +80,5 @@
     <string name="error_opcode_not_implemented">OpCode non implementato: %s</string>
     <string name="settings_log_errors">Registra errori</string>
     <string name="settings_log_commands">Registra comandi</string>
+    <string name="error_invalid_path">Errore: Percorso non valido o dannoso richiesto</string>
 </resources>

@@ -86,4 +86,5 @@
     <string name="error_opcode_not_implemented">未実装のオペコード: %s</string>
     <string name="settings_log_errors">エラーを記録</string>
     <string name="settings_log_commands">コマンドを記録</string>
+    <string name="error_invalid_path">エラー：無効または悪意のあるパスが要求されました</string>
 </resources>

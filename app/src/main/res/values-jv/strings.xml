@@ -58,4 +58,5 @@
     <string name="server_restart_prompt">サーバーや実行中やいびーん。変更ず適用するんでぃ再起動さびーんな？</string>
     <string name="settings_log_errors">エラーを記録</string>
     <string name="settings_log_commands">コマンドを記録</string>
+    <string name="error_invalid_path">エラー：無効または悪意のあるパスが要求されました</string>
 </resources>

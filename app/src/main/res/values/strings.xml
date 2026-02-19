@@ -93,4 +93,5 @@
     <string name="error_opcode_not_implemented">OpCode not implemented: %s</string>
     <string name="settings_log_errors">Log Errors</string>
     <string name="settings_log_commands">Log Commands</string>
+    <string name="error_invalid_path">Error: Invalid or malicious path requested</string>
 </resources>

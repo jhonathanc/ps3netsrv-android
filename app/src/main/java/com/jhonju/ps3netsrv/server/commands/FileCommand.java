@@ -11,6 +11,7 @@ import com.jhonju.ps3netsrv.server.io.DocumentFileCustom;
 import com.jhonju.ps3netsrv.server.io.FileCustom;
 import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

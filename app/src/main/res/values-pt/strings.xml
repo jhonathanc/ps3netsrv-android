@@ -82,4 +82,5 @@
     <string name="error_opcode_not_implemented">OpCode não implementado: %s</string>
     <string name="settings_log_errors">Registrar erros</string>
     <string name="settings_log_commands">Registrar comandos</string>
+    <string name="error_invalid_path">Erro: Caminho inválido ou malicioso solicitado</string>
 </resources>

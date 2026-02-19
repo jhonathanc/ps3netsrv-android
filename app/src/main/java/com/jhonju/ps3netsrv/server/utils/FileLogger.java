@@ -21,10 +21,46 @@ public class FileLogger {
   private static final String COMMAND_LOG_FILE = "ps3netsrv_commands.log";
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
 
+  public static void logInfo(String message) {
+    if (!SettingsService.isLogCommands())
+      return;
+    writeLog(ERROR_LOG_FILE, "INFO: " + message);
+  }
+
+  public static void logWarning(String message) {
+    if (!SettingsService.isLogErrors())
+      return;
+    writeLog(ERROR_LOG_FILE, "WARNING: " + message);
+  }
+
+  public static void logWarning(String message, Throwable t) {
+    if (!SettingsService.isLogErrors())
+      return;
+    StringBuilder sb = new StringBuilder();
+    sb.append(message).append("\n");
+    sb.append(t.toString()).append("\n");
+    for (StackTraceElement element : t.getStackTrace()) {
+      sb.append("\tat ").append(element.toString()).append("\n");
+    }
+    writeLog(ERROR_LOG_FILE, "WARNING: " + sb.toString());
+  }
+
   public static void logError(String message) {
     if (!SettingsService.isLogErrors())
       return;
     writeLog(ERROR_LOG_FILE, "ERROR: " + message);
+  }
+
+  public static void logError(String message, Throwable t) {
+    if (!SettingsService.isLogErrors())
+      return;
+    StringBuilder sb = new StringBuilder();
+    sb.append(message).append("\n");
+    sb.append(t.toString()).append("\n");
+    for (StackTraceElement element : t.getStackTrace()) {
+      sb.append("\tat ").append(element.toString()).append("\n");
+    }
+    writeLog(ERROR_LOG_FILE, "ERROR: " + sb.toString());
   }
 
   public static void logError(Throwable t) {

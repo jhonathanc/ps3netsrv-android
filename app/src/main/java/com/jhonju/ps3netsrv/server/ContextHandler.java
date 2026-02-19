@@ -1,5 +1,7 @@
 package com.jhonju.ps3netsrv.server;
 
+import android.content.ContentResolver;
+
 import com.jhonju.ps3netsrv.server.commands.GetDirSizeCommand;
 import com.jhonju.ps3netsrv.server.commands.ICommand;
 import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;

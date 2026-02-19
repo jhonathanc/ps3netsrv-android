@@ -34,6 +34,12 @@ public abstract class FileCommand extends AbstractCommand {
 
   private String getFormattedPath(String path) {
     path = path.replaceAll("\\x00+$", "");
+
+    // Path Traversal Protection: Reject any path containing ".."
+    if (path.contains("..")) {
+      return null;
+    }
+
     if (path.equals("/.") || path.equals("/"))
       path = "";
     if (path.startsWith("/"))
@@ -63,6 +69,11 @@ public abstract class FileCommand extends AbstractCommand {
     HashSet<IFile> files = new HashSet<>();
 
     String formattedPath = getFormattedPath(path);
+    if (formattedPath == null) {
+      send(ERROR_CODE_BYTEARRAY);
+      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_invalid_path));
+    }
+
     String childName = "";
 
     if (resolveParent) {
@@ -94,6 +105,10 @@ public abstract class FileCommand extends AbstractCommand {
           for (String s : paths) {
             if (s.isEmpty())
               continue;
+            
+            // Check for potential traversal in individual segments (redundant but safe)
+            if (s.equals("..") || s.equals(".")) continue;
+
             DocumentFile found = findFileSafely(documentFile, s);
             if (found == null) {
               documentFile = null;
@@ -108,12 +123,30 @@ public abstract class FileCommand extends AbstractCommand {
         }
       } else {
         // Use Standard File I/O
-        String fullPath = rootDirectory;
-        if (!formattedPath.isEmpty()) {
-          fullPath = new java.io.File(rootDirectory, formattedPath).getAbsolutePath();
+        java.io.File rootDir = new java.io.File(rootDirectory);
+        java.io.File targetFile;
+        if (formattedPath.isEmpty()) {
+          targetFile = rootDir;
+        } else {
+          targetFile = new java.io.File(rootDir, formattedPath);
         }
-        java.io.File javaFile = new java.io.File(fullPath);
-        files.add(new FileCustom(javaFile));
+
+        // Final security check: Ensure the canonical path still starts with the root directory
+        try {
+          String rootCanonical = rootDir.getCanonicalPath();
+          String targetCanonical = targetFile.getCanonicalPath();
+          
+          if (!targetCanonical.startsWith(rootCanonical)) {
+            FileLogger.logWarning("Path traversal attempt blocked: " + path + " resolves to " + targetCanonical);
+            continue;
+          }
+          
+          if (targetFile.exists()) {
+            files.add(new FileCustom(targetFile));
+          }
+        } catch (IOException e) {
+          FileLogger.logError("Error resolving canonical path", e);
+        }
       }
     }
     return files;

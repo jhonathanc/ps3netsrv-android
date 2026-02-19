@@ -48,6 +48,10 @@ public class ContextHandler extends Thread {
     simultaneousConnections--;
   }
 
+  public static int getSimultaneousConnections() {
+    return simultaneousConnections;
+  }
+
   public ContextHandler(Socket socket, List<String> folderPaths,
       android.content.ContentResolver contentResolver, int maxConnections,
       Thread.UncaughtExceptionHandler exceptionHandler) {
@@ -61,14 +65,7 @@ public class ContextHandler extends Thread {
 
   @Override
   public void run() {
-    incrementSimultaneousConnections();
     try (Context ctx = new Context(socket, folderPaths, contentResolver)) {
-      if (maxConnections > 0 && simultaneousConnections > maxConnections) {
-        getUncaughtExceptionHandler().uncaughtException(this,
-            new PS3NetSrvException(com.jhonju.ps3netsrv.app.PS3NetSrvApp.getAppContext()
-                .getString(com.jhonju.ps3netsrv.R.string.error_connection_limit_reached)));
-        return;
-      }
       while (ctx.isSocketConnected()) {
         try {
           ByteBuffer packet = BinaryUtils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);

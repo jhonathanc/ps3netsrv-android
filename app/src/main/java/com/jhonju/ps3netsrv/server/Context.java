@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.List;
 import java.util.Set;
 
@@ -47,6 +48,14 @@ public class Context implements AutoCloseable {
     this.socket = socket;
     this.contentResolver = contentResolver;
     this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
+    try {
+      if (socket != null) {
+        // Set a timeout of 60 seconds to prevent DoS from idle connections
+        socket.setSoTimeout(60000);
+      }
+    } catch (SocketException e) {
+      FileLogger.logWarning("Failed to set socket timeout", e);
+    }
   }
 
   /**

@@ -21,7 +21,9 @@ import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Objects;
 
 public class ContextHandler extends Thread {
@@ -31,7 +33,9 @@ public class ContextHandler extends Thread {
   private static final byte IDX_CMD_DATA_3 = 8;
   private static final byte CMD_DATA_SIZE = 16;
   private final int maxConnections;
-  private final Context context;
+  private final Socket socket;
+  private final List<String> folderPaths;
+  private final ContentResolver contentResolver;
   private static volatile int simultaneousConnections;
 
   public synchronized void incrementSimultaneousConnections() {
@@ -42,18 +46,21 @@ public class ContextHandler extends Thread {
     simultaneousConnections--;
   }
 
-  public ContextHandler(Context context, int maxConnections, Thread.UncaughtExceptionHandler exceptionHandler) {
+  public ContextHandler(Socket socket, List<String> folderPaths,
+      android.content.ContentResolver contentResolver, int maxConnections,
+      Thread.UncaughtExceptionHandler exceptionHandler) {
     super();
     setUncaughtExceptionHandler(exceptionHandler);
-    this.context = context;
+    this.socket = socket;
+    this.folderPaths = folderPaths;
+    this.contentResolver = contentResolver;
     this.maxConnections = maxConnections;
   }
 
   @Override
   public void run() {
     incrementSimultaneousConnections();
-    Context ctx = context;
-    try {
+    try (Context ctx = new Context(socket, folderPaths, contentResolver)) {
       if (maxConnections > 0 && simultaneousConnections > maxConnections) {
         getUncaughtExceptionHandler().uncaughtException(this,
             new PS3NetSrvException(com.jhonju.ps3netsrv.app.PS3NetSrvApp.getAppContext()
@@ -75,7 +82,6 @@ public class ContextHandler extends Thread {
     } catch (IOException e) {
       Objects.requireNonNull(getUncaughtExceptionHandler()).uncaughtException(this, e);
     } finally {
-      context.close();
       decrementSimultaneousConnections();
     }
   }

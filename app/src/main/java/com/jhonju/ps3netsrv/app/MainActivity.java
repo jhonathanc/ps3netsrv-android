@@ -42,6 +42,12 @@ public class MainActivity extends AppCompatActivity {
           if (SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager()) {
               // Permission not granted, handle appropriately (maybe show a dialog or exit)
+            } else {
+              if (SDK_INT >= 33) {
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                  ActivityCompat.requestPermissions(MainActivity.this, new String[] { Manifest.permission.POST_NOTIFICATIONS }, 2);
+                }
+              }
             }
           }
         }
@@ -133,19 +139,22 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
       }
 
-      if (!hasStorage || !hasNotification) {
-        requestPermission();
+      if (!hasStorage) {
+        requestPermission(true, !hasNotification);
+      } else if (!hasNotification) {
+        requestPermission(false, true);
       }
     } else {
       if (ContextCompat.checkSelfPermission(PS3NetSrvApp.getAppContext(),
           Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-        requestPermission();
+        requestPermission(true, false);
       }
     }
   }
 
-  private void requestPermission() {
+  private void requestPermission(boolean needsStorage, boolean needsNotification) {
     if (SDK_INT >= Build.VERSION_CODES.R) {
+      if (needsStorage) {
       try {
         Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
         intent.addCategory("android.intent.category.DEFAULT");
@@ -156,11 +165,8 @@ public class MainActivity extends AppCompatActivity {
         intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
         manageAllFilesLauncher.launch(intent);
       }
-      if (SDK_INT >= 33) {
-        if (ContextCompat.checkSelfPermission(this,
-            Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-          ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.POST_NOTIFICATIONS }, 2);
-        }
+      } else if (needsNotification && SDK_INT >= 33) {
+        ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.POST_NOTIFICATIONS }, 2);
       }
     } else {
       ActivityCompat.requestPermissions(this,
@@ -184,10 +190,14 @@ public class MainActivity extends AppCompatActivity {
 
     // noinspection SimplifiableIfStatement
     if (id == R.id.action_settings) {
-      startActivity(new Intent(this, SettingsActivity.class));
+      Intent intent = new Intent(this, SettingsActivity.class);
+      intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+      startActivity(intent);
       return true;
     } else if (id == R.id.action_about) {
-      startActivity(new Intent(this, AboutActivity.class));
+      Intent intent = new Intent(this, AboutActivity.class);
+      intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+      startActivity(intent);
       return true;
     }
 

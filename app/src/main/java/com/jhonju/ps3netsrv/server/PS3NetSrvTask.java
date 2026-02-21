@@ -30,7 +30,8 @@ public class PS3NetSrvTask implements Runnable {
   private final EListType listType;
   private final Set<String> filterAddresses;
   private ServerSocket serverSocket;
-  private boolean isRunning = true;
+  private volatile boolean isRunning = true;
+  private final android.content.Context androidContext;
 
   /**
    * Checks if the server is currently running.
@@ -54,7 +55,7 @@ public class PS3NetSrvTask implements Runnable {
    */
   public PS3NetSrvTask(int port, List<String> folderPaths, int maxConnections, Set<String> filterAddresses,
       EListType listType, Thread.UncaughtExceptionHandler exceptionHandler,
-      android.content.ContentResolver contentResolver) {
+      android.content.ContentResolver contentResolver, android.content.Context androidContext) {
     this.port = port;
     this.contentResolver = contentResolver;
     this.folderPaths = folderPaths;
@@ -62,6 +63,7 @@ public class PS3NetSrvTask implements Runnable {
     this.filterAddresses = filterAddresses;
     this.listType = listType;
     this.exceptionHandler = exceptionHandler;
+    this.androidContext = androidContext;
   }
 
   /**
@@ -76,7 +78,10 @@ public class PS3NetSrvTask implements Runnable {
    */
   @Override
   public void run() {
-    try (ServerSocket serverSocket = new ServerSocket(port)) {
+    try {
+      this.serverSocket = new ServerSocket();
+      this.serverSocket.setReuseAddress(true);
+      this.serverSocket.bind(new java.net.InetSocketAddress(port));
       FileLogger.logInfo("PS3NetSrv server started listening on port: " + port);
 
       while (isRunning) {
@@ -88,9 +93,9 @@ public class PS3NetSrvTask implements Runnable {
             FileLogger.logWarning("Incoming connection blocked from IP: " + hostAddress +
                 " (Filter type: " + listType + ")");
             exceptionHandler.uncaughtException(null, new PS3NetSrvException(
-                com.jhonju.ps3netsrv.app.PS3NetSrvApp.getAppContext().getString(
+                this.androidContext.getString(
                     com.jhonju.ps3netsrv.R.string.error_blocked_connection, hostAddress)));
-            try (Context ignored = new Context(clientSocket, folderPaths, contentResolver)) {
+            try (Context ignored = new Context(clientSocket, folderPaths, contentResolver, androidContext)) {
               // try-with-resources closes the socket automatically
             }
             continue;
@@ -99,13 +104,13 @@ public class PS3NetSrvTask implements Runnable {
           FileLogger.logInfo("Client connected from IP: " + hostAddress);
           if (maxConnections > 0 && ContextHandler.getSimultaneousConnections() >= maxConnections) {
             FileLogger.logWarning("Connection limit reached (" + maxConnections + "). Rejecting " + hostAddress);
-            try (Context ignored = new Context(clientSocket, folderPaths, contentResolver)) {
+            try (Context ignored = new Context(clientSocket, folderPaths, contentResolver, androidContext)) {
               // try-with-resources closes the socket automatically
             }
             continue;
           }
           new ContextHandler(clientSocket, folderPaths, contentResolver,
-              maxConnections, exceptionHandler).start();
+              maxConnections, exceptionHandler, androidContext).start();
         } catch (IOException e) {
           if (isRunning) {
             FileLogger.logError("Error accepting client connection", e);

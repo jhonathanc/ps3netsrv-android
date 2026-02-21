@@ -1,10 +1,9 @@
 package com.jhonju.ps3netsrv.server.commands;
 
+import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
-import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
-import com.jhonju.ps3netsrv.R;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,7 +14,6 @@ public abstract class AbstractCommand implements ICommand {
   protected byte[] ERROR_CODE_BYTEARRAY = BinaryUtils.intToBytesBE(ERROR_CODE);
   protected byte[] SUCCESS_CODE_BYTEARRAY = BinaryUtils.intToBytesBE(0);
   protected static final int EMPTY_SIZE = 0;
-  protected static final int BUFFER_SIZE = 4 * 1048576; // 4MB
   protected static final int BYTES_TO_SKIP = 24;
   protected static final short MILLISECONDS_IN_SECOND = 1000;
 
@@ -28,7 +26,7 @@ public abstract class AbstractCommand implements ICommand {
     try {
       byteArray = result.toByteArray();
     } catch (IOException e) {
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_byte_array_conversion));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_byte_array_conversion));
     }
     /*
      * the "send" is out from try-catch because toByteArray also throws IOException,
@@ -42,7 +40,7 @@ public abstract class AbstractCommand implements ICommand {
   protected void send(byte[] result) throws IOException, PS3NetSrvException {
     OutputStream os = ctx.getOutputStream();
     if (result.length == EMPTY_SIZE) {
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_empty_byte_array));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_empty_byte_array));
     }
     os.write(result);
     os.flush();

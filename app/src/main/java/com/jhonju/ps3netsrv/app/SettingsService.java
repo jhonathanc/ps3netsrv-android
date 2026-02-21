@@ -27,27 +27,52 @@ public class SettingsService {
   private static final SharedPreferences spReadOnly = PS3NetSrvApp.getAppContext().getSharedPreferences("READ_ONLY", 0);
   private static final SharedPreferences spLog = PS3NetSrvApp.getAppContext().getSharedPreferences("LOG", 0);
 
+  private static Integer cachedPort = null;
+  private static Set<String> cachedIps = null;
+  private static Integer cachedListType = null;
+  private static Integer cachedMaxConnections = null;
+  private static Boolean cachedReadOnly = null;
+  private static Boolean cachedLogErrors = null;
+  private static Boolean cachedLogCommands = null;
+  private static List<String> cachedFolders = null;
+
   public static int getPort() {
-    return spPort.getInt(settings, PS3NetSrvApp.getAppContext().getResources().getInteger(R.integer.defaultPort));
+    if (cachedPort == null) {
+      cachedPort = spPort.getInt(settings, PS3NetSrvApp.getAppContext().getResources().getInteger(R.integer.defaultPort));
+    }
+    return cachedPort;
   }
 
   public static Set<String> getIps() {
-    return spIps.getStringSet(settings, new HashSet<String>());
+    if (cachedIps == null) {
+      cachedIps = spIps.getStringSet(settings, new HashSet<String>());
+    }
+    return cachedIps;
   }
 
   public static int getListType() {
-    return spListType.getInt(settings, 0);
+    if (cachedListType == null) {
+      cachedListType = spListType.getInt(settings, 0);
+    }
+    return cachedListType;
   }
 
   public static int getMaxConnections() {
-    return spMaxConnections.getInt(settings, 0);
+    if (cachedMaxConnections == null) {
+      cachedMaxConnections = spMaxConnections.getInt(settings, 0);
+    }
+    return cachedMaxConnections;
   }
 
   public static boolean isReadOnly() {
-    return spReadOnly.getBoolean(settings, false);
+    if (cachedReadOnly == null) {
+      cachedReadOnly = spReadOnly.getBoolean(settings, false);
+    }
+    return cachedReadOnly;
   }
 
   public static void setReadOnly(boolean readOnly) {
+    cachedReadOnly = readOnly;
     SharedPreferences.Editor editor = spReadOnly.edit();
     editor.putBoolean(settings, readOnly);
     editor.apply();
@@ -68,12 +93,17 @@ public class SettingsService {
   }
 
   public static void setPort(int port) {
+    if (port < 1024 || port > 65535) port = 38008; // default to safe port
+    cachedPort = port;
     SharedPreferences.Editor editor = spPort.edit();
     editor.putInt(settings, port);
     editor.apply();
   }
 
   public static List<String> getFolders() {
+    if (cachedFolders != null) {
+      return new ArrayList<>(cachedFolders);
+    }
     if (!spFolders.contains(settings)) {
       // Migration logic: Check if old SET exists
       if (spFolder.contains(settings)) {
@@ -116,10 +146,12 @@ public class SettingsService {
         folders.add(getDefaultFolder());
       }
     }
+    cachedFolders = new ArrayList<>(folders);
     return folders;
   }
 
   public static void setFolders(List<String> folders) {
+    cachedFolders = new ArrayList<>(folders);
     SharedPreferences.Editor editor = spFolders.edit();
     JSONArray jsonArray = new JSONArray();
     for (String folder : folders) {
@@ -132,38 +164,50 @@ public class SettingsService {
   }
 
   public static void setIps(Set<String> ips) {
+    cachedIps = new HashSet<>(ips);
     SharedPreferences.Editor editor = spIps.edit();
     editor.putStringSet(settings, ips);
     editor.apply();
   }
 
   public static void setListType(int listType) {
+    cachedListType = listType;
     SharedPreferences.Editor editor = spListType.edit();
     editor.putInt(settings, listType);
     editor.apply();
   }
 
   public static void setMaxConnections(int maxConnections) {
+    if (maxConnections < 0) maxConnections = 0; // Negative limit makes no sense
+    cachedMaxConnections = maxConnections;
     SharedPreferences.Editor editor = spMaxConnections.edit();
     editor.putInt(settings, maxConnections);
     editor.apply();
   }
 
   public static boolean isLogErrors() {
-    return spLog.getBoolean("LOG_ERRORS", false);
+    if (cachedLogErrors == null) {
+      cachedLogErrors = spLog.getBoolean("LOG_ERRORS", false);
+    }
+    return cachedLogErrors;
   }
 
   public static void setLogErrors(boolean logErrors) {
+    cachedLogErrors = logErrors;
     SharedPreferences.Editor editor = spLog.edit();
     editor.putBoolean("LOG_ERRORS", logErrors);
     editor.apply();
   }
 
   public static boolean isLogCommands() {
-    return spLog.getBoolean("LOG_COMMANDS", false);
+    if (cachedLogCommands == null) {
+      cachedLogCommands = spLog.getBoolean("LOG_COMMANDS", false);
+    }
+    return cachedLogCommands;
   }
 
   public static void setLogCommands(boolean logCommands) {
+    cachedLogCommands = logCommands;
     SharedPreferences.Editor editor = spLog.edit();
     editor.putBoolean("LOG_COMMANDS", logCommands);
     editor.apply();

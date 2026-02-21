@@ -19,7 +19,7 @@ public class MakeDirCommand extends FileCommand {
   public void executeTask() throws PS3NetSrvException, IOException {
     if (ctx.isReadOnly()) {
       send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_make_dir_readonly));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_make_dir_readonly));
     }
 
     Set<IFile> parents = getFile(true);

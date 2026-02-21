@@ -58,7 +58,7 @@ public class OpenFileCommand extends FileCommand {
     if (files == null || files.isEmpty()) {
       ctx.setFile(null);
       send(new OpenFileResult());
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_open_file_not_exists));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_open_file_not_exists));
     }
 
     // Use the first file in the set, or iterate if needed.
@@ -84,7 +84,7 @@ public class OpenFileCommand extends FileCommand {
       FileLogger.logError(e);
       ctx.setFile(null);
       send(new OpenFileResult());
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_cd_sector_size));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_cd_sector_size));
     }
 
     send(new OpenFileResult(file.length(), file.lastModified() / MILLISECONDS_IN_SECOND));

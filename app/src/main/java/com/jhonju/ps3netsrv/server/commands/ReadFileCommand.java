@@ -1,17 +1,14 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.INT_CAPACITY;
-
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
+
+import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 
-import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
-import com.jhonju.ps3netsrv.R;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 public class ReadFileCommand extends AbstractCommand {
   protected int numBytes;
@@ -23,47 +20,27 @@ public class ReadFileCommand extends AbstractCommand {
     this.offset = offset;
   }
 
-  private static class ReadFileResult implements IResult {
-    private final int bytesReadLength;
-    private final byte[] bytesRead;
-
-    public ReadFileResult(int bytesReadLength, byte[] bytesRead) {
-      this.bytesReadLength = bytesReadLength;
-      this.bytesRead = bytesRead;
-    }
-
-    @Override
-    public byte[] toByteArray() throws IOException {
-      ByteArrayOutputStream out = new ByteArrayOutputStream(INT_CAPACITY + bytesReadLength);
-      try {
-        out.write(BinaryUtils.intToBytesBE(bytesReadLength));
-        out.write(bytesRead);
-        return out.toByteArray();
-      } finally {
-        out.close();
-      }
-    }
-  }
-
   @Override
   public void executeTask() throws IOException, PS3NetSrvException {
-    byte[] readFileResult = new byte[numBytes];
     try {
       int bytesRead = 0;
       java.util.Set<IFile> files = ctx.getFile();
       if (files != null && !files.isEmpty()) {
         IFile file = files.iterator().next();
-        bytesRead = file.read(readFileResult, offset);
+        bytesRead = file.read(ctx.getOutputBuffer(), 0, numBytes, offset);
       } else {
-        throw new IOException(PS3NetSrvApp.getAppContext().getString(R.string.error_no_file_open));
+        throw new IOException(ctx.getAndroidContext().getString(R.string.error_no_file_open));
       }
-      if (bytesRead < EMPTY_SIZE) {
-        throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_read_file_eof));
+      if (bytesRead <= EMPTY_SIZE) {
+        throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_read_file_eof));
       }
-      send(new ReadFileResult(bytesRead, readFileResult));
+      OutputStream os = ctx.getOutputStream();
+      os.write(BinaryUtils.intToBytesBE(bytesRead));
+      os.write(ctx.getOutputBuffer(), 0, bytesRead);
+      os.flush();
     } catch (IOException e) {
       send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_read_file_generic));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_read_file_generic));
     }
   }
 }

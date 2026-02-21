@@ -19,7 +19,7 @@ public class CreateFileCommand extends FileCommand {
   public void executeTask() throws PS3NetSrvException, IOException {
     if (ctx.isReadOnly()) {
       send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_create_file_readonly));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_create_file_readonly));
     }
 
     try {
@@ -35,7 +35,7 @@ public class CreateFileCommand extends FileCommand {
       }
 
       if (!success) {
-        throw new IOException(PS3NetSrvApp.getAppContext().getString(R.string.error_create_file_generic, fileName));
+        throw new IOException(ctx.getAndroidContext().getString(R.string.error_create_file_generic, fileName));
       }
       // ctx.setWriteOnlyFile(file);
       // TODO: FIX the writeOnlyFile on ctx

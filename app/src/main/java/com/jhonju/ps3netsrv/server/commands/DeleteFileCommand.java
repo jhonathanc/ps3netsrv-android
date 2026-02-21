@@ -50,7 +50,7 @@ public class DeleteFileCommand extends FileCommand {
     if (ctx.isReadOnly()) {
       FileLogger.logWarning("Delete operation attempted in read-only mode");
       send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(
           R.string.error_delete_file_readonly));
     }
 

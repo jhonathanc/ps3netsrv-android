@@ -56,7 +56,7 @@ public abstract class FileCommand extends AbstractCommand {
     ByteBuffer buffer = BinaryUtils.readCommandData(ctx.getInputStream(), this.filePathLength);
     if (buffer == null) {
       send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_receiving_filename));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_receiving_filename));
     }
 
     String path = new String(buffer.array(), StandardCharsets.UTF_8);
@@ -72,7 +72,7 @@ public abstract class FileCommand extends AbstractCommand {
     String formattedPath = getFormattedPath(path);
     if (formattedPath == null) {
       send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_invalid_path));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_invalid_path));
     }
 
     String childName = "";
@@ -96,7 +96,7 @@ public abstract class FileCommand extends AbstractCommand {
       if (rootDirectory.startsWith("content:")) {
         // Use SAF (DocumentFile)
         androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile
-            .fromTreeUri(PS3NetSrvApp.getAppContext(), Uri.parse(rootDirectory));
+            .fromTreeUri(ctx.getAndroidContext(), Uri.parse(rootDirectory));
         if (documentFile == null || !documentFile.exists()) {
           continue;
         }

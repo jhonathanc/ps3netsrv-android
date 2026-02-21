@@ -1,6 +1,8 @@
 package com.jhonju.ps3netsrv.server.io;
 
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
+import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,13 +13,21 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
+/**
+ * VirtualIsoFile constructs and serves a virtual ISO 9660 filesystem image 
+ * on-the-fly from a normal directory structure. It acts as an IFile implementation, 
+ * rendering transparent ISO sector streams upon read requests and fully supporting
+ * multipart or segmented content mapping.
+ */
 public class VirtualIsoFile implements IFile {
 
   private static final int SECTOR_SIZE = 2048;
-  private static final int MAX_DIRECTORY_BUFFER_SIZE = 4 * 1024 * 1024; // 4MB to handle large directories(STREAMS has 3689 files)
+
   private static final int PATH_TABLE_ENTRY_ESTIMATE = 32;
 
   // Multi-extent support - max size per extent (~4GB, sector-aligned)
@@ -48,6 +58,11 @@ public class VirtualIsoFile implements IFile {
   // Lock object for thread-safe access to fsBuf
   private final Object fsBufLock = new Object();
 
+  /**
+   * Represents a mapped file within the virtual ISO filesystem.
+   * Encapsulates physical file details, tracking multipart components where applicable,
+   * alongside logical block addressing (rlba) properties.
+   */
   private static class FileEntry {
     String name;
     long size;
@@ -63,6 +78,11 @@ public class VirtualIsoFile implements IFile {
     int extentParts = 1;
   }
 
+  /**
+   * Represents a directory list within the ISO 9660 hierarchy.
+   * Tracks structural tree pointers such as parent nodes, hierarchy index,
+   * LBA positions, and its internal lists of child file entries.
+   */
   private static class DirList {
     String name;
     DirList parent;
@@ -104,7 +124,7 @@ public class VirtualIsoFile implements IFile {
 
     // 1.5. Map parents to children for DFS/BFS traversals
     // This is needed for both DFS file layout (Phase 2) and BFS Path Table (Phase 4)
-    java.util.Map<DirList, List<DirList>> childrenMap = new java.util.HashMap<>();
+    Map<DirList, List<DirList>> childrenMap = new HashMap<>();
     for (DirList dir : allDirs) {
         if (dir.parent != null && dir != rootList) {
             List<DirList> children = childrenMap.get(dir.parent);
@@ -486,6 +506,7 @@ public class VirtualIsoFile implements IFile {
         }
       }
     } catch (Exception e) {
+      FileLogger.logError("Error in scanDirectoryOptimized", e);
     }
 
     // Sort files
@@ -614,7 +635,7 @@ public class VirtualIsoFile implements IFile {
         subDirs.add(d);
     }
 
-    ByteBuffer bb = ByteBuffer.allocate(MAX_DIRECTORY_BUFFER_SIZE);
+    ByteBuffer bb = ByteBuffer.allocate(BinaryUtils.BUFFER_SIZE);
     bb.order(ByteOrder.LITTLE_ENDIAN);
 
     writeDirRecord(bb, dir, ".", 0);

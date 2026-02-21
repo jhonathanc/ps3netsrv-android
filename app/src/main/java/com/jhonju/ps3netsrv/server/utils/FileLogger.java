@@ -93,32 +93,14 @@ public class FileLogger {
     if (logFile == null)
       return;
 
-    FileOutputStream fos = null;
-    OutputStreamWriter writer = null;
-    try {
-      fos = new FileOutputStream(logFile, true);
-      writer = new OutputStreamWriter(fos);
+    try (FileOutputStream fos = new FileOutputStream(logFile, true);
+         OutputStreamWriter writer = new OutputStreamWriter(fos)) {
       String timestamp = DATE_FORMAT.format(new Date());
       writer.append("[").append(timestamp).append("] ").append(content).append("\n");
       writer.flush();
     } catch (IOException e) {
       // Fallback to Logcat if file writing fails
       Log.e("FileLogger", "Failed to write to " + fileName, e);
-    } finally {
-      if (writer != null) {
-        try {
-          writer.close();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-      if (fos != null) {
-        try {
-          fos.close();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
     }
   }
 

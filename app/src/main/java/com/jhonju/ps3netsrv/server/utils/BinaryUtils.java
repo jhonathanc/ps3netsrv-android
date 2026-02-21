@@ -29,6 +29,7 @@ public class BinaryUtils {
   public static final int _3K3Y_KEY_OFFSET = 0xF80;
   public static final int _3K3Y_WATERMARK_OFFSET = 0xF70;
   public static final int ENCRYPTION_KEY_SIZE = 16;
+  public static final int BUFFER_SIZE = 4 * 1048576; // 4MB
   
   // 3k3y watermarks: "Encrypted 3K BLD" and "Dncrypted 3K BLD"
   public static final byte[] _3K3Y_ENCRYPTED_WATERMARK = {
@@ -83,8 +84,15 @@ public class BinaryUtils {
 
   public static ByteBuffer readCommandData(InputStream in, int size) throws IOException {
     byte[] data = new byte[size];
-    if (in.read(data) < 0)
-      return null;
+    int bytesRead = 0;
+    while (bytesRead < size) {
+      int result = in.read(data, bytesRead, size - bytesRead);
+      if (result == -1) {
+        if (bytesRead == 0) return null;
+        break;
+      }
+      bytesRead += result;
+    }
     return ByteBuffer.wrap(data);
   }
 

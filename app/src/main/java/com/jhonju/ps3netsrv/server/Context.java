@@ -2,6 +2,7 @@ package com.jhonju.ps3netsrv.server;
 
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
 import com.jhonju.ps3netsrv.server.io.IFile;
+import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.IOException;
@@ -31,6 +32,8 @@ import android.content.ContentResolver;
 public class Context implements AutoCloseable {
   private Socket socket;
   private final ContentResolver contentResolver;
+  private final android.content.Context androidContext;
+  private final byte[] outputBuffer = new byte[BinaryUtils.BUFFER_SIZE];
 
   private final List<String> rootDirectories;
   private Set<IFile> file;
@@ -43,10 +46,11 @@ public class Context implements AutoCloseable {
    * @param rootDirectories List of root directories accessible to this client
    * @param contentResolver Android ContentResolver for file access
    */
-  public Context(Socket socket, List<String> rootDirectories, ContentResolver contentResolver) {
-    this.rootDirectories = rootDirectories;
-    this.socket = socket;
-    this.contentResolver = contentResolver;
+  public Context(Socket socket, List<String> rootDirectories, ContentResolver contentResolver, android.content.Context androidContext) {
+    this.rootDirectories = java.util.Objects.requireNonNull(rootDirectories, "rootDirectories cannot be null");
+    this.socket = java.util.Objects.requireNonNull(socket, "socket cannot be null");
+    this.contentResolver = java.util.Objects.requireNonNull(contentResolver, "contentResolver cannot be null");
+    this.androidContext = java.util.Objects.requireNonNull(androidContext, "androidContext cannot be null");
     this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
     try {
       if (socket != null) {
@@ -74,6 +78,14 @@ public class Context implements AutoCloseable {
    */
   public ContentResolver getContentResolver() {
     return contentResolver;
+  }
+
+  public android.content.Context getAndroidContext() {
+    return androidContext;
+  }
+
+  public byte[] getOutputBuffer() {
+    return outputBuffer;
   }
 
   /**

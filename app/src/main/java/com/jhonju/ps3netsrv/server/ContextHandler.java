@@ -2,6 +2,7 @@ package com.jhonju.ps3netsrv.server;
 
 import android.content.ContentResolver;
 
+import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.server.commands.GetDirSizeCommand;
 import com.jhonju.ps3netsrv.server.commands.ICommand;
 import com.jhonju.ps3netsrv.server.commands.OpenDirCommand;
@@ -27,6 +28,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ContextHandler extends Thread {
   private static final byte IDX_OP_CODE = 0;
@@ -38,34 +40,36 @@ public class ContextHandler extends Thread {
   private final Socket socket;
   private final List<String> folderPaths;
   private final ContentResolver contentResolver;
-  private static volatile int simultaneousConnections;
+  private final android.content.Context androidContext;
+  private static final AtomicInteger simultaneousConnections = new AtomicInteger(0);
 
   public synchronized void incrementSimultaneousConnections() {
-    simultaneousConnections++;
+    simultaneousConnections.incrementAndGet();
   }
 
   public synchronized void decrementSimultaneousConnections() {
-    simultaneousConnections--;
+    simultaneousConnections.decrementAndGet();
   }
 
   public static int getSimultaneousConnections() {
-    return simultaneousConnections;
+    return simultaneousConnections.get();
   }
 
   public ContextHandler(Socket socket, List<String> folderPaths,
-      android.content.ContentResolver contentResolver, int maxConnections,
-      Thread.UncaughtExceptionHandler exceptionHandler) {
+      ContentResolver contentResolver, int maxConnections,
+      Thread.UncaughtExceptionHandler exceptionHandler, android.content.Context androidContext) {
     super();
     setUncaughtExceptionHandler(exceptionHandler);
     this.socket = socket;
     this.folderPaths = folderPaths;
     this.contentResolver = contentResolver;
+    this.androidContext = androidContext;
     this.maxConnections = maxConnections;
   }
 
   @Override
   public void run() {
-    try (Context ctx = new Context(socket, folderPaths, contentResolver)) {
+    try (com.jhonju.ps3netsrv.server.Context ctx = new com.jhonju.ps3netsrv.server.Context(socket, folderPaths, contentResolver, androidContext)) {
       while (ctx.isSocketConnected()) {
         try {
           ByteBuffer packet = BinaryUtils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
@@ -85,13 +89,12 @@ public class ContextHandler extends Thread {
     }
   }
 
-  private void handleContext(Context ctx, ByteBuffer buffer) throws PS3NetSrvException, IOException {
+  private void handleContext(com.jhonju.ps3netsrv.server.Context ctx, ByteBuffer buffer) throws PS3NetSrvException, IOException {
     final ICommand command;
     ENetIsoCommand opCode = ENetIsoCommand.valueOf(buffer.getShort(IDX_OP_CODE));
 
     if (opCode == null) {
-      throw new PS3NetSrvException(com.jhonju.ps3netsrv.app.PS3NetSrvApp.getAppContext()
-          .getString(com.jhonju.ps3netsrv.R.string.error_invalid_opcode, buffer.getShort(IDX_OP_CODE)));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_invalid_opcode, buffer.getShort(IDX_OP_CODE)));
     }
     FileLogger.logCommand(opCode.name(), buffer.array());
     switch (opCode) {
@@ -139,8 +142,7 @@ public class ContextHandler extends Thread {
         command = new ReadDirEntryCommandV2(ctx);
         break;
       default:
-        throw new PS3NetSrvException(com.jhonju.ps3netsrv.app.PS3NetSrvApp.getAppContext()
-            .getString(com.jhonju.ps3netsrv.R.string.error_opcode_not_implemented, opCode.name()));
+        throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_opcode_not_implemented, opCode.name()));
     }
     command.executeTask();
   }

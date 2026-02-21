@@ -25,8 +25,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PS3NetService extends Service {
-  private static ExecutorService executorService;
-  private static PS3NetSrvTask task;
+  private ExecutorService executorService;
+  private PS3NetSrvTask task;
+  private static boolean serviceRunning = false;
 
   private Thread.UncaughtExceptionHandler exceptionHandler = new Thread.UncaughtExceptionHandler() {
     @Override
@@ -53,7 +54,7 @@ public class PS3NetService extends Service {
         : idListType == R.id.rbAllowed ? EListType.LIST_TYPE_ALLOWED : EListType.LIST_TYPE_BLOCKED;
     task = new PS3NetSrvTask(SettingsService.getPort(), SettingsService.getFolders(),
         SettingsService.getMaxConnections(), SettingsService.getIps(), eListType, exceptionHandler,
-        getContentResolver());
+        getContentResolver(), getApplicationContext());
   }
 
   @Override
@@ -68,18 +69,20 @@ public class PS3NetService extends Service {
   }
 
   private void stopTask() {
+    serviceRunning = false;
     try {
       if (task != null)
         task.shutdown();
     } catch (Exception e) {
       System.err.println(e.getMessage());
     } finally {
-      if (!executorService.isShutdown())
+      if (executorService != null && !executorService.isShutdown())
         executorService.shutdownNow();
     }
   }
 
   private void startTask() {
+    serviceRunning = true;
     executorService.execute(task);
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -100,13 +103,20 @@ public class PS3NetService extends Service {
           .build();
       startForeground(2, notification);
     } else {
-      startForeground(1, new Notification());
+      NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, "");
+      Notification notification = notificationBuilder.setOngoing(true)
+          .setSmallIcon(R.drawable.ic_notification)
+          .setContentTitle(getString(R.string.notification_title))
+          .setPriority(NotificationCompat.PRIORITY_MIN)
+          .build();
+      startForeground(1, notification);
     }
   }
 
   @Override
   public void onDestroy() {
     stopTask();
+    task = null;
     super.onDestroy();
   }
 
@@ -117,6 +127,6 @@ public class PS3NetService extends Service {
   }
 
   public static boolean isRunning() {
-    return task != null && task.isRunning();
+    return serviceRunning;
   }
 }

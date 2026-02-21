@@ -8,7 +8,6 @@ import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.REDKEY_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.SECTOR_SIZE;
 
-
 import android.content.ContentResolver;
 import android.os.ParcelFileDescriptor;
 
@@ -18,12 +17,14 @@ import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -43,6 +44,8 @@ public class DocumentFileCustom implements IFile {
   private Long cachedSize;
   private Boolean cachedIsDir;
   private boolean isInitialized = false;
+  private IFile[] cachedListFiles = null;
+  private String[] cachedList = null;
 
   public DocumentFileCustom(DocumentFile documentFile) throws IOException {
     this(documentFile, PS3NetSrvApp.getAppContext().getContentResolver());
@@ -69,7 +72,7 @@ public class DocumentFileCustom implements IFile {
          try {
              init();
          } catch (IOException e) {
-             com.jhonju.ps3netsrv.server.utils.FileLogger.logError(e);
+             FileLogger.logError(e);
          }
      }
   }
@@ -122,12 +125,17 @@ public class DocumentFileCustom implements IFile {
     if (encryptionKey != null) {
       this.decryptionKey = new SecretKeySpec(encryptionKey, "AES");
       this.encryptionType = detectedEncryptionType;
+      Arrays.fill(encryptionKey, (byte) 0);
     } else {
       this.decryptionKey = null;
       this.encryptionType = EEncryptionType.NONE;
     }
     this.regionInfos = regions != null ? regions : new PS3RegionInfo[0];
     this.isInitialized = true;
+    
+    if (sec0sec1 != null) {
+      Arrays.fill(sec0sec1, (byte) 0);
+    }
   }
 
   private byte[] getRedumpKey(DocumentFile parent, String fileName) throws IOException {
@@ -197,6 +205,7 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public IFile[] listFiles() throws IOException {
+    if (cachedListFiles != null) return cachedListFiles;
     init(); // Ensure initialized for listFiles (though we try to avoid using this method)
     DocumentFile[] filesAux = documentFile.listFiles();
     IFile[] files = new IFile[filesAux.length];
@@ -205,6 +214,7 @@ public class DocumentFileCustom implements IFile {
       files[i] = new DocumentFileCustom(fileAux, contentResolver);
       i++;
     }
+    cachedListFiles = files;
     return files;
   }
 
@@ -221,6 +231,7 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public String[] list() {
+    if (cachedList != null) return cachedList;
     DocumentFile[] filesAux = documentFile.listFiles();
     String[] files = new String[filesAux.length];
     int i = 0;
@@ -228,6 +239,7 @@ public class DocumentFileCustom implements IFile {
       files[i] = fileAux.getName();
       i++;
     }
+    cachedList = files;
     return files;
   }
 
@@ -266,7 +278,7 @@ public class DocumentFileCustom implements IFile {
       if (fileChannel != null)
         fileChannel.close();
     } catch (Exception e) {
-      System.err.println(e.getMessage());
+      FileLogger.logError("Error closing fileChannel", e);
     } finally {
       fileChannel = null;
     }
@@ -275,7 +287,7 @@ public class DocumentFileCustom implements IFile {
       if (fis != null)
         fis.close();
     } catch (Exception e) {
-      System.err.println(e.getMessage());
+      FileLogger.logError("Error closing fis", e);
     } finally {
       fis = null;
     }
@@ -284,7 +296,7 @@ public class DocumentFileCustom implements IFile {
       if (pfd != null)
         pfd.close();
     } catch (Exception e) {
-      System.err.println(e.getMessage());
+      FileLogger.logError("Error closing pfd", e);
     } finally {
       pfd = null;
     }

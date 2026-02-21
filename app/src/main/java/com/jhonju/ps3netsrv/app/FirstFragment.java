@@ -27,8 +27,6 @@ import java.util.Set;
 
 public class FirstFragment extends Fragment {
 
-  private boolean isServerRunning = false;
-
   @Override
   public View onCreateView(
       LayoutInflater inflater, ViewGroup container,
@@ -46,7 +44,7 @@ public class FirstFragment extends Fragment {
       @Override
       public void onClick(View view) {
         try {
-          if (isServerRunning) {
+          if (PS3NetService.isRunning()) {
             requireActivity().stopService(new Intent(getActivity(), PS3NetService.class));
           } else {
             if (!NetworkUtils.isConnectedToLocal()) {
@@ -56,8 +54,8 @@ public class FirstFragment extends Fragment {
             }
             startPs3NetService();
           }
-          isServerRunning = !isServerRunning;
-          btnStartServer.setText(isServerRunning ? R.string.stop_server : R.string.start_server);
+          boolean isNowRunning = !PS3NetService.isRunning(); // Will toggle shortly after start/stop
+          btnStartServer.setText(isNowRunning ? R.string.stop_server : R.string.start_server);
 
           List<String> folderPaths = SettingsService.getFolders();
           Set<String> folderPathsAux = new HashSet<>();
@@ -70,14 +68,10 @@ public class FirstFragment extends Fragment {
           }
           int port = SettingsService.getPort();
 
-          StringBuilder sb = new StringBuilder();
-          for (String item : folderPathsAux) {
-            sb.append(item).append("\n");
-          }
-          String serverRunningMsg = isServerRunning
-              ? String.format(getResources().getString(R.string.server_running), NetworkUtils.getIPAddress(true), port,
-                  sb.toString())
-              : getResources().getString(R.string.server_stopped);
+          String joinedFolders = android.text.TextUtils.join("\n", folderPathsAux);
+          String serverRunningMsg = isNowRunning ? 
+              String.format(getResources().getString(R.string.server_running), NetworkUtils.getIPAddress(true), port, joinedFolders) :
+              getResources().getString(R.string.server_stopped);
 
           tvServerState.setText(serverRunningMsg);
         } catch (Exception e) {

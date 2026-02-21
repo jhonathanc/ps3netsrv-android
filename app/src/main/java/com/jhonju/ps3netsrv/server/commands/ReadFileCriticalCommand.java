@@ -1,10 +1,10 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
 
 public class ReadFileCriticalCommand extends ReadFileCommand {
@@ -15,19 +15,20 @@ public class ReadFileCriticalCommand extends ReadFileCommand {
 
   @Override
   public void executeTask() throws IOException, PS3NetSrvException {
-    byte[] result = new byte[numBytes];
     try {
       int bytesRead = 0;
       java.util.Set<com.jhonju.ps3netsrv.server.io.IFile> files = ctx.getFile();
       if (files != null && !files.isEmpty()) {
-        bytesRead = files.iterator().next().read(result, offset);
+        bytesRead = files.iterator().next().read(ctx.getOutputBuffer(), 0, numBytes, offset);
       }
       if (bytesRead < EMPTY_SIZE) {
-        throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_read_file_eof));
+        throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_read_file_eof));
       }
+      OutputStream os = ctx.getOutputStream();
+      os.write(ctx.getOutputBuffer(), 0, numBytes);
+      os.flush();
     } catch (IOException e) {
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_read_file_generic));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_read_file_generic));
     }
-    send(result);
   }
 }

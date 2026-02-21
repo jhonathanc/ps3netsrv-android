@@ -24,7 +24,7 @@ public class WriteFileCommand extends FileCommand {
   public void executeTask() throws IOException, PS3NetSrvException {
     if (ctx.isReadOnly()) {
       send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_write_file_readonly));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_write_file_readonly));
     }
 
     // Read filename and resolve files
@@ -32,16 +32,16 @@ public class WriteFileCommand extends FileCommand {
     // So we use getFile() without parent resolution.
     Set<IFile> files = getFile();
 
-    if (numBytes > BUFFER_SIZE) {
+    if (numBytes > BinaryUtils.BUFFER_SIZE) {
       send(ERROR_CODE_BYTEARRAY);
       throw new PS3NetSrvException(
-          PS3NetSrvApp.getAppContext().getString(R.string.error_write_file_size, numBytes, BUFFER_SIZE));
+          ctx.getAndroidContext().getString(R.string.error_write_file_size, numBytes, BinaryUtils.BUFFER_SIZE));
     }
 
     ByteBuffer buffer = BinaryUtils.readCommandData(ctx.getInputStream(), numBytes);
     if (buffer == null) {
       send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(PS3NetSrvApp.getAppContext().getString(R.string.error_write_file_null));
+      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_write_file_null));
     }
 
     byte[] content = buffer.array();

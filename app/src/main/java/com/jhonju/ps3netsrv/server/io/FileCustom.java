@@ -8,7 +8,6 @@ import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.REDKEY_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.SECTOR_SIZE;
 
-
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
@@ -18,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Arrays;
 import javax.crypto.spec.SecretKeySpec;
 
 public class FileCustom implements IFile {
@@ -81,11 +81,16 @@ public class FileCustom implements IFile {
     if (encryptionKey != null) {
       this.decryptionKey = new SecretKeySpec(encryptionKey, "AES");
       this.encryptionType = detectedEncryptionType;
+      Arrays.fill(encryptionKey, (byte) 0);
     } else {
       this.decryptionKey = null;
       this.encryptionType = EEncryptionType.NONE;
     }
     this.regionInfos = regionInfos != null ? regionInfos : new PS3RegionInfo[0];
+    
+    if (sec0sec1 != null) {
+      Arrays.fill(sec0sec1, (byte) 0);
+    }
   }
 
   private static byte[] getRedumpKey(File parent, String path, String fileName) throws IOException {

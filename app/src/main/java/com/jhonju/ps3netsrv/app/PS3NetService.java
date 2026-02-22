@@ -29,20 +29,13 @@ public class PS3NetService extends Service {
   private PS3NetSrvTask task;
   private static boolean serviceRunning = false;
 
-  private Thread.UncaughtExceptionHandler exceptionHandler = new Thread.UncaughtExceptionHandler() {
-    @Override
-    public void uncaughtException(Thread thread, Throwable throwable) {
-      final String message = throwable.getMessage();
-      HandlerThread handlerThread = new HandlerThread("ToastThread");
-      handlerThread.start();
-      Looper looper = handlerThread.getLooper();
-      Handler handler = new Handler(looper);
-      handler.post(new Runnable() {
-        public void run() {
-          Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-        }
-      });
-    }
+  private final Thread.UncaughtExceptionHandler exceptionHandler = (thread, throwable) -> {
+    final String message = throwable.getMessage();
+    HandlerThread handlerThread = new HandlerThread("ToastThread");
+    handlerThread.start();
+    Looper looper = handlerThread.getLooper();
+    Handler handler = new Handler(looper);
+    handler.post(() -> Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show());
   };
 
   @Override

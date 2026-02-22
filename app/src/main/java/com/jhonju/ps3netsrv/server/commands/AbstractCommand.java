@@ -9,10 +9,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public abstract class AbstractCommand implements ICommand {
-  protected Context ctx;
+  protected final Context ctx;
   protected static final int ERROR_CODE = -1;
   protected byte[] ERROR_CODE_BYTEARRAY = BinaryUtils.intToBytesBE(ERROR_CODE);
-  protected byte[] SUCCESS_CODE_BYTEARRAY = BinaryUtils.intToBytesBE(0);
+  protected final byte[] SUCCESS_CODE_BYTEARRAY = BinaryUtils.intToBytesBE(0);
   protected static final int EMPTY_SIZE = 0;
   protected static final int BYTES_TO_SKIP = 24;
   protected static final short MILLISECONDS_IN_SECOND = 1000;

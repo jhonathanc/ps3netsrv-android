@@ -22,7 +22,7 @@ public class ReadCD2048Command extends AbstractCommand {
   }
 
   @Override
-  public void executeTask() throws IOException, PS3NetSrvException {
+  public void executeTask() throws IOException {
     if (sectorCount > MAX_SECTORS) {
       throw new IllegalArgumentException(ctx.getAndroidContext().getString(R.string.error_too_many_sectors));
       // TODO: VERIFICAR O QUE PODE SER DEVOLVIDO COMO RESPOSTA

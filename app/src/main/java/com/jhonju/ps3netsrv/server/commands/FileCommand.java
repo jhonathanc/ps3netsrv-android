@@ -22,7 +22,7 @@ import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.R;
 
 public abstract class FileCommand extends AbstractCommand {
-  protected short filePathLength;
+  protected final short filePathLength;
   protected String fileName;
   protected String requestedPath;
 

@@ -80,7 +80,7 @@ public class VirtualIsoFile implements IFile {
     long endOffset;
 
     // Multipart support - list of file parts
-    List<IFile> fileParts = new ArrayList<>();
+    final List<IFile> fileParts = new ArrayList<>();
     boolean isMultipart;
 
     // Multi-extent support - number of extent parts for files > 4GB
@@ -99,7 +99,7 @@ public class VirtualIsoFile implements IFile {
     int lba;
     int sizeBytes;
     byte[] content;
-    List<FileEntry> files = new ArrayList<>();
+    final List<FileEntry> files = new ArrayList<>();
   }
 
   public VirtualIsoFile(IFile rootDir, android.content.Context context) throws IOException {

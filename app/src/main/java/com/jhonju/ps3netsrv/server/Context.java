@@ -207,15 +207,4 @@ public class Context implements Closeable {
       }
     }
   }
-
-  /**
-   * Legacy close method for backward compatibility.
-   * New code should use try-with-resources or explicit close() calls.
-   * 
-   * @deprecated Use try-with-resources or close() instead
-   */
-  @Deprecated
-  public void closeResources() {
-    close();
-  }
 }

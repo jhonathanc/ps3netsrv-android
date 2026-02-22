@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class ReadFileCommand extends AbstractCommand {
-  protected int numBytes;
-  protected long offset;
+  protected final int numBytes;
+  protected final long offset;
 
   public ReadFileCommand(Context ctx, int numBytes, long offset) {
     super(ctx);

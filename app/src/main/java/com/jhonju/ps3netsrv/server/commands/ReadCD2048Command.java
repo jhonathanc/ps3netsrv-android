@@ -1,7 +1,6 @@
 package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
-import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.R;

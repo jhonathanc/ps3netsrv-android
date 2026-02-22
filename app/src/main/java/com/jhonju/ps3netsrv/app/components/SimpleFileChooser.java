@@ -74,19 +74,17 @@ public class SimpleFileChooser {
 
     // Comparator for Arrays.sort(). Separate folders from files, order
     // alphabetically, ignore case.
-    private final Comparator<File> fileArrayComparator = new Comparator<File>() {
-        public int compare(File file1, File file2) {
-            if (file1 == null || file2 == null) // if either null, assume equal
-                return 0;
-                // put folder first before file
-            else if (file1.isDirectory() && (!file2.isDirectory()))
-                return -1;
-            else if (file2.isDirectory() && (!file1.isDirectory()))
-                return 1;
-            else
-                // when both are folders or both are files, sort by name
-                return file1.getName().toUpperCase().compareTo(file2.getName().toUpperCase());
-        }
+    private final Comparator<File> fileArrayComparator = (file1, file2) -> {
+        if (file1 == null || file2 == null) // if either null, assume equal
+            return 0;
+            // put folder first before file
+        else if (file1.isDirectory() && (!file2.isDirectory()))
+            return -1;
+        else if (file2.isDirectory() && (!file1.isDirectory()))
+            return 1;
+        else
+            // when both are folders or both are files, sort by name
+            return file1.getName().toUpperCase().compareTo(file2.getName().toUpperCase());
     };
 
     private final DialogInterface.OnClickListener onPositiveButtonClickListener = new DialogInterface.OnClickListener() {

@@ -36,9 +36,7 @@ public class ParamSfoParser {
       if (paramSfo == null || !paramSfo.exists() || !paramSfo.isFile()) {
         return null;
       }
-
-      String titleId = parseTitleId(paramSfo);
-      return titleId;
+      return parseTitleId(paramSfo);
     } catch (IOException e) {
       com.jhonju.ps3netsrv.server.utils.FileLogger.logError(e);
       return null;
@@ -107,8 +105,7 @@ public class ParamSfoParser {
         if (dataAbsOffset + dataLength > data.length) {
           return null;
         }
-        String val = readNullTerminatedString(data, dataAbsOffset);
-        return val;
+        return readNullTerminatedString(data, dataAbsOffset);
       }
     }
     return null;

@@ -16,13 +16,10 @@ import com.google.android.material.snackbar.Snackbar;
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.utils.NetworkUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 public class FirstFragment extends Fragment {
@@ -40,44 +37,41 @@ public class FirstFragment extends Fragment {
 
     final TextView tvServerState = view.findViewById(R.id.tvServerStopped);
     final Button btnStartServer = view.findViewById(R.id.button_start_stop_server);
-    view.findViewById(R.id.button_start_stop_server).setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View view) {
-        try {
-          if (PS3NetService.isRunning()) {
-            requireActivity().stopService(new Intent(getActivity(), PS3NetService.class));
-          } else {
-            if (!NetworkUtils.isConnectedToLocal()) {
-              Snackbar.make(view, R.string.connection_disabled, Snackbar.LENGTH_LONG)
-                  .setAction(R.string.action_ok, null).show();
-              return;
-            }
-            startPs3NetService();
+    view.findViewById(R.id.button_start_stop_server).setOnClickListener(view1 -> {
+      try {
+        if (PS3NetService.isRunning()) {
+          requireActivity().stopService(new Intent(getActivity(), PS3NetService.class));
+        } else {
+          if (!NetworkUtils.isConnectedToLocal()) {
+            Snackbar.make(view1, R.string.connection_disabled, Snackbar.LENGTH_LONG)
+                .setAction(R.string.action_ok, null).show();
+            return;
           }
-          boolean isNowRunning = !PS3NetService.isRunning(); // Will toggle shortly after start/stop
-          btnStartServer.setText(isNowRunning ? R.string.stop_server : R.string.start_server);
-
-          List<String> folderPaths = SettingsService.getFolders();
-          Set<String> folderPathsAux = new HashSet<>();
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            for (String folderPath : folderPaths) {
-              folderPathsAux.add(URLDecoder.decode(folderPath, StandardCharsets.UTF_8.displayName()));
-            }
-          } else {
-            folderPathsAux = new HashSet<>(folderPaths);
-          }
-          int port = SettingsService.getPort();
-
-          String joinedFolders = android.text.TextUtils.join("\n", folderPathsAux);
-          String serverRunningMsg = isNowRunning ? 
-              String.format(getResources().getString(R.string.server_running), NetworkUtils.getIPAddress(true), port, joinedFolders) :
-              getResources().getString(R.string.server_stopped);
-
-          tvServerState.setText(serverRunningMsg);
-        } catch (Exception e) {
-          Snackbar.make(view, String.format(getString(R.string.error_occurred), e.getMessage()), Snackbar.LENGTH_LONG)
-              .setAction(R.string.action_ok, null).show();
+          startPs3NetService();
         }
+        boolean isNowRunning = !PS3NetService.isRunning(); // Will toggle shortly after start/stop
+        btnStartServer.setText(isNowRunning ? R.string.stop_server : R.string.start_server);
+
+        List<String> folderPaths = SettingsService.getFolders();
+        Set<String> folderPathsAux = new HashSet<>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+          for (String folderPath : folderPaths) {
+            folderPathsAux.add(URLDecoder.decode(folderPath, StandardCharsets.UTF_8.displayName()));
+          }
+        } else {
+          folderPathsAux = new HashSet<>(folderPaths);
+        }
+        int port = SettingsService.getPort();
+
+        String joinedFolders = android.text.TextUtils.join("\n", folderPathsAux);
+        String serverRunningMsg = isNowRunning ?
+            String.format(getResources().getString(R.string.server_running), NetworkUtils.getIPAddress(true), port, joinedFolders) :
+            getResources().getString(R.string.server_stopped);
+
+        tvServerState.setText(serverRunningMsg);
+      } catch (Exception e) {
+        Snackbar.make(view1, String.format(getString(R.string.error_occurred), e.getMessage()), Snackbar.LENGTH_LONG)
+            .setAction(R.string.action_ok, null).show();
       }
     });
   }

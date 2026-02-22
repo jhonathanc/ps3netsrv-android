@@ -2,7 +2,6 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
-import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
@@ -19,7 +18,7 @@ import java.util.Set;
  * 3. Sends success/failure response to the client
  * 4. Logs all operations for debugging
  * 
- * @author PS3NetSrv Android Contributors
+ * @author JCorrêa
  */
 public class DeleteFileCommand extends FileCommand {
 

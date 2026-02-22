@@ -3,12 +3,10 @@ package com.jhonju.ps3netsrv.app;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import com.jhonju.ps3netsrv.R;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class SettingsViewModel extends ViewModel {
 

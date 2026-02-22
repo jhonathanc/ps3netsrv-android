@@ -8,8 +8,6 @@ import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public class ReadDirEntryCommand extends AbstractCommand {

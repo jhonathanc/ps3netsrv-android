@@ -16,6 +16,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -33,6 +35,7 @@ public class FileCustom implements IFile {
     return file;
   }
 
+  @SuppressWarnings("")
   public FileCustom(File file) throws IOException {
     this.file = file;
     byte[] encryptionKey = null;
@@ -41,7 +44,17 @@ public class FileCustom implements IFile {
     PS3RegionInfo[] regionInfos = null;
     byte[] sec0sec1 = null;
 
-    if (file != null && file.isFile()) {
+    long fileSize;
+    boolean isRegularFile;
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+      BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+      fileSize = basicFileAttributes.size();
+      isRegularFile = basicFileAttributes.isRegularFile();
+    } else {
+      fileSize = file.length();
+      isRegularFile = file.isFile();
+    }
+    if (isRegularFile) {
       randomAccessFile = new RandomAccessFile(file, READ_ONLY_MODE);
 
       boolean isInPS3ISOFolder = file.getParentFile() != null
@@ -49,7 +62,7 @@ public class FileCustom implements IFile {
 
       // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
       int sec0Sec1Length = SECTOR_SIZE * 2;
-      if (isInPS3ISOFolder && file.length() >= sec0Sec1Length) {
+      if (isInPS3ISOFolder && fileSize >= sec0Sec1Length) {
         sec0sec1 = new byte[sec0Sec1Length];
         randomAccessFile.seek(0);
         if (randomAccessFile.read(sec0sec1) != sec0Sec1Length) {

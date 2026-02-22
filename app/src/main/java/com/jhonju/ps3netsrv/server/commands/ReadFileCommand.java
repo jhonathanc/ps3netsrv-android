@@ -23,7 +23,7 @@ public class ReadFileCommand extends AbstractCommand {
   @Override
   public void executeTask() throws IOException, PS3NetSrvException {
     try {
-      int bytesRead = 0;
+      int bytesRead;
       java.util.Set<IFile> files = ctx.getFile();
       if (files != null && !files.isEmpty()) {
         IFile file = files.iterator().next();

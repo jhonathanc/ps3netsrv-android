@@ -66,6 +66,16 @@ public class PS3NetSrvTask implements Runnable {
     this.androidContext = androidContext;
   }
 
+  private void closeSocket(Socket clientSocket) {
+    try {
+      clientSocket.close();
+    } catch (IOException e) {
+      FileLogger.logWarning("Error closing socket", e);
+    } finally {
+      clientSocket = null;
+    }
+  }
+
   /**
    * Main server loop that accepts and handles incoming client connections.
    * 
@@ -95,22 +105,18 @@ public class PS3NetSrvTask implements Runnable {
             exceptionHandler.uncaughtException(null, new PS3NetSrvException(
                 this.androidContext.getString(
                     com.jhonju.ps3netsrv.R.string.error_blocked_connection, hostAddress)));
-            try (Context ignored = new Context(clientSocket, folderPaths, contentResolver, androidContext)) {
-              // try-with-resources closes the socket automatically
-            }
+            closeSocket(clientSocket);
             continue;
           }
 
           FileLogger.logInfo("Client connected from IP: " + hostAddress);
           if (maxConnections > 0 && ContextHandler.getSimultaneousConnections() >= maxConnections) {
             FileLogger.logWarning("Connection limit reached (" + maxConnections + "). Rejecting " + hostAddress);
-            try (Context ignored = new Context(clientSocket, folderPaths, contentResolver, androidContext)) {
-              // try-with-resources closes the socket automatically
-            }
+            closeSocket(clientSocket);
             continue;
           }
           new ContextHandler(clientSocket, folderPaths, contentResolver,
-              maxConnections, exceptionHandler, androidContext).start();
+                  exceptionHandler, androidContext).start();
         } catch (IOException e) {
           if (isRunning) {
             FileLogger.logError("Error accepting client connection", e);

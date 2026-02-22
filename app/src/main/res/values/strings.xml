@@ -53,9 +53,9 @@
     <string name="select_language">App language:</string>
     <string name="title_activity_about">About</string>
     <string name="about_developer_label">Developer:</string>
-    <string name="about_developer_value">Jhonathan Corrêa</string>
+    <string name="about_developer_value" translatable="false">Jhonathan Corrêa</string>
     <string name="about_credits_label">Thanks to:</string>
-    <string name="about_credits_value">Aldostools</string>
+    <string name="about_credits_value" translatable="false">Aldostools</string>
     <string name="about_version_label">Version (Commit):</string>
     <string name="error_receiving_filename">Error: Failed to receive filename</string>
     <string name="error_byte_array_conversion">Error converting byte array</string>
@@ -75,7 +75,7 @@
     <string name="error_write_file_size">Error: Data size (%1$d) exceeds buffer size (%2$d)</string>
     <string name="error_write_file_null">Error writing file: Content is null</string>
     <string name="version_format">Version: %s</string>
-    <string name="action_ok">OK</string>
+    <string name="action_ok" translatable="false">OK</string>
     <string name="connection_disabled">The ethernet/wifi connection is disabled</string>
     <string name="error_occurred">An error occurred: %s</string>
     <string name="error_redump_key_invalid">Redump key is invalid</string>
@@ -87,11 +87,12 @@
     <string name="notification_title">PS3NetSrv is running in background</string>
     <string name="language_changed_dialog_message">Language changed. Application needs to restart to apply changes. The server will be restarted.</string>
     <string name="server_restart_prompt">Server is running. Restart to apply changes?</string>
-    <string name="error_blocked_connection">Blocked connection: %s</string>
-    <string name="error_connection_limit_reached">Connection limit is reached</string>
+    <string name="error_blocked_connection">Connection refused: %s</string>
+    <string name="error_connection_limit_reached">Connection limit reached</string>
     <string name="error_invalid_opcode">Invalid opCode: %d</string>
     <string name="error_opcode_not_implemented">OpCode not implemented: %s</string>
     <string name="settings_log_errors">Log Errors</string>
     <string name="settings_log_commands">Log Commands</string>
     <string name="error_invalid_path">Error: Invalid or malicious path requested</string>
+    <string name="str_hifen" translatable="false">-</string>
 </resources>

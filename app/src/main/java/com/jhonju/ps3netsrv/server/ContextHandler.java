@@ -36,7 +36,6 @@ public class ContextHandler extends Thread {
   private static final byte IDX_CMD_DATA_2 = 4;
   private static final byte IDX_CMD_DATA_3 = 8;
   private static final byte CMD_DATA_SIZE = 16;
-  private final int maxConnections;
   private final Socket socket;
   private final List<String> folderPaths;
   private final ContentResolver contentResolver;
@@ -56,20 +55,20 @@ public class ContextHandler extends Thread {
   }
 
   public ContextHandler(Socket socket, List<String> folderPaths,
-      ContentResolver contentResolver, int maxConnections,
-      Thread.UncaughtExceptionHandler exceptionHandler, android.content.Context androidContext) {
+      ContentResolver contentResolver, Thread.UncaughtExceptionHandler exceptionHandler,
+      android.content.Context androidContext) {
     super();
     setUncaughtExceptionHandler(exceptionHandler);
     this.socket = socket;
     this.folderPaths = folderPaths;
     this.contentResolver = contentResolver;
     this.androidContext = androidContext;
-    this.maxConnections = maxConnections;
   }
 
   @Override
   public void run() {
-    try (com.jhonju.ps3netsrv.server.Context ctx = new com.jhonju.ps3netsrv.server.Context(socket, folderPaths, contentResolver, androidContext)) {
+    com.jhonju.ps3netsrv.server.Context ctx = new com.jhonju.ps3netsrv.server.Context(socket, folderPaths, contentResolver, androidContext);
+    try {
       while (ctx.isSocketConnected()) {
         try {
           ByteBuffer packet = BinaryUtils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
@@ -85,6 +84,7 @@ public class ContextHandler extends Thread {
     } catch (IOException e) {
       Objects.requireNonNull(getUncaughtExceptionHandler()).uncaughtException(this, e);
     } finally {
+      ctx.close();
       decrementSimultaneousConnections();
     }
   }

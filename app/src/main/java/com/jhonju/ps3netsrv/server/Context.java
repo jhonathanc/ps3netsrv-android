@@ -5,6 +5,7 @@ import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,11 +26,9 @@ import android.content.ContentResolver;
  * - CD sector size configuration
  * - Read-only mode status
  * 
- * Implements AutoCloseable to ensure proper resource cleanup using try-with-resources.
- * 
- * @author PS3NetSrv Android Contributors
+ * @author JCorrêa
  */
-public class Context implements AutoCloseable {
+public class Context implements Closeable {
   private Socket socket;
   private final ContentResolver contentResolver;
   private final android.content.Context androidContext;
@@ -53,10 +52,7 @@ public class Context implements AutoCloseable {
     this.androidContext = java.util.Objects.requireNonNull(androidContext, "androidContext cannot be null");
     this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
     try {
-      if (socket != null) {
-        // Set a timeout of 60 seconds to prevent DoS from idle connections
-        socket.setSoTimeout(60000);
-      }
+      socket.setSoTimeout(60000);
     } catch (SocketException e) {
       FileLogger.logWarning("Failed to set socket timeout", e);
     }
@@ -192,7 +188,7 @@ public class Context implements AutoCloseable {
             f.close();
             FileLogger.logInfo("File closed: " + f.getName());
           } catch (IOException e) {
-            FileLogger.logWarning("Error closing file: " + (f != null ? f.getName() : "unknown"), e);
+            FileLogger.logWarning("Error closing file: " + f.getName(), e);
           }
         }
       }

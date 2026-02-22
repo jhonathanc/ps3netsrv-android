@@ -1,5 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
+import android.os.Build;
+
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
@@ -105,13 +107,14 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
         long modifiedTime = fileAux.lastModified() / MILLISECONDS_IN_SECOND;
 
         try {
-          // Try to get BasicFileAttributes if it's a FileCustom
-          if (fileAux instanceof FileCustom) {
-            Path path = ((java.io.File) ((FileCustom) fileAux).getRealFile()).toPath();
-            BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
-            fileTimes[0] = attrs.creationTime().toMillis() / MILLISECONDS_IN_SECOND;
-            fileTimes[1] = attrs.lastAccessTime().toMillis() / MILLISECONDS_IN_SECOND;
-            modifiedTime = attrs.lastModifiedTime().toMillis() / MILLISECONDS_IN_SECOND;
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (fileAux instanceof FileCustom) {
+              Path path = ((FileCustom) fileAux).getRealFile().toPath();
+              BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
+              fileTimes[0] = attrs.creationTime().toMillis() / MILLISECONDS_IN_SECOND;
+              fileTimes[1] = attrs.lastAccessTime().toMillis() / MILLISECONDS_IN_SECOND;
+              modifiedTime = attrs.lastModifiedTime().toMillis() / MILLISECONDS_IN_SECOND;
+            }
           }
         } catch (Exception e) {
           FileLogger.logError(e);

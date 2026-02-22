@@ -1,13 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 33
-    buildToolsVersion "30.0.1"
+    compileSdkVersion 34
 
     defaultConfig {
         applicationId "com.jhonju.ps3netsrv"
         minSdkVersion 14
-        targetSdkVersion 33
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
 
@@ -28,6 +27,12 @@ android {
 
     buildFeatures {
         viewBinding true
+    }
+
+    bundle {
+        language {
+            enableSplit = false
+        }
     }
 }
 

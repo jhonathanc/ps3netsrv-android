@@ -9,8 +9,6 @@
     <string name="app_name">ps3netsrv</string>
     <string name="action_settings">設定</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label" translatable="false">First Fragment</string>
-    <string name="second_fragment_label" translatable="false">Second Fragment</string>
     <string name="next">次</string>
     <string name="previous">前</string>
 
@@ -51,6 +49,10 @@
     <string name="section_content">コンテンツ</string>
     <string name="section_security">セキュリティ</string>
     <string name="select_language">アプリの言語：</string>
+    <string name="title_activity_about">このソフトについて</string>
+    <string name="about_developer_label">開発者：</string>
+    <string name="about_credits_label">スペシャルサンクス：</string>
+    <string name="about_version_label">バージョン：</string>
     <string name="error_receiving_filename">エラー：ファイル名の受信に失敗しました</string>
     <string name="error_byte_array_conversion">バイト配列の変換エラー</string>
     <string name="error_empty_byte_array">応答用のバイト配列が空です</string>
@@ -69,7 +71,6 @@
     <string name="error_write_file_size">書き込みエラー：データサイズ (%1$d) がバッファ (%2$d) を超えています</string>
     <string name="error_write_file_null">書き込みエラー：コンテンツがnullです</string>
     <string name="version_format">バージョン: %s</string>
-    <string name="action_ok">OK</string>
     <string name="connection_disabled">イーサネット/Wi-Fi接続が無効です</string>
     <string name="error_occurred">エラーが発生しました: %s</string>
     <string name="error_redump_key_invalid">Redumpキーが無効です</string>
@@ -80,8 +81,9 @@
     <string name="notification_channel_name">PS3NetSrv バックグラウンドサービス</string>
     <string name="notification_title">PS3NetSrv はバックグラウンドで実行中です</string>
     <string name="language_changed_dialog_message">言語が変更されました。変更を適用するにはアプリケーションを再起動する必要があります。サーバーは再起動されます。</string>
-    <string name="error_blocked_connection">ブロックされた接続: %s</string>
-    <string name="error_connection_limit_reached">接続制限に達しました</string>
+    <string name="server_restart_prompt">サーバーは実行中です。再起動して変更を適用しますか？</string>
+    <string name="error_blocked_connection">接続が拒否されました： %s</string>
+    <string name="error_connection_limit_reached">接続数の上限に達しました。</string>
     <string name="error_invalid_opcode">無効な OpCode: %d</string>
     <string name="error_opcode_not_implemented">未実装のオペコード: %s</string>
     <string name="settings_log_errors">エラーを記録</string>

@@ -18,33 +18,21 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.3">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvServerStopped"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:padding="32dp"
             android:gravity="center"
-            android:padding="32dp">
+            android:text="@string/server_stopped"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/textColorPrimary"
 
-            <ImageView
-                android:id="@+id/ivStatusIcon"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:src="@drawable/ic_launcher_foreground"
-                android:layout_marginBottom="16dp"
-                app:tint="@color/colorPrimary"
-                tools:ignore="ContentDescription" />
+            android:drawableTop="@drawable/ic_launcher_foreground"
+            android:drawablePadding="16dp"
 
-            <TextView
-                android:id="@+id/tvServerStopped"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/server_stopped"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textAlignment="center"
-                android:textColor="@color/textColorPrimary"/>
-
-        </LinearLayout>
+            app:drawableTint="@color/colorPrimary"/>
 
     </com.google.android.material.card.MaterialCardView>
 

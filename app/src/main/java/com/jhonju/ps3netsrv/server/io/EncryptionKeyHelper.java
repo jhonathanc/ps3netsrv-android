@@ -50,13 +50,4 @@ public final class EncryptionKeyHelper {
     }
     return bytes;
   }
-
-  public static boolean isKeyEmpty(byte[] key) {
-    for (byte b : key) {
-      if (b != 0) {
-        return false;
-      }
-    }
-    return true;
-  }
 }

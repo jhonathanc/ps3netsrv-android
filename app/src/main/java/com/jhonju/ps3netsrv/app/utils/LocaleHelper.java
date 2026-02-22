@@ -18,11 +18,6 @@ public class LocaleHelper {
         return setLocale(context, lang);
     }
 
-    public static Context onAttach(Context context, String defaultLanguage) {
-        String lang = getPersistedData(context, defaultLanguage);
-        return setLocale(context, lang);
-    }
-
     public static String getLanguage(Context context) {
         return getPersistedData(context, Locale.getDefault().getLanguage());
     }
@@ -46,7 +41,7 @@ public class LocaleHelper {
         SharedPreferences preferences = context.getSharedPreferences("language_settings", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(SELECTED_LANGUAGE, language);
-        editor.commit();
+        editor.apply();
     }
 
     @TargetApi(Build.VERSION_CODES.N)
@@ -61,7 +56,6 @@ public class LocaleHelper {
         return context.createConfigurationContext(configuration);
     }
 
-    @SuppressWarnings("deprecation")
     private static Context updateResourcesLegacy(Context context, String language) {
         Locale locale = new Locale(language);
         Locale.setDefault(locale);

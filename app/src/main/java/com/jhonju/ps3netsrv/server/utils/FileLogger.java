@@ -1,11 +1,9 @@
 package com.jhonju.ps3netsrv.server.utils;
 
-import android.os.Environment;
 import android.util.Log;
 
 import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.app.SettingsService;
-import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,7 +40,7 @@ public class FileLogger {
     for (StackTraceElement element : t.getStackTrace()) {
       sb.append("\tat ").append(element.toString()).append("\n");
     }
-    writeLog(ERROR_LOG_FILE, "WARNING: " + sb.toString());
+    writeLog(ERROR_LOG_FILE, "WARNING: " + sb);
   }
 
   public static void logError(String message) {
@@ -60,7 +58,7 @@ public class FileLogger {
     for (StackTraceElement element : t.getStackTrace()) {
       sb.append("\tat ").append(element.toString()).append("\n");
     }
-    writeLog(ERROR_LOG_FILE, "ERROR: " + sb.toString());
+    writeLog(ERROR_LOG_FILE, "ERROR: " + sb);
   }
 
   public static void logError(Throwable t) {
@@ -71,7 +69,7 @@ public class FileLogger {
     for (StackTraceElement element : t.getStackTrace()) {
       sb.append("\tat ").append(element.toString()).append("\n");
     }
-    writeLog(ERROR_LOG_FILE, "EXCEPTION: " + sb.toString());
+    writeLog(ERROR_LOG_FILE, "EXCEPTION: " + sb);
   }
 
   public static void logCommand(String opcodeName, byte[] commandData) {
@@ -82,25 +80,42 @@ public class FileLogger {
     writeLog(COMMAND_LOG_FILE, "[" + opcodeName + "] " + dataHex);
   }
 
-  public static void logPath(String tag, String path) {
-    if (!SettingsService.isLogCommands())
-      return;
-    writeLog(COMMAND_LOG_FILE, "[" + tag + "] " + path);
-  }
-
   private static synchronized void writeLog(String fileName, String content) {
     File logFile = getLogFile(fileName);
     if (logFile == null)
       return;
 
-    try (FileOutputStream fos = new FileOutputStream(logFile, true);
-         OutputStreamWriter writer = new OutputStreamWriter(fos)) {
+    FileOutputStream fos = null;
+    OutputStreamWriter writer = null;
+
+    try {
+      fos = new FileOutputStream(logFile, true);
+      writer = new OutputStreamWriter(fos);
+
       String timestamp = DATE_FORMAT.format(new Date());
-      writer.append("[").append(timestamp).append("] ").append(content).append("\n");
+      writer.append("[").append(timestamp)
+          .append("] ")
+          .append(content)
+          .append("\n");
+
       writer.flush();
+
     } catch (IOException e) {
-      // Fallback to Logcat if file writing fails
       Log.e("FileLogger", "Failed to write to " + fileName, e);
+    } finally {
+      if (writer != null) {
+        try {
+          writer.close();
+        } catch (IOException e) {
+          Log.e("FileLogger", "Failed to close writer", e);
+        }
+      } else if (fos != null) {
+        try {
+          fos.close();
+        } catch (IOException e) {
+          Log.e("FileLogger", "Failed to close fos", e);
+        }
+      }
     }
   }
 

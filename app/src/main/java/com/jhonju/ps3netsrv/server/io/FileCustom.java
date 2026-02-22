@@ -8,13 +8,12 @@ import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.REDKEY_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.SECTOR_SIZE;
 
-import com.jhonju.ps3netsrv.R;
-import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
@@ -44,10 +43,10 @@ public class FileCustom implements IFile {
 
     if (file != null && file.isFile()) {
       randomAccessFile = new RandomAccessFile(file, READ_ONLY_MODE);
-      
-      boolean isInPS3ISOFolder = file.getParentFile() != null 
+
+      boolean isInPS3ISOFolder = file.getParentFile() != null
           && file.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
-      
+
       // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
       int sec0Sec1Length = SECTOR_SIZE * 2;
       if (isInPS3ISOFolder && file.length() >= sec0Sec1Length) {
@@ -62,14 +61,14 @@ public class FileCustom implements IFile {
       encryptionKey = getRedumpKey(file.getParentFile(), file.getAbsolutePath(), file.getName());
       if (encryptionKey != null) {
         detectedEncryptionType = EEncryptionType.REDUMP;
-      } else if (sec0sec1 != null && BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
+      } else if (BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
         // If no Redump key, check for 3k3y watermark and extract key if found
         encryptionKey = BinaryUtils.convertD1ToKey(sec0sec1);
         if (encryptionKey != null) {
           detectedEncryptionType = EEncryptionType._3K3Y;
         }
       }
-      
+
       // Parse region info from sec0sec1 if we have encryption
       if (encryptionKey != null && sec0sec1 != null) {
         regionInfos = BinaryUtils.getRegionInfos(sec0sec1);
@@ -87,7 +86,7 @@ public class FileCustom implements IFile {
       this.encryptionType = EEncryptionType.NONE;
     }
     this.regionInfos = regionInfos != null ? regionInfos : new PS3RegionInfo[0];
-    
+
     if (sec0sec1 != null) {
       Arrays.fill(sec0sec1, (byte) 0);
     }
@@ -120,11 +119,6 @@ public class FileCustom implements IFile {
     } finally {
       fis.close();
     }
-  }
-
-
-  public boolean mkdir() {
-    return file.mkdir();
   }
 
   @Override
@@ -222,8 +216,11 @@ public class FileCustom implements IFile {
 
   @Override
   public void write(byte[] buffer) throws IOException {
-    try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+    FileOutputStream fos = new java.io.FileOutputStream(file);
+    try {
       fos.write(buffer);
+    } finally {
+      fos.close();
     }
   }
 

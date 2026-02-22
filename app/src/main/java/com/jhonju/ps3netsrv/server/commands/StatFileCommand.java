@@ -1,5 +1,7 @@
 package com.jhonju.ps3netsrv.server.commands;
 
+import android.os.Build;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Set;
@@ -79,11 +81,13 @@ public class StatFileCommand extends FileCommand {
           long modifiedTime = file.lastModified() / MILLISECONDS_IN_SECOND;
 
           try {
-            if (file instanceof FileCustom) {
-               Path path = ((java.io.File) ((FileCustom) file).getRealFile()).toPath();
-               BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
-               fileStats[0] = attrs.creationTime().toMillis() / MILLISECONDS_IN_SECOND;
-               fileStats[1] = attrs.lastAccessTime().toMillis() / MILLISECONDS_IN_SECOND;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+              if (file instanceof FileCustom) {
+                Path path = ((FileCustom) file).getRealFile().toPath();
+                BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
+                fileStats[0] = attrs.creationTime().toMillis() / MILLISECONDS_IN_SECOND;
+                fileStats[1] = attrs.lastAccessTime().toMillis() / MILLISECONDS_IN_SECOND;
+              }
             }
           } catch (Exception e) {
              FileLogger.logError(e);

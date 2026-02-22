@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@color/colorBackground"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".app.SettingsActivity">
 
@@ -38,7 +37,8 @@
         android:layout_height="wrap_content"
         android:text="@string/select_language"
         android:textColor="@color/textColorPrimary"
-        android:layout_marginEnd="16dp"/>
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp" />
 
             <Spinner
                 android:id="@+id/language_spinner"
@@ -86,7 +86,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp">
+                android:layout_marginEnd="8dp"
+                android:layout_marginRight="8dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etFolder"
@@ -111,7 +112,8 @@
             android:layout_width="match_parent"
             android:layout_height="120dp"
             android:background="@color/colorSurface"
-            android:elevation="2dp"
+            app:elevation="2dp"
+            android:nestedScrollingEnabled="false"
             android:layout_marginBottom="16dp"/>
 
         <!-- Security Section -->
@@ -211,7 +213,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp">
+                android:layout_marginEnd="8dp"
+                android:layout_marginRight="8dp">
                 
                 <EditText
                     android:id="@+id/etIp"
@@ -237,7 +240,8 @@
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:background="@color/colorSurface"
-            android:elevation="2dp"
+            app:elevation="2dp"
+            android:nestedScrollingEnabled="false"
             android:layout_marginBottom="24dp"/>
 
         <Button

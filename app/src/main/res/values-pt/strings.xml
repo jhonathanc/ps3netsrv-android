@@ -2,8 +2,6 @@
     <string name="app_name">ps3netsrv</string>
     <string name="action_settings">Configurações</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
 
     <string name="next">Próximo</string>
     <string name="previous">Anterior</string>
@@ -64,7 +62,6 @@
     <string name="error_write_file_size">Erro: Tamanho dos dados (%1$d) excede o buffer (%2$d)</string>
     <string name="error_write_file_null">Erro ao escrever arquivo: Conteúdo nulo</string>
     <string name="version_format">Versão: %s</string>
-    <string name="action_ok">OK</string>
     <string name="connection_disabled">A conexão ethernet/wifi está desativada</string>
     <string name="error_occurred">Ocorreu um erro: %s</string>
     <string name="error_redump_key_invalid">Chave Redump é inválida</string>
@@ -76,7 +73,7 @@
     <string name="notification_title">PS3NetSrv está rodando em segundo plano</string>
     <string name="language_changed_dialog_message">Idioma alterado. O aplicativo precisa ser reiniciado para aplicar as alterações. O servidor será reiniciado.</string>
     <string name="server_restart_prompt">O servidor está em execução. Reiniciar para aplicar as alterações?</string>
-    <string name="error_blocked_connection">Conexão bloqueada: %s</string>
+    <string name="error_blocked_connection">Conexão recusada: %s</string>
     <string name="error_connection_limit_reached">Limite de conexões atingido</string>
     <string name="error_invalid_opcode">OpCode inválido: %d</string>
     <string name="error_opcode_not_implemented">OpCode não implementado: %s</string>

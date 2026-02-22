@@ -14,7 +14,6 @@ import android.os.ParcelFileDescriptor;
 import androidx.documentfile.provider.DocumentFile;
 
 import com.jhonju.ps3netsrv.R;
-import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
@@ -22,6 +21,7 @@ import com.jhonju.ps3netsrv.server.utils.FileLogger;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
@@ -47,39 +47,41 @@ public class DocumentFileCustom implements IFile {
   private IFile[] cachedListFiles = null;
   private String[] cachedList = null;
 
-  public DocumentFileCustom(DocumentFile documentFile) throws IOException {
-    this(documentFile, PS3NetSrvApp.getAppContext().getContentResolver());
-  }
+  private final android.content.Context androidContext;
 
-  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver) throws IOException {
+  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, android.content.Context context) throws IOException {
     this.documentFile = documentFile;
     this.contentResolver = contentResolver;
+    this.androidContext = context;
     init();
   }
 
-  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, String name, long size, boolean isDir) {
-    this(documentFile, contentResolver, name, size, isDir, false);
+  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, android.content.Context context, String name, long size, boolean isDir) {
+    this(documentFile, contentResolver, context, name, size, isDir, false);
   }
 
-  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, String name, long size, boolean isDir, boolean initNow) {
-     this.documentFile = documentFile;
-     this.contentResolver = contentResolver;
-     this.cachedName = name;
-     this.cachedSize = size;
-     this.cachedIsDir = isDir;
-     this.isInitialized = false;
-     if (initNow) {
-         try {
-             init();
-         } catch (IOException e) {
-             FileLogger.logError(e);
-         }
-     }
+  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, android.content.Context context, String name, long size,
+      boolean isDir, boolean initNow) {
+    this.documentFile = documentFile;
+    this.contentResolver = contentResolver;
+    this.cachedName = name;
+    this.cachedSize = size;
+    this.cachedIsDir = isDir;
+    this.androidContext = context;
+    this.isInitialized = false;
+    if (initNow) {
+      try {
+        init();
+      } catch (IOException e) {
+        FileLogger.logError(e);
+      }
+    }
   }
 
   private void init() throws IOException {
-    if (isInitialized) return;
-    
+    if (isInitialized)
+      return;
+
     byte[] encryptionKey = null;
     EEncryptionType detectedEncryptionType = EEncryptionType.NONE;
     PS3RegionInfo[] regions = null;
@@ -90,7 +92,7 @@ public class DocumentFileCustom implements IFile {
       this.fis = new FileInputStream(pfd.getFileDescriptor());
       this.fileChannel = fis.getChannel();
 
-      boolean isInPS3ISOFolder = documentFile.getParentFile() != null 
+      boolean isInPS3ISOFolder = documentFile.getParentFile() != null
           && documentFile.getParentFile().getName() != null
           && documentFile.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
 
@@ -108,14 +110,14 @@ public class DocumentFileCustom implements IFile {
       encryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
       if (encryptionKey != null) {
         detectedEncryptionType = EEncryptionType.REDUMP;
-      } else if (sec0sec1 != null && BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
+      } else if (BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
         // If no Redump key, check for 3k3y watermark and extract key if found
         encryptionKey = BinaryUtils.convertD1ToKey(sec0sec1);
         if (encryptionKey != null) {
           detectedEncryptionType = EEncryptionType._3K3Y;
         }
       }
-      
+
       // Parse region info from sec0sec1 if we have encryption
       if (encryptionKey != null && sec0sec1 != null) {
         regions = BinaryUtils.getRegionInfos(sec0sec1);
@@ -132,7 +134,7 @@ public class DocumentFileCustom implements IFile {
     }
     this.regionInfos = regions != null ? regions : new PS3RegionInfo[0];
     this.isInitialized = true;
-    
+
     if (sec0sec1 != null) {
       Arrays.fill(sec0sec1, (byte) 0);
     }
@@ -174,7 +176,6 @@ public class DocumentFileCustom implements IFile {
     }
   }
 
-
   @Override
   public boolean exists() {
     return documentFile != null && documentFile.exists();
@@ -182,13 +183,15 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public boolean isFile() {
-      if (cachedIsDir != null) return !cachedIsDir;
-      return documentFile.isFile();
+    if (cachedIsDir != null)
+      return !cachedIsDir;
+    return documentFile.isFile();
   }
 
   @Override
   public boolean isDirectory() {
-    if (cachedIsDir != null) return cachedIsDir;
+    if (cachedIsDir != null)
+      return cachedIsDir;
     return documentFile.isDirectory();
   }
 
@@ -199,19 +202,21 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public long length() {
-    if (cachedSize != null) return cachedSize;
+    if (cachedSize != null)
+      return cachedSize;
     return documentFile.length();
   }
 
   @Override
   public IFile[] listFiles() throws IOException {
-    if (cachedListFiles != null) return cachedListFiles;
+    if (cachedListFiles != null)
+      return cachedListFiles;
     init(); // Ensure initialized for listFiles (though we try to avoid using this method)
     DocumentFile[] filesAux = documentFile.listFiles();
     IFile[] files = new IFile[filesAux.length];
     int i = 0;
     for (DocumentFile fileAux : filesAux) {
-      files[i] = new DocumentFileCustom(fileAux, contentResolver);
+      files[i] = new DocumentFileCustom(fileAux, contentResolver, androidContext);
       i++;
     }
     cachedListFiles = files;
@@ -225,13 +230,15 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public String getName() {
-    if (cachedName != null) return cachedName;
+    if (cachedName != null)
+      return cachedName;
     return documentFile.getName();
   }
 
   @Override
   public String[] list() {
-    if (cachedList != null) return cachedList;
+    if (cachedList != null)
+      return cachedList;
     DocumentFile[] filesAux = documentFile.listFiles();
     String[] files = new String[filesAux.length];
     int i = 0;
@@ -245,7 +252,7 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public IFile findFile(String fileName) throws IOException {
-    return new DocumentFileCustom(documentFile.findFile(fileName), contentResolver);
+    return new DocumentFileCustom(documentFile.findFile(fileName), contentResolver, androidContext);
   }
 
   @Override
@@ -255,7 +262,8 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public int read(byte[] buffer, int offset, int length, long position) throws IOException {
-    if (!isInitialized) init();
+    if (!isInitialized)
+      init();
     fileChannel.position(position);
     int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer, offset, length));
     if (encryptionType != EEncryptionType.NONE) {
@@ -305,15 +313,20 @@ public class DocumentFileCustom implements IFile {
   @Override
   public void write(byte[] buffer) throws IOException {
     if (documentFile != null && documentFile.isFile()) {
-      try (java.io.OutputStream os = contentResolver.openOutputStream(documentFile.getUri())) {
+      OutputStream os = contentResolver.openOutputStream(documentFile.getUri());
+      try {
         if (os != null) {
           os.write(buffer);
         } else {
-          throw new IOException(PS3NetSrvApp.getAppContext().getString(R.string.error_open_output_stream));
+          throw new IOException(androidContext.getString(R.string.error_open_output_stream));
+        }
+      } finally {
+        if (os != null) {
+          os.close();
         }
       }
     } else {
-      throw new IOException(PS3NetSrvApp.getAppContext().getString(R.string.error_file_not_writable));
+      throw new IOException(androidContext.getString(R.string.error_file_not_writable));
     }
   }
 

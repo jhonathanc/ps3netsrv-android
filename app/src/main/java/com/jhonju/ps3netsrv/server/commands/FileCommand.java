@@ -4,7 +4,6 @@ import android.net.Uri;
 
 import androidx.documentfile.provider.DocumentFile;
 
-import com.jhonju.ps3netsrv.app.PS3NetSrvApp;
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.DocumentFileCustom;
@@ -26,7 +25,6 @@ public abstract class FileCommand extends AbstractCommand {
   protected short filePathLength;
   protected String fileName;
   protected String requestedPath;
-  protected DocumentFile currentDirectory;
 
   public FileCommand(Context ctx, short filePathLength) {
     super(ctx);
@@ -75,7 +73,7 @@ public abstract class FileCommand extends AbstractCommand {
       throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_invalid_path));
     }
 
-    String childName = "";
+    String childName;
 
     if (resolveParent) {
       if (formattedPath.endsWith("/")) {
@@ -120,7 +118,7 @@ public abstract class FileCommand extends AbstractCommand {
         }
 
         if (documentFile != null && documentFile.exists()) {
-          files.add(new DocumentFileCustom(documentFile, ctx.getContentResolver()));
+          files.add(new DocumentFileCustom(documentFile, ctx.getContentResolver(), ctx.getAndroidContext()));
         }
       } else {
         // Use Standard File I/O

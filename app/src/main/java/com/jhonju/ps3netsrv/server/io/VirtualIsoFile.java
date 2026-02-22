@@ -1,5 +1,9 @@
 package com.jhonju.ps3netsrv.server.io;
 
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
+
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
@@ -12,16 +16,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
 /**
- * VirtualIsoFile constructs and serves a virtual ISO 9660 filesystem image 
- * on-the-fly from a normal directory structure. It acts as an IFile implementation, 
- * rendering transparent ISO sector streams upon read requests and fully supporting
+ * VirtualIsoFile constructs and serves a virtual ISO 9660 filesystem image
+ * on-the-fly from a normal directory structure. It acts as an IFile
+ * implementation,
+ * rendering transparent ISO sector streams upon read requests and fully
+ * supporting
  * multipart or segmented content mapping.
  */
 public class VirtualIsoFile implements IFile {
@@ -35,13 +41,15 @@ public class VirtualIsoFile implements IFile {
 
   // ISO 9660 file flags
   private static final byte ISO_FILE = 0x00;
-  private static final byte ISO_DIRECTORY = 0x02;
+
   private static final byte ISO_MULTIEXTENT = (byte) 0x80;
 
   // Multipart file pattern (.66600, .66601, etc.)
   private static final String MULTIPART_SUFFIX_PATTERN = ".66600";
 
   private final IFile rootFile;
+
+  private final android.content.Context context;
   private final String volumeName;
 
   // PS3 Mode fields
@@ -60,7 +68,8 @@ public class VirtualIsoFile implements IFile {
 
   /**
    * Represents a mapped file within the virtual ISO filesystem.
-   * Encapsulates physical file details, tracking multipart components where applicable,
+   * Encapsulates physical file details, tracking multipart components where
+   * applicable,
    * alongside logical block addressing (rlba) properties.
    */
   private static class FileEntry {
@@ -93,7 +102,11 @@ public class VirtualIsoFile implements IFile {
     List<FileEntry> files = new ArrayList<>();
   }
 
-  public VirtualIsoFile(IFile rootDir) throws IOException {
+  public VirtualIsoFile(IFile rootDir, android.content.Context context) throws IOException {
+    if (rootDir == null) {
+      throw new IOException("root dir should not be null");
+    }
+    this.context = context;
     this.rootFile = rootDir;
 
     // Detect PS3 mode by checking for PS3_GAME/PARAM.SFO
@@ -106,7 +119,6 @@ public class VirtualIsoFile implements IFile {
     } else {
       this.volumeName = rootDir.getName() != null ? rootDir.getName().toUpperCase() : "DVDVIDEO";
     }
-
     build();
   }
 
@@ -123,17 +135,18 @@ public class VirtualIsoFile implements IFile {
     scanDirectory(rootFile, rootList, allDirs);
 
     // 1.5. Map parents to children for DFS/BFS traversals
-    // This is needed for both DFS file layout (Phase 2) and BFS Path Table (Phase 4)
+    // This is needed for both DFS file layout (Phase 2) and BFS Path Table (Phase
+    // 4)
     Map<DirList, List<DirList>> childrenMap = new HashMap<>();
     for (DirList dir : allDirs) {
-        if (dir.parent != null && dir != rootList) {
-            List<DirList> children = childrenMap.get(dir.parent);
-            if (children == null) {
-                children = new ArrayList<>();
-                childrenMap.put(dir.parent, children);
-            }
-            children.add(dir);
+      if (dir.parent != null && dir != rootList) {
+        List<DirList> children = childrenMap.get(dir.parent);
+        if (children == null) {
+          children = new ArrayList<>();
+          childrenMap.put(dir.parent, children);
         }
+        children.add(dir);
+      }
     }
 
     // 2. Calculate sizes and assign Relative LBAs for files
@@ -146,66 +159,66 @@ public class VirtualIsoFile implements IFile {
     int currentFileSectorOffset = 0;
     allFiles = new ArrayList<>();
     currentFileSectorOffset = scanFilesDFS(rootList, currentFileSectorOffset, allFiles, childrenMap);
-    
+
     int filesSizeSectors = currentFileSectorOffset;
 
     // 4. Generate Path Tables
-    
+
     // ISO 9660 requires Path Table to be sorted by:
     // 1. Parent Directory Number (Ascending)
     // 2. Directory Identifier (Ascending)
     // To achieve this, we must traverse the directory tree in Level Order (BFS),
     // and sort siblings by name.
-    
+
     // childrenMap is already built in Phase 1.5
 
-    
     // Now perform BFS to rebuild allDirs in correct order
     List<DirList> sortedDirs = new ArrayList<>();
-    
+
     // Queue for BFS
     List<DirList> queue = new ArrayList<>();
     queue.add(rootList);
-    
+
     // Initial root setup
     rootList.idx = 1;
     sortedDirs.add(rootList);
-    
-    // We use a simple pointer instead of actual Queue to avoid auto-boxing overhead/complexity
+
+    // We use a simple pointer instead of actual Queue to avoid auto-boxing
+    // overhead/complexity
     int queuePtr = 0;
-    while(queuePtr < queue.size()) {
-       DirList parent = queue.get(queuePtr++);
-       
-       List<DirList> children = childrenMap.get(parent);
-       if (children != null) {
-           // Sort siblings by name
-           Collections.sort(children, new Comparator<DirList>() {
-               @Override
-               public int compare(DirList o1, DirList o2) {
-                   String n1 = o1.name;
-                   String n2 = o2.name;
-                   if (n1 == null) return -1;
-                   if (n2 == null) return 1;
-                   return n1.compareToIgnoreCase(n2);
-               }
-           });
-           
-           for (DirList child : children) {
-               // Assign index based on position in the FINAL sorted list
-               // (sortedDirs size + 1 because ISO indices are 1-based)
-               child.idx = sortedDirs.size() + 1;
-               sortedDirs.add(child);
-               queue.add(child);
-           }
-       }
+    while (queuePtr < queue.size()) {
+      DirList parent = queue.get(queuePtr++);
+
+      List<DirList> children = childrenMap.get(parent);
+      if (children != null) {
+        // Sort siblings by name
+        Collections.sort(children, (o1, o2) -> {
+          String n1 = o1.name;
+          String n2 = o2.name;
+          if (n1 == null)
+            return -1;
+          if (n2 == null)
+            return 1;
+          return n1.compareToIgnoreCase(n2);
+        });
+
+        for (DirList child : children) {
+          // Assign index based on position in the FINAL sorted list
+          // (sortedDirs size + 1 because ISO indices are 1-based)
+          child.idx = sortedDirs.size() + 1;
+          sortedDirs.add(child);
+          queue.add(child);
+        }
+      }
     }
-    
+
     // Replace the original list with the sorted one
     allDirs.clear();
     allDirs.addAll(sortedDirs);
 
     byte[] pathTableL = generatePathTable(allDirs, false);
-    byte[] pathTableM = generatePathTable(allDirs, true);
+    //byte[] pathTableM = generatePathTable(allDirs, true);
+    byte[] pathTableM;
 
     int pathTableSize = pathTableL.length;
     int pathTableSectors = (pathTableSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
@@ -226,13 +239,13 @@ public class VirtualIsoFile implements IFile {
     // Path Table M follows immediately
     int pathTableM_LBA = lba;
     lba += pathTableSectors;
-    
+
     // Directories start after Path Tables, but at least at LBA 32
     if (lba < 32) {
-        lba = 32;
+      lba = 32;
     }
 
-    for (DirList dir : allDirs) {      
+    for (DirList dir : allDirs) {
       dir.lba = lba;
       byte[] content = generateDirectoryContent(dir, allDirs, 0);
       dir.content = content;
@@ -253,11 +266,11 @@ public class VirtualIsoFile implements IFile {
     if ((volumeSize & 0x1F) != 0) {
       padSectors += (0x20 - (volumeSize & 0x1F));
     }
-    
+
     // Ensure total size is a multiple of 32
     int finalVolumeSize = volumeSize + padSectors;
     if ((finalVolumeSize & 0x1F) != 0) {
-        finalVolumeSize = (finalVolumeSize + 0x1F) & ~0x1F;
+      finalVolumeSize = (finalVolumeSize + 0x1F) & ~0x1F;
     }
 
     // 7. Build fsBuf
@@ -272,7 +285,7 @@ public class VirtualIsoFile implements IFile {
       writePS3Sectors(fsBuf, finalVolumeSize);
     }
 
-    writePVD(fsBuf, 16 * SECTOR_SIZE, pathTableSize, pathTableL_LBA, pathTableM_LBA, rootList, finalVolumeSize);
+    writePVD(fsBuf, pathTableSize, pathTableL_LBA, pathTableM_LBA, rootList, finalVolumeSize);
 
     // Terminator
     fsBuf.put(17 * SECTOR_SIZE, (byte) 255);
@@ -370,7 +383,7 @@ public class VirtualIsoFile implements IFile {
    */
   private void scanDirectory(IFile dir, DirList dirEntry, List<DirList> allDirs) throws IOException {
     // Optimization for DocumentFileCustom to avoid slow listFiles()
-    if (dir instanceof DocumentFileCustom) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
       scanDirectoryOptimized((DocumentFileCustom) dir, dirEntry, allDirs);
       return;
     }
@@ -380,17 +393,14 @@ public class VirtualIsoFile implements IFile {
       return;
     }
 
-    Arrays.sort(files, new Comparator<IFile>() {
-      @Override
-      public int compare(IFile o1, IFile o2) {
-        String n1 = o1.getName();
-        String n2 = o2.getName();
-        if (n1 == null)
-          return -1;
-        if (n2 == null)
-          return 1;
-        return n1.compareToIgnoreCase(n2);
-      }
+    Arrays.sort(files, (o1, o2) -> {
+      String n1 = o1.getName();
+      String n2 = o2.getName();
+      if (n1 == null)
+        return -1;
+      if (n2 == null)
+        return 1;
+      return n1.compareToIgnoreCase(n2);
     });
 
     // Track multipart base names to avoid duplicates
@@ -401,76 +411,75 @@ public class VirtualIsoFile implements IFile {
     }
   }
 
-  private void processFile(IFile f, String name, IFile dir, DirList dirEntry, List<DirList> allDirs, List<String> processedMultiparts) throws IOException {
-      if (name == null)
-        return;
+  private void processFile(IFile f, String name, IFile dir, DirList dirEntry, List<DirList> allDirs,
+      List<String> processedMultiparts) throws IOException {
+    if (name == null)
+      return;
 
-      if (f.isDirectory()) {
-        DirList child = new DirList();
-        child.name = name;
-        child.parent = dirEntry;
-        allDirs.add(child);
-        scanDirectory(f, child, allDirs);
-      } else {
-        // Check for multipart files (.66600, .66601, etc.)
-        if (isMultipartFile(name)) {
-          // Skip non-first parts (.66601, .66602, etc.)
-          if (!name.endsWith(MULTIPART_SUFFIX_PATTERN)) {
-            return;
-          }
-
-          // This is the first part (.66600), process the whole set
-          String baseName = name.substring(0, name.length() - 6); // Remove ".66600"
-          if (processedMultiparts.contains(baseName)) {
-            return;
-          }
-          processedMultiparts.add(baseName);
-
-          FileEntry fe = createMultipartFileEntry(dir, baseName, f);
-          if (fe != null) {
-            dirEntry.files.add(fe);
-          }
-        } else {
-          // Regular single file
-          FileEntry fe = new FileEntry();
-          fe.name = name;
-          fe.size = f.length();
-          fe.fileParts.add(f);
-          fe.isMultipart = false;
-          dirEntry.files.add(fe);
+    if (f.isDirectory()) {
+      DirList child = new DirList();
+      child.name = name;
+      child.parent = dirEntry;
+      allDirs.add(child);
+      scanDirectory(f, child, allDirs);
+    } else {
+      // Check for multipart files (.66600, .66601, etc.)
+      if (isMultipartFile(name)) {
+        // Skip non-first parts (.66601, .66602, etc.)
+        if (!name.endsWith(MULTIPART_SUFFIX_PATTERN)) {
+          return;
         }
+
+        // This is the first part (.66600), process the whole set
+        String baseName = name.substring(0, name.length() - 6); // Remove ".66600"
+        if (processedMultiparts.contains(baseName)) {
+          return;
+        }
+        processedMultiparts.add(baseName);
+
+        FileEntry fe = createMultipartFileEntry(dir, baseName, f);
+        dirEntry.files.add(fe);
+      } else {
+        // Regular single file
+        FileEntry fe = new FileEntry();
+        fe.name = name;
+        fe.size = f.length();
+        fe.fileParts.add(f);
+        fe.isMultipart = false;
+        dirEntry.files.add(fe);
       }
+    }
   }
 
   // Visited set prevents infinite loops
   private java.util.Set<String> visitedDocIds;
 
-  private void scanDirectoryOptimized(DocumentFileCustom dir, DirList dirEntry, List<DirList> allDirs) throws IOException {
+  @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+  private void scanDirectoryOptimized(DocumentFileCustom dir, DirList dirEntry, List<DirList> allDirs)
+      throws IOException {
     if (visitedDocIds == null) {
       visitedDocIds = new java.util.HashSet<>();
     }
-    
+
     // We assume dir.documentFile is a TreeDocumentFile
     android.net.Uri currentUri = dir.documentFile.getUri();
     String dirDocId = android.provider.DocumentsContract.getDocumentId(currentUri);
-    
+
     if (visitedDocIds.contains(dirDocId)) {
-        return;
+      return;
     }
     visitedDocIds.add(dirDocId);
-    
-    android.content.Context context = com.jhonju.ps3netsrv.app.PS3NetSrvApp.getAppContext();
+
     android.content.ContentResolver resolver = context.getContentResolver();
-    
-    // Use the current URI as the tree base. 
+
+    // Use the current URI as the tree base.
     // DocumentFile.listFiles() uses its own mUri as the treeUri argument.
     android.net.Uri childrenUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(
-        currentUri, 
-        dirDocId
-    );
+        currentUri,
+        dirDocId);
 
     List<IFile> filesList = new ArrayList<>();
-    
+
     String[] projection = new String[] {
         android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID,
         android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME,
@@ -478,54 +487,57 @@ public class VirtualIsoFile implements IFile {
         android.provider.DocumentsContract.Document.COLUMN_SIZE
     };
 
-    try (android.database.Cursor c = resolver.query(childrenUri, projection, null, null, null)) {
+    android.database.Cursor c = resolver.query(childrenUri, projection, null, null, null);
+    try {
       if (c != null) {
         while (c.moveToNext()) {
           String docId = c.getString(0);
           String name = c.getString(1);
           String mimeType = c.getString(2);
           long size = c.getLong(3);
-          
-          if (docId == null || name == null) continue;
-           
+
+          if (docId == null || name == null)
+            continue;
+
           boolean isDir = android.provider.DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType);
-          
+
           // Construct child URI using the CURRENT URI as tree base.
           // This ensures we stay within the same tree structure.
           android.net.Uri docUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(currentUri, docId);
-          
+
           androidx.documentfile.provider.DocumentFile docFile;
-          // Use fromSingleUri even for directories because we are manually traversing them anyway.
-          // fromTreeUri seems to act weirdly with nested tree URIs, resetting them to root.
+          // Use fromSingleUri even for directories because we are manually traversing
+          // them anyway.
+          // fromTreeUri seems to act weirdly with nested tree URIs, resetting them to
+          // root.
           docFile = androidx.documentfile.provider.DocumentFile.fromSingleUri(context, docUri);
-          
+
           if (docFile != null) {
-              // Use lazy constructor to avoid I/O
-              filesList.add(new DocumentFileCustom(docFile, resolver, name, size, isDir));
+            // Use lazy constructor to avoid I/O
+            filesList.add(new DocumentFileCustom(docFile, resolver, context, name, size, isDir));
           }
         }
       }
     } catch (Exception e) {
       FileLogger.logError("Error in scanDirectoryOptimized", e);
+    } finally {
+      if (c != null) {
+        c.close();
+      }
     }
 
     // Sort files
-    Collections.sort(filesList, new Comparator<IFile>() {
-      @Override
-      public int compare(IFile o1, IFile o2) {
-        String n1 = o1.getName();
-        String n2 = o2.getName();
-        return (n1 == null) ? -1 : (n2 == null) ? 1 : n1.compareToIgnoreCase(n2);
-      }
+    Collections.sort(filesList, (o1, o2) -> {
+      String n1 = o1.getName();
+      String n2 = o2.getName();
+      return (n1 == null) ? -1 : (n2 == null) ? 1 : n1.compareToIgnoreCase(n2);
     });
 
-
-    
     // Track multipart base names
     List<String> processedMultiparts = new ArrayList<>();
 
     for (IFile f : filesList) {
-       processFile(f, f.getName(), dir, dirEntry, allDirs, processedMultiparts);
+      processFile(f, f.getName(), dir, dirEntry, allDirs, processedMultiparts);
     }
   }
 
@@ -565,7 +577,7 @@ public class VirtualIsoFile implements IFile {
 
     // Find and add subsequent parts
     for (int i = 1; i < 100; i++) {
-      String partName = baseName + String.format(".666%02d", i);
+      String partName = baseName + String.format(Locale.US, ".666%02d", i);
       IFile part = dir.findFile(partName);
       if (part == null || !part.exists() || !part.isFile()) {
         break;
@@ -575,15 +587,6 @@ public class VirtualIsoFile implements IFile {
     }
 
     return fe;
-  }
-
-  private int getDepth(DirList d) {
-    int depth = 0;
-    while (d != d.parent) {
-      depth++;
-      d = d.parent;
-    }
-    return depth;
   }
 
   private byte[] generatePathTable(List<DirList> dirs, boolean msb) {
@@ -610,10 +613,7 @@ public class VirtualIsoFile implements IFile {
         parentIdx = 1;
       bb.putShort(parentIdx);
 
-
-
-
-    if (d == rootList)
+      if (d == rootList)
         bb.put((byte) 0);
       else
         // Enforce US Locale
@@ -629,57 +629,49 @@ public class VirtualIsoFile implements IFile {
   }
 
   private byte[] generateDirectoryContent(DirList dir, List<DirList> allDirs, int filesStartLba) {
-    List<DirList> subDirs = new ArrayList<>();
-    for (DirList d : allDirs) {
-      if (d.parent == dir && d != dir && d != rootList)
-        subDirs.add(d);
-    }
-
     ByteBuffer bb = ByteBuffer.allocate(BinaryUtils.BUFFER_SIZE);
     bb.order(ByteOrder.LITTLE_ENDIAN);
 
-    writeDirRecord(bb, dir, ".", 0);
-    writeDirRecord(bb, dir.parent, "..", 0);
+    writeDirRecord(bb, dir, ".");
+    writeDirRecord(bb, dir.parent, "..");
 
     // ISO 9660: Strict Alphabetical Order (Files and Dirs mixed)
     // PS3 likely relies on this for binary search.
-    // Previous "Files First" attempt violated this for EBOOT.BIN (E) vs DOWNLOADED (D).
-    
-    List<Object> allEntries = new ArrayList<>();
-    allEntries.addAll(dir.files);
+    // Previous "Files First" attempt violated this for EBOOT.BIN (E) vs DOWNLOADED
+    // (D).
+
+    List<Object> allEntries = new ArrayList<>(dir.files);
     for (DirList d : allDirs) {
       if (d.parent == dir && d != dir && d != rootList)
         allEntries.add(d);
     }
 
-    Collections.sort(allEntries, new Comparator<Object>() {
-        @Override
-        public int compare(Object o1, Object o2) {
-            String n1 = (o1 instanceof FileEntry) ? ((FileEntry)o1).name : ((DirList)o1).name;
-            String n2 = (o2 instanceof FileEntry) ? ((FileEntry)o2).name : ((DirList)o2).name;
-            return n1.toUpperCase(java.util.Locale.US).compareTo(n2.toUpperCase(java.util.Locale.US));
-        }
+    Collections.sort(allEntries, (o1, o2) -> {
+      String n1 = (o1 instanceof FileEntry) ? ((FileEntry) o1).name : ((DirList) o1).name;
+      String n2 = (o2 instanceof FileEntry) ? ((FileEntry) o2).name : ((DirList) o2).name;
+      return n1.toUpperCase(Locale.US).compareTo(n2.toUpperCase(Locale.US));
     });
 
     for (Object o : allEntries) {
-        if (o instanceof FileEntry) {
-            FileEntry f = (FileEntry) o;
-            writeFileRecord(bb, f, filesStartLba);
-        } else {
-            DirList sub = (DirList) o;
-            writeDirRecord(bb, sub, sub.name, 0);
-        }
+      if (o instanceof FileEntry) {
+        FileEntry f = (FileEntry) o;
+        writeFileRecord(bb, f, filesStartLba);
+      } else {
+        DirList sub = (DirList) o;
+        writeDirRecord(bb, sub, sub.name);
+      }
     }
 
     // Pad the directory content to the nearest sector boundary (2048 bytes)
-    // makeps3iso sets directory size to a multiple of 2048. PS3 likely expects this.
+    // makeps3iso sets directory size to a multiple of 2048. PS3 likely expects
+    // this.
     int size = bb.position();
     int remainder = size % SECTOR_SIZE;
     if (remainder != 0) {
-        int pad = SECTOR_SIZE - remainder;
-        for (int i = 0; i < pad; i++) {
-            bb.put((byte) 0);
-        }
+      int pad = SECTOR_SIZE - remainder;
+      for (int i = 0; i < pad; i++) {
+        bb.put((byte) 0);
+      }
     }
 
     byte[] res = new byte[bb.position()];
@@ -687,61 +679,61 @@ public class VirtualIsoFile implements IFile {
     bb.get(res);
     return res;
   }
-  
+
   /**
    * Recursive helper to populate allFiles in DFS order and assign LBAs.
    */
-  private int scanFilesDFS(DirList dir, int currentSectorOffset, List<FileEntry> fileList, java.util.Map<DirList, List<DirList>> childrenMap) {
-      // Process Files in THIS directory first (alphabetical order)
-      List<FileEntry> sortedFiles = new ArrayList<>(dir.files);
-      Collections.sort(sortedFiles, new Comparator<FileEntry>() {
-        @Override
-        public int compare(FileEntry o1, FileEntry o2) {
-            return o1.name.toUpperCase(java.util.Locale.US).compareTo(o2.name.toUpperCase(java.util.Locale.US));
-        }
+  private int scanFilesDFS(DirList dir, int currentSectorOffset, List<FileEntry> fileList,
+      java.util.Map<DirList, List<DirList>> childrenMap) {
+    // Process Files in THIS directory first (alphabetical order)
+    List<FileEntry> sortedFiles = new ArrayList<>(dir.files);
+
+    Collections.sort(sortedFiles, (o1, o2) -> {
+      if (o1.name == null) return -1;
+      if (o2.name == null) return 1;
+      return o1.name.compareToIgnoreCase(o2.name);
+    });
+
+    for (FileEntry file : sortedFiles) {
+      file.rlba = currentSectorOffset;
+      int sectors = (int) ((file.size + SECTOR_SIZE - 1) / SECTOR_SIZE);
+
+      currentSectorOffset += sectors;
+
+      fileList.add(file);
+
+      if (file.size > MULTIEXTENT_PART_SIZE) {
+        file.extentParts = (int) ((file.size + MULTIEXTENT_PART_SIZE - 1) / MULTIEXTENT_PART_SIZE);
+      }
+    }
+
+    // Then recurse into subdirectories (alphabetical order)
+    List<DirList> children = childrenMap.get(dir);
+    if (children != null) {
+      List<DirList> sortedChildren = new ArrayList<>(children);
+      Collections.sort(sortedChildren, (o1, o2) -> {
+        if (o1.name == null) return -1;
+        if (o2.name == null) return 1;
+        return o1.name.compareToIgnoreCase(o2.name);
       });
-      
-      for (FileEntry file : sortedFiles) {
-          file.rlba = currentSectorOffset;
-          int sectors = (int) ((file.size + SECTOR_SIZE - 1) / SECTOR_SIZE);
 
-          currentSectorOffset += sectors;
+      for (DirList child : sortedChildren) {
+        currentSectorOffset = scanFilesDFS(child, currentSectorOffset, fileList, childrenMap);
+      }
+    }
 
-          fileList.add(file);
-          
-          if (file.size > MULTIEXTENT_PART_SIZE) {
-            file.extentParts = (int) ((file.size + MULTIEXTENT_PART_SIZE - 1) / MULTIEXTENT_PART_SIZE);
-          }
-      }
-      
-      // Then recurse into subdirectories (alphabetical order)
-      List<DirList> children = childrenMap.get(dir);
-      if (children != null) {
-          List<DirList> sortedChildren = new ArrayList<>(children);
-          Collections.sort(sortedChildren, new Comparator<DirList>() {
-            @Override
-            public int compare(DirList o1, DirList o2) {
-                return o1.name.toUpperCase(java.util.Locale.US).compareTo(o2.name.toUpperCase(java.util.Locale.US));
-            }
-          });
-          
-          for (DirList child : sortedChildren) {
-              currentSectorOffset = scanFilesDFS(child, currentSectorOffset, fileList, childrenMap);
-          }
-      }
-      
-      return currentSectorOffset;
+    return currentSectorOffset;
   }
 
-  private void writeDirRecord(ByteBuffer bb, DirList target, String name, int flags) {
+  private void writeDirRecord(ByteBuffer bb, DirList target, String name) {
     // ISO 9660: '.' and '..' are 1 byte (0x00 and 0x01).
     int nameLen = (name.equals(".") || name.equals("..")) ? 1 : name.length();
-    
+
     // makeps3iso compatibility: +6 bytes overhead
     int padOverhead = 6;
     int recordLen = 33 + nameLen + padOverhead;
     if (recordLen % 2 != 0) {
-        recordLen++;
+      recordLen++;
     }
 
     int pos = bb.position();
@@ -782,8 +774,8 @@ public class VirtualIsoFile implements IFile {
     // Fill remaining bytes with 0 padding
     int bytesWritten = 33 + nameLen;
     while (bytesWritten < recordLen) {
-        bb.put((byte) 0);
-        bytesWritten++;
+      bb.put((byte) 0);
+      bytesWritten++;
     }
   }
 
@@ -799,13 +791,13 @@ public class VirtualIsoFile implements IFile {
     // PS3 compatibility: makeps3iso logic.
     int nameLen = name.length();
     int nameLenWithSuffix = nameLen + 2; // +2 for ";1"
-    
+
     // makeps3iso compatibility: +6 bytes overhead
     int padOverhead = 6;
     int recordLen = 33 + nameLenWithSuffix + padOverhead;
-    
+
     if (recordLen % 2 != 0) {
-        recordLen++;
+      recordLen++;
     }
 
     int pos = bb.position();
@@ -820,9 +812,7 @@ public class VirtualIsoFile implements IFile {
     bb.put((byte) 0);
 
     int lba = filesStartLba + f.rlba;
-    
 
-    
     putBothEndianInt(bb, lba);
 
     // Use int cast for size (works for files <= 4GB)
@@ -836,16 +826,16 @@ public class VirtualIsoFile implements IFile {
     putBothEndianShort(bb, (short) 1);
 
     // Length of File Identifier includes suffix
-    bb.put((byte) nameLenWithSuffix); 
+    bb.put((byte) nameLenWithSuffix);
     bb.put(name.toUpperCase().getBytes(StandardCharsets.US_ASCII));
     bb.put((byte) ';');
     bb.put((byte) '1');
-    
+
     // Fill remaining bytes with 0 padding
     int bytesWritten = 33 + nameLenWithSuffix;
     while (bytesWritten < recordLen) {
-        bb.put((byte) 0);
-        bytesWritten++;
+      bb.put((byte) 0);
+      bytesWritten++;
     }
   }
 
@@ -856,61 +846,61 @@ public class VirtualIsoFile implements IFile {
   private void writeMultiExtentFileRecords(ByteBuffer bb, FileEntry f, int filesStartLba) {
     String name = f.name;
     int nameLenWithSuffix = name.length() + 2;
-    
+
     // makeps3iso logic (+6 byte overhead)
     int padOverhead = 6;
     int recordLen = 33 + nameLenWithSuffix + padOverhead;
-    
+
     if (recordLen % 2 != 0) {
-        recordLen++;
+      recordLen++;
     }
 
     int lba = filesStartLba + f.rlba;
     long remainingSize = f.size;
 
     for (int part = 0; part < f.extentParts; part++) {
-        long currentSize = Math.min(remainingSize, MULTIEXTENT_PART_SIZE);
-        
-        // Alignment check (same as single record)
-        int pos = bb.position();
-        // Strict sector boundary check
-        if ((pos % SECTOR_SIZE) + recordLen > SECTOR_SIZE) {
-            int pad = (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE) - pos;
-            for (int i = 0; i < pad; i++)
-                bb.put((byte) 0);
-        }
-        
-        bb.put((byte) recordLen);
+      long currentSize = Math.min(remainingSize, MULTIEXTENT_PART_SIZE);
+
+      // Alignment check (same as single record)
+      int pos = bb.position();
+      // Strict sector boundary check
+      if ((pos % SECTOR_SIZE) + recordLen > SECTOR_SIZE) {
+        int pad = (((pos / SECTOR_SIZE) + 1) * SECTOR_SIZE) - pos;
+        for (int i = 0; i < pad; i++)
+          bb.put((byte) 0);
+      }
+
+      bb.put((byte) recordLen);
+      bb.put((byte) 0);
+
+      putBothEndianInt(bb, lba);
+      putBothEndianInt(bb, (int) currentSize);
+      putDate(bb);
+
+      byte flags = ISO_FILE;
+      if (part < f.extentParts - 1) {
+        flags |= ISO_MULTIEXTENT;
+      }
+
+      bb.put(flags);
+      bb.put((byte) 0);
+      bb.put((byte) 0);
+      putBothEndianShort(bb, (short) 1);
+
+      bb.put((byte) nameLenWithSuffix);
+      bb.put(name.toUpperCase().getBytes(StandardCharsets.US_ASCII));
+      bb.put((byte) ';');
+      bb.put((byte) '1');
+
+      // Fill remaining bytes with 0 padding
+      int bytesWritten = 33 + nameLenWithSuffix;
+      while (bytesWritten < recordLen) {
         bb.put((byte) 0);
-        
-        putBothEndianInt(bb, lba);
-        putBothEndianInt(bb, (int) currentSize);
-        putDate(bb);
-        
-        byte flags = ISO_FILE;
-        if (part < f.extentParts - 1) {
-            flags |= ISO_MULTIEXTENT;
-        }
-        
-        bb.put(flags);
-        bb.put((byte) 0);
-        bb.put((byte) 0);
-        putBothEndianShort(bb, (short) 1);
-        
-        bb.put((byte) nameLenWithSuffix);
-        bb.put(name.toUpperCase().getBytes(StandardCharsets.US_ASCII));
-        bb.put((byte) ';');
-        bb.put((byte) '1');
-        
-        // Fill remaining bytes with 0 padding
-        int bytesWritten = 33 + nameLenWithSuffix;
-        while (bytesWritten < recordLen) {
-            bb.put((byte) 0);
-            bytesWritten++;
-        }
-            
-        lba += (int) ((currentSize + SECTOR_SIZE - 1) / SECTOR_SIZE);
-        remainingSize -= currentSize;
+        bytesWritten++;
+      }
+
+      lba += (int) ((currentSize + SECTOR_SIZE - 1) / SECTOR_SIZE);
+      remainingSize -= currentSize;
     }
   }
 
@@ -942,9 +932,8 @@ public class VirtualIsoFile implements IFile {
     bb.put((byte) 0);
   }
 
-  private void writePVD(ByteBuffer bb, int offset, int pathTableSize, int ptL, int ptM, DirList root,
-      int volumeSizeSectors) {
-    bb.position(offset);
+  private void writePVD(ByteBuffer bb, int pathTableSize, int ptL, int ptM, DirList root, int volumeSizeSectors) {
+    bb.position(32768);
     bb.put((byte) 1);
     bb.put("CD001".getBytes(StandardCharsets.US_ASCII));
     bb.put((byte) 1);
@@ -978,13 +967,13 @@ public class VirtualIsoFile implements IFile {
 
     ByteBuffer temp = ByteBuffer.allocate(256);
     temp.order(ByteOrder.LITTLE_ENDIAN);
-    writeDirRecord(temp, root, ".", 0);
+    writeDirRecord(temp, root, ".");
     byte[] rootRecord = new byte[temp.position()];
     temp.position(0);
     temp.get(rootRecord);
     bb.put(rootRecord);
 
-    pad(bb, 2048 - bb.position() + offset);
+    pad(bb, 2048 - bb.position() + 32768);
   }
 
   private void pad(ByteBuffer bb, int count) {
@@ -1048,7 +1037,7 @@ public class VirtualIsoFile implements IFile {
   }
 
   @Override
-  public IFile[] listFiles() throws IOException {
+  public IFile[] listFiles() {
     return null;
   }
 
@@ -1068,7 +1057,7 @@ public class VirtualIsoFile implements IFile {
   }
 
   @Override
-  public IFile findFile(String fileName) throws IOException {
+  public IFile findFile(String fileName) {
     return null;
   }
 

@@ -45,7 +45,7 @@ public class SettingsService {
 
   public static Set<String> getIps() {
     if (cachedIps == null) {
-      cachedIps = spIps.getStringSet(settings, new HashSet<String>());
+      cachedIps = spIps.getStringSet(settings, new HashSet<>());
     }
     return cachedIps;
   }

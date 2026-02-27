@@ -3,6 +3,8 @@ package com.jhonju.ps3netsrv.server.io;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.DKEY_EXT;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.DOT_STR;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.ISO_EXTENSION;
+import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.MAX_ISO_PARTS;
+import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.MULTIPART_ISO_SUFFIX;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.PS3ISO_FOLDER_NAME;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.READ_ONLY_MODE;
 import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.REDKEY_FOLDER_NAME;
@@ -47,20 +49,32 @@ public class DocumentFileCustom implements IFile {
   private IFile[] cachedListFiles = null;
   private String[] cachedList = null;
 
+  // Multipart ISO fields
+  private boolean isMultipart = false;
+  private FileChannel[] partChannels;
+  private ParcelFileDescriptor[] partPfds;
+  private FileInputStream[] partStreams;
+  private int partCount = 0;
+  private long partSize = 0;
+  private long totalSize = 0;
+
   private final android.content.Context androidContext;
 
-  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, android.content.Context context) throws IOException {
+  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, android.content.Context context)
+      throws IOException {
     this.documentFile = documentFile;
     this.contentResolver = contentResolver;
     this.androidContext = context;
     init();
   }
 
-  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, android.content.Context context, String name, long size, boolean isDir) {
+  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, android.content.Context context,
+      String name, long size, boolean isDir) {
     this(documentFile, contentResolver, context, name, size, isDir, false);
   }
 
-  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, android.content.Context context, String name, long size,
+  public DocumentFileCustom(DocumentFile documentFile, ContentResolver contentResolver, android.content.Context context,
+      String name, long size,
       boolean isDir, boolean initNow) {
     this.documentFile = documentFile;
     this.contentResolver = contentResolver;
@@ -92,35 +106,42 @@ public class DocumentFileCustom implements IFile {
       this.fis = new FileInputStream(pfd.getFileDescriptor());
       this.fileChannel = fis.getChannel();
 
-      boolean isInPS3ISOFolder = documentFile.getParentFile() != null
-          && documentFile.getParentFile().getName() != null
-          && documentFile.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
+      // Check for multipart ISO (.iso.0)
+      String fileName = getName();
+      if (fileName != null && fileName.toLowerCase().endsWith(MULTIPART_ISO_SUFFIX)) {
+        initMultipart();
+        // Multipart ISOs skip encryption
+      } else {
+        boolean isInPS3ISOFolder = documentFile.getParentFile() != null
+            && documentFile.getParentFile().getName() != null
+            && documentFile.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
 
-      // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
-      int sec0Sec1Length = SECTOR_SIZE * 2;
-      if (isInPS3ISOFolder && documentFile.length() >= sec0Sec1Length) {
-        sec0sec1 = new byte[sec0Sec1Length];
-        fileChannel.position(0);
-        if (fileChannel.read(ByteBuffer.wrap(sec0sec1)) != sec0Sec1Length) {
-          sec0sec1 = null;
+        // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
+        int sec0Sec1Length = SECTOR_SIZE * 2;
+        if (isInPS3ISOFolder && documentFile.length() >= sec0Sec1Length) {
+          sec0sec1 = new byte[sec0Sec1Length];
+          fileChannel.position(0);
+          if (fileChannel.read(ByteBuffer.wrap(sec0sec1)) != sec0Sec1Length) {
+            sec0sec1 = null;
+          }
         }
-      }
 
-      // First try to get Redump key from external .dkey file
-      encryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
-      if (encryptionKey != null) {
-        detectedEncryptionType = EEncryptionType.REDUMP;
-      } else if (BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
-        // If no Redump key, check for 3k3y watermark and extract key if found
-        encryptionKey = BinaryUtils.convertD1ToKey(sec0sec1);
+        // First try to get Redump key from external .dkey file
+        encryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
         if (encryptionKey != null) {
-          detectedEncryptionType = EEncryptionType._3K3Y;
+          detectedEncryptionType = EEncryptionType.REDUMP;
+        } else if (BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
+          // If no Redump key, check for 3k3y watermark and extract key if found
+          encryptionKey = BinaryUtils.convertD1ToKey(sec0sec1);
+          if (encryptionKey != null) {
+            detectedEncryptionType = EEncryptionType._3K3Y;
+          }
         }
-      }
 
-      // Parse region info from sec0sec1 if we have encryption
-      if (encryptionKey != null && sec0sec1 != null) {
-        regions = BinaryUtils.getRegionInfos(sec0sec1);
+        // Parse region info from sec0sec1 if we have encryption
+        if (encryptionKey != null && sec0sec1 != null) {
+          regions = BinaryUtils.getRegionInfos(sec0sec1);
+        }
       }
     }
 
@@ -138,6 +159,55 @@ public class DocumentFileCustom implements IFile {
     if (sec0sec1 != null) {
       Arrays.fill(sec0sec1, (byte) 0);
     }
+  }
+
+  private void initMultipart() {
+    isMultipart = true;
+    partChannels = new FileChannel[MAX_ISO_PARTS];
+    partPfds = new ParcelFileDescriptor[MAX_ISO_PARTS];
+    partStreams = new FileInputStream[MAX_ISO_PARTS];
+
+    // Part 0 is the already-opened file
+    partChannels[0] = fileChannel;
+    partPfds[0] = pfd;
+    partStreams[0] = fis;
+    partSize = documentFile.length();
+    partCount = 1;
+    totalSize = partSize;
+
+    // Find sibling parts (.iso.1, .iso.2, ...) in the parent directory
+    DocumentFile parent = documentFile.getParentFile();
+    if (parent == null)
+      return;
+
+    String fileName = getName();
+    // Base name without the trailing "0" -> e.g. "game.iso."
+    String baseName = fileName.substring(0, fileName.length() - 1);
+
+    for (int i = 1; i < MAX_ISO_PARTS; i++) {
+      String partName = baseName + i;
+      DocumentFile partDoc = parent.findFile(partName);
+      if (partDoc == null || !partDoc.exists() || !partDoc.isFile())
+        break;
+
+      try {
+        ParcelFileDescriptor partPfd = contentResolver.openFileDescriptor(partDoc.getUri(), READ_ONLY_MODE);
+        FileInputStream partFis = new FileInputStream(partPfd.getFileDescriptor());
+        FileChannel partChannel = partFis.getChannel();
+
+        partPfds[i] = partPfd;
+        partStreams[i] = partFis;
+        partChannels[i] = partChannel;
+        totalSize += partDoc.length();
+        partCount++;
+      } catch (IOException e) {
+        FileLogger.logError("Error opening multipart ISO part: " + partName, e);
+        break;
+      }
+    }
+
+    // Update cached size to reflect total multipart size
+    cachedSize = totalSize;
   }
 
   private byte[] getRedumpKey(DocumentFile parent, String fileName) throws IOException {
@@ -202,6 +272,9 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public long length() {
+    if (isMultipart) {
+      return totalSize;
+    }
     if (cachedSize != null)
       return cachedSize;
     return documentFile.length();
@@ -264,6 +337,11 @@ public class DocumentFileCustom implements IFile {
   public int read(byte[] buffer, int offset, int length, long position) throws IOException {
     if (!isInitialized)
       init();
+
+    if (isMultipart) {
+      return readMultipart(buffer, offset, length, position);
+    }
+
     fileChannel.position(position);
     int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer, offset, length));
     if (encryptionType != EEncryptionType.NONE) {
@@ -280,33 +358,86 @@ public class DocumentFileCustom implements IFile {
     return bytesRead;
   }
 
+  private int readMultipart(byte[] buffer, int offset, int length, long position) throws IOException {
+    int partIndex = (int) (position / partSize);
+    long posInPart = position % partSize;
+
+    if (partIndex >= partCount) {
+      return -1;
+    }
+
+    partChannels[partIndex].position(posInPart);
+    int bytesRead = partChannels[partIndex].read(ByteBuffer.wrap(buffer, offset, length));
+
+    // Check if read spans into the next part
+    if (bytesRead < length && (partIndex + 1) < partCount) {
+      int remaining = length - bytesRead;
+      int nextIndex = partIndex + 1;
+      partChannels[nextIndex].position(0);
+      int bytesRead2 = partChannels[nextIndex].read(ByteBuffer.wrap(buffer, offset + bytesRead, remaining));
+      if (bytesRead2 > 0) {
+        bytesRead += bytesRead2;
+      }
+    }
+
+    return bytesRead;
+  }
+
   @Override
   public void close() throws IOException {
-    try {
-      if (fileChannel != null)
-        fileChannel.close();
-    } catch (Exception e) {
-      FileLogger.logError("Error closing fileChannel", e);
-    } finally {
+    if (isMultipart) {
+      // Close all multipart handles (part 0 is the main file's channel/pfd/fis)
+      for (int i = 0; i < partCount; i++) {
+        try {
+          if (partChannels[i] != null)
+            partChannels[i].close();
+        } catch (Exception e) {
+          FileLogger.logError("Error closing part channel " + i, e);
+        }
+        try {
+          if (partStreams[i] != null)
+            partStreams[i].close();
+        } catch (Exception e) {
+          FileLogger.logError("Error closing part stream " + i, e);
+        }
+        try {
+          if (partPfds[i] != null)
+            partPfds[i].close();
+        } catch (Exception e) {
+          FileLogger.logError("Error closing part pfd " + i, e);
+        }
+      }
+      // Nullify the main references since they were closed above as part 0
       fileChannel = null;
-    }
-
-    try {
-      if (fis != null)
-        fis.close();
-    } catch (Exception e) {
-      FileLogger.logError("Error closing fis", e);
-    } finally {
       fis = null;
-    }
-
-    try {
-      if (pfd != null)
-        pfd.close();
-    } catch (Exception e) {
-      FileLogger.logError("Error closing pfd", e);
-    } finally {
       pfd = null;
+    } else {
+      try {
+        if (fileChannel != null)
+          fileChannel.close();
+      } catch (Exception e) {
+        FileLogger.logError("Error closing fileChannel", e);
+      } finally {
+        fileChannel = null;
+      }
+
+      try {
+        if (fis != null)
+          fis.close();
+      } catch (Exception e) {
+        FileLogger.logError("Error closing fis", e);
+      } finally {
+        fis = null;
+      }
+
+      try {
+        if (pfd != null)
+          pfd.close();
+      } catch (Exception e) {
+        FileLogger.logError("Error closing pfd", e);
+      } finally {
+        pfd = null;
+      }
     }
   }
 

@@ -25,29 +25,31 @@ public class BinaryUtils {
   public static final String PS3ISO_FOLDER_NAME = "PS3ISO";
   public static final String REDKEY_FOLDER_NAME = "REDKEY";
   public static final String ISO_EXTENSION = ".iso";
+  public static final String MULTIPART_ISO_SUFFIX = ".iso.0";
+  public static final int MAX_ISO_PARTS = 64;
   public static final String READ_ONLY_MODE = "r";
   public static final int _3K3Y_KEY_OFFSET = 0xF80;
   public static final int _3K3Y_WATERMARK_OFFSET = 0xF70;
   public static final int ENCRYPTION_KEY_SIZE = 16;
   public static final int BUFFER_SIZE = 4 * 1048576; // 4MB
-  
+
   // 3k3y watermarks: "Encrypted 3K BLD" and "Dncrypted 3K BLD"
   public static final byte[] _3K3Y_ENCRYPTED_WATERMARK = {
-      0x45, 0x6E, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65, 
+      0x45, 0x6E, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65,
       0x64, 0x20, 0x33, 0x4B, 0x20, 0x42, 0x4C, 0x44
   };
   public static final byte[] _3K3Y_DECRYPTED_WATERMARK = {
-      0x44, 0x6E, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65, 
+      0x44, 0x6E, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65,
       0x64, 0x20, 0x33, 0x4B, 0x20, 0x42, 0x4C, 0x44
   };
-  
+
   // Keys for D1 to decryption key conversion
   public static final byte[] _3K3Y_D1_KEY = {
-      0x38, 0x0B, (byte) 0xCF, 0x0B, 0x53, 0x45, 0x5B, 0x3C, 
+      0x38, 0x0B, (byte) 0xCF, 0x0B, 0x53, 0x45, 0x5B, 0x3C,
       0x78, 0x17, (byte) 0xAB, 0x4F, (byte) 0xA3, (byte) 0xBA, (byte) 0x90, (byte) 0xED
   };
   public static final byte[] _3K3Y_D1_IV = {
-      0x69, 0x47, 0x47, 0x72, (byte) 0xAF, 0x6F, (byte) 0xDA, (byte) 0xB3, 
+      0x69, 0x47, 0x47, 0x72, (byte) 0xAF, 0x6F, (byte) 0xDA, (byte) 0xB3,
       0x42, 0x74, 0x3A, (byte) 0xEF, (byte) 0xAA, 0x18, 0x62, (byte) 0x87
   };
 
@@ -88,7 +90,8 @@ public class BinaryUtils {
     while (bytesRead < size) {
       int result = in.read(data, bytesRead, size - bytesRead);
       if (result == -1) {
-        if (bytesRead == 0) return null;
+        if (bytesRead == 0)
+          return null;
         break;
       }
       bytesRead += result;
@@ -112,7 +115,8 @@ public class BinaryUtils {
     return regionInfos;
   }
 
-  public static void decryptData(SecretKeySpec key, byte[] iv, byte[] data, int dataOffset, int sectorCount, long startLBA)
+  public static void decryptData(SecretKeySpec key, byte[] iv, byte[] data, int dataOffset, int sectorCount,
+      long startLBA)
       throws IOException {
     try {
       Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
@@ -154,7 +158,8 @@ public class BinaryUtils {
   }
 
   /**
-   * Check if the sec0sec1 data contains the 3k3y encrypted watermark at offset 0xF70.
+   * Check if the sec0sec1 data contains the 3k3y encrypted watermark at offset
+   * 0xF70.
    * This watermark is "Encrypted 3K BLD".
    */
   public static boolean has3K3YEncryptedWatermark(byte[] sec0sec1) {
@@ -170,7 +175,8 @@ public class BinaryUtils {
   }
 
   /**
-   * Check if the sec0sec1 data contains the 3k3y decrypted watermark at offset 0xF70.
+   * Check if the sec0sec1 data contains the 3k3y decrypted watermark at offset
+   * 0xF70.
    * This watermark is "Dncrypted 3K BLD" (already decrypted, no key needed).
    */
   public static boolean has3K3YDecryptedWatermark(byte[] sec0sec1) {
@@ -186,18 +192,20 @@ public class BinaryUtils {
   }
 
   /**
-   * Extract the D1 key from sec0sec1 data and convert it to the actual decryption key.
-   * The D1 value at offset 0xF80 needs to be encrypted with a specific key/IV to get the real key.
+   * Extract the D1 key from sec0sec1 data and convert it to the actual decryption
+   * key.
+   * The D1 value at offset 0xF80 needs to be encrypted with a specific key/IV to
+   * get the real key.
    */
   public static byte[] convertD1ToKey(byte[] sec0sec1) throws IOException {
     if (sec0sec1 == null || sec0sec1.length < _3K3Y_KEY_OFFSET + ENCRYPTION_KEY_SIZE) {
       return null;
     }
-    
+
     // Extract D1 from offset 0xF80
     byte[] d1 = new byte[ENCRYPTION_KEY_SIZE];
     System.arraycopy(sec0sec1, _3K3Y_KEY_OFFSET, d1, 0, ENCRYPTION_KEY_SIZE);
-    
+
     // Convert D1 to decryption key using AES encryption with the magic key/IV
     try {
       Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");

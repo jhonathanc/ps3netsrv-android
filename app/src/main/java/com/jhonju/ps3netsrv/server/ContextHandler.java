@@ -67,7 +67,9 @@ public class ContextHandler extends Thread {
 
   @Override
   public void run() {
-    com.jhonju.ps3netsrv.server.Context ctx = new com.jhonju.ps3netsrv.server.Context(socket, folderPaths, contentResolver, androidContext);
+    incrementSimultaneousConnections();
+    com.jhonju.ps3netsrv.server.Context ctx = new com.jhonju.ps3netsrv.server.Context(socket, folderPaths,
+        contentResolver, androidContext);
     try {
       while (ctx.isSocketConnected()) {
         try {
@@ -89,12 +91,14 @@ public class ContextHandler extends Thread {
     }
   }
 
-  private void handleContext(com.jhonju.ps3netsrv.server.Context ctx, ByteBuffer buffer) throws PS3NetSrvException, IOException {
+  private void handleContext(com.jhonju.ps3netsrv.server.Context ctx, ByteBuffer buffer)
+      throws PS3NetSrvException, IOException {
     final ICommand command;
     ENetIsoCommand opCode = ENetIsoCommand.valueOf(buffer.getShort(IDX_OP_CODE));
 
     if (opCode == null) {
-      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_invalid_opcode, buffer.getShort(IDX_OP_CODE)));
+      throw new PS3NetSrvException(
+          ctx.getAndroidContext().getString(R.string.error_invalid_opcode, buffer.getShort(IDX_OP_CODE)));
     }
     FileLogger.logCommand(opCode.name(), buffer.array());
     switch (opCode) {
@@ -142,7 +146,8 @@ public class ContextHandler extends Thread {
         command = new ReadDirEntryCommandV2(ctx);
         break;
       default:
-        throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_opcode_not_implemented, opCode.name()));
+        throw new PS3NetSrvException(
+            ctx.getAndroidContext().getString(R.string.error_opcode_not_implemented, opCode.name()));
     }
     command.executeTask();
   }

@@ -383,7 +383,7 @@ public class VirtualIsoFile implements IFile {
    */
   private void scanDirectory(IFile dir, DirList dirEntry, List<DirList> allDirs) throws IOException {
     // Optimization for DocumentFileCustom to avoid slow listFiles()
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && dir instanceof DocumentFileCustom) {
       scanDirectoryOptimized((DocumentFileCustom) dir, dirEntry, allDirs);
       return;
     }

@@ -66,14 +66,9 @@ public class MainActivity extends AppCompatActivity {
         if (cm == null)
             return;
 
-        // Use a dedicated background thread for network callbacks to avoid blocking the
-        // main thread
-        android.os.HandlerThread networkThread = new android.os.HandlerThread("NetworkMonitor");
-        networkThread.start();
-        android.os.Handler networkHandler = new android.os.Handler(networkThread.getLooper());
-
         NetworkRequest request = new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
                 .addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build();
+        // Available since API 21; callbacks run on ConnectivityManager's internal Handler.
         cm.registerNetworkCallback(request, new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(Network network) {
@@ -89,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception ignored) {
                 }
             }
-        }, networkHandler);
+        });
     }
 
     @Override

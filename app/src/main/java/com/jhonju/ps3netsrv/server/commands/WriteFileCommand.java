@@ -26,28 +26,35 @@ public class WriteFileCommand extends FileCommand {
       throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_write_file_readonly));
     }
 
+    if (numBytes < 0 || numBytes > BinaryUtils.BUFFER_SIZE) {
+      send(ERROR_CODE_BYTEARRAY);
+      // The payload has not been consumed; do not parse it as another command.
+      throw new IOException(
+          ctx.getAndroidContext().getString(R.string.error_write_file_size, numBytes, BinaryUtils.BUFFER_SIZE));
+    }
+
     // Read filename and resolve files
     // Note: WriteFile usually expects the file to exist (created by CreateFile)
     // So we use getFile() without parent resolution.
     Set<IFile> files = getFile();
 
-    if (numBytes > BinaryUtils.BUFFER_SIZE) {
-      send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(
-          ctx.getAndroidContext().getString(R.string.error_write_file_size, numBytes, BinaryUtils.BUFFER_SIZE));
-    }
+    try {
+      ByteBuffer buffer = BinaryUtils.readCommandData(ctx.getInputStream(), numBytes);
+      if (buffer == null) {
+        send(ERROR_CODE_BYTEARRAY);
+        throw new java.io.EOFException(ctx.getAndroidContext().getString(R.string.error_write_file_null));
+      }
 
-    ByteBuffer buffer = BinaryUtils.readCommandData(ctx.getInputStream(), numBytes);
-    if (buffer == null) {
-      send(ERROR_CODE_BYTEARRAY);
-      throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_write_file_null));
-    }
+      byte[] content = buffer.array();
+      for (IFile file : files) {
+        file.write(content);
+      }
 
-    byte[] content = buffer.array();
-    for (IFile file : files) {
-      file.write(content);
+      send(BinaryUtils.intToBytesBE(content.length));
+    } finally {
+      for (IFile file : files) {
+        Context.closeFile(file);
+      }
     }
-
-    send(BinaryUtils.intToBytesBE(content.length));
   }
 }

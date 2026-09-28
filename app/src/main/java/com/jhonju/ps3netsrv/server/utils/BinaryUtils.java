@@ -3,6 +3,7 @@ package com.jhonju.ps3netsrv.server.utils;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.io.PS3RegionInfo;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -85,6 +86,9 @@ public class BinaryUtils {
   }
 
   public static ByteBuffer readCommandData(InputStream in, int size) throws IOException {
+    if (size < 0 || size > BUFFER_SIZE) {
+      throw new IOException("Invalid command payload size: " + size);
+    }
     byte[] data = new byte[size];
     int bytesRead = 0;
     while (bytesRead < size) {
@@ -92,7 +96,10 @@ public class BinaryUtils {
       if (result == -1) {
         if (bytesRead == 0)
           return null;
-        break;
+        throw new EOFException("Incomplete command payload");
+      }
+      if (result == 0) {
+        throw new IOException("No progress reading command payload");
       }
       bytesRead += result;
     }

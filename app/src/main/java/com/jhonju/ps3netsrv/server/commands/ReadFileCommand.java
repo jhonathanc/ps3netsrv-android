@@ -22,25 +22,27 @@ public class ReadFileCommand extends AbstractCommand {
 
   @Override
   public void executeTask() throws IOException, PS3NetSrvException {
+    if (numBytes < 0 || numBytes > BinaryUtils.BUFFER_SIZE || offset < 0) {
+      send(ERROR_CODE_BYTEARRAY);
+      return;
+    }
+    final int bytesRead;
     try {
-      int bytesRead;
       java.util.Set<IFile> files = ctx.getFile();
       if (files != null && !files.isEmpty()) {
         IFile file = files.iterator().next();
-        bytesRead = file.read(ctx.getOutputBuffer(), 0, numBytes, offset);
+        bytesRead = numBytes == 0 ? 0 : Math.max(0, file.read(ctx.getOutputBuffer(), 0, numBytes, offset));
       } else {
         throw new IOException(ctx.getAndroidContext().getString(R.string.error_no_file_open));
       }
-      if (bytesRead <= EMPTY_SIZE) {
-        throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_read_file_eof));
-      }
-      OutputStream os = ctx.getOutputStream();
-      os.write(BinaryUtils.intToBytesBE(bytesRead));
-      os.write(ctx.getOutputBuffer(), 0, bytesRead);
-      os.flush();
     } catch (IOException e) {
       send(ERROR_CODE_BYTEARRAY);
       throw new PS3NetSrvException(ctx.getAndroidContext().getString(R.string.error_read_file_generic));
     }
+    // Socket failures must reach ContextHandler so the connection is closed.
+    OutputStream os = ctx.getOutputStream();
+    os.write(BinaryUtils.intToBytesBE(bytesRead));
+    os.write(ctx.getOutputBuffer(), 0, bytesRead);
+    os.flush();
   }
 }

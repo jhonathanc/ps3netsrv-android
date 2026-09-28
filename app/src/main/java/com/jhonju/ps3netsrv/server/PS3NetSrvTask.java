@@ -110,13 +110,13 @@ public class PS3NetSrvTask implements Runnable {
           }
 
           FileLogger.logInfo("Client connected from IP: " + hostAddress);
-          if (maxConnections > 0 && ContextHandler.getSimultaneousConnections() >= maxConnections) {
+          ContextHandler handler = new ContextHandler(clientSocket, folderPaths, contentResolver,
+              exceptionHandler, androidContext);
+          if (!handler.startIfCapacity(maxConnections)) {
             FileLogger.logWarning("Connection limit reached (" + maxConnections + "). Rejecting " + hostAddress);
             closeSocket(clientSocket);
             continue;
           }
-          new ContextHandler(clientSocket, folderPaths, contentResolver,
-                  exceptionHandler, androidContext).start();
         } catch (IOException e) {
           if (isRunning) {
             FileLogger.logError("Error accepting client connection", e);

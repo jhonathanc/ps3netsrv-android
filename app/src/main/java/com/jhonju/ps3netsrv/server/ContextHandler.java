@@ -41,13 +41,49 @@ public class ContextHandler extends Thread {
   private final ContentResolver contentResolver;
   private final android.content.Context androidContext;
   private static final AtomicInteger simultaneousConnections = new AtomicInteger(0);
+  private boolean connectionReserved;
 
-  public synchronized void incrementSimultaneousConnections() {
-    simultaneousConnections.incrementAndGet();
+  @Override
+  public synchronized void start() {
+    startIfCapacity(0);
   }
 
-  public synchronized void decrementSimultaneousConnections() {
-    simultaneousConnections.decrementAndGet();
+  /** Reserve before starting the worker; zero keeps the unlimited setting. */
+  public synchronized boolean startIfCapacity(int limit) {
+    if (getState() != State.NEW) {
+      throw new IllegalThreadStateException("Client handler already started");
+    }
+    int current;
+    do {
+      current = simultaneousConnections.get();
+      if (limit > 0 && current >= limit) {
+        return false;
+      }
+    } while (!simultaneousConnections.compareAndSet(current, current + 1));
+    connectionReserved = true;
+    try {
+      super.start();
+      return true;
+    } catch (RuntimeException | Error e) {
+      closeSocket();
+      releaseConnection();
+      throw e;
+    }
+  }
+
+  private synchronized void releaseConnection() {
+    if (connectionReserved) {
+      connectionReserved = false;
+      simultaneousConnections.decrementAndGet();
+    }
+  }
+
+  private void closeSocket() {
+    try {
+      socket.close();
+    } catch (IOException e) {
+      FileLogger.logWarning("Error closing client socket", e);
+    }
   }
 
   public static int getSimultaneousConnections() {
@@ -67,10 +103,9 @@ public class ContextHandler extends Thread {
 
   @Override
   public void run() {
-    incrementSimultaneousConnections();
-    com.jhonju.ps3netsrv.server.Context ctx = new com.jhonju.ps3netsrv.server.Context(socket, folderPaths,
-        contentResolver, androidContext);
+    com.jhonju.ps3netsrv.server.Context ctx = null;
     try {
+      ctx = new com.jhonju.ps3netsrv.server.Context(socket, folderPaths, contentResolver, androidContext);
       while (ctx.isSocketConnected()) {
         try {
           ByteBuffer packet = BinaryUtils.readCommandData(ctx.getInputStream(), CMD_DATA_SIZE);
@@ -86,8 +121,15 @@ public class ContextHandler extends Thread {
     } catch (IOException e) {
       Objects.requireNonNull(getUncaughtExceptionHandler()).uncaughtException(this, e);
     } finally {
-      ctx.close();
-      decrementSimultaneousConnections();
+      try {
+        if (ctx != null) {
+          ctx.close();
+        } else {
+          closeSocket();
+        }
+      } finally {
+        releaseConnection();
+      }
     }
   }
 

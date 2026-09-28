@@ -104,7 +104,7 @@ public class SettingsService {
     if (cachedFolders != null) {
       return new ArrayList<>(cachedFolders);
     }
-    if (!spFolders.contains(settings)) {
+    if (!spFolders.contains("FOLDERS_JSON") && !spFolders.contains(settings)) {
       // Migration logic: Check if old SET exists
       if (spFolder.contains(settings)) {
         // Very old single folder setting

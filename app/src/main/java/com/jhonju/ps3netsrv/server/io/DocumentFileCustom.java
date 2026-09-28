@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.util.Locale;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -46,7 +47,7 @@ public class DocumentFileCustom implements IFile {
   private Long cachedSize;
   private Boolean cachedIsDir;
   private boolean isInitialized = false;
-  private IFile[] cachedListFiles = null;
+  private boolean closed;
   private String[] cachedList = null;
 
   // Multipart ISO fields
@@ -93,6 +94,7 @@ public class DocumentFileCustom implements IFile {
   }
 
   private void init() throws IOException {
+    if (closed) throw new IOException("File is closed");
     if (isInitialized)
       return;
 
@@ -101,63 +103,69 @@ public class DocumentFileCustom implements IFile {
     PS3RegionInfo[] regions = null;
     byte[] sec0sec1 = null;
 
-    if (documentFile != null && documentFile.isFile()) {
-      this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
-      this.fis = new FileInputStream(pfd.getFileDescriptor());
-      this.fileChannel = fis.getChannel();
+    try {
+      if (documentFile != null && documentFile.isFile()) {
+        this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
+        if (pfd == null) throw new IOException("Provider returned no file descriptor");
+        this.fis = new FileInputStream(pfd.getFileDescriptor());
+        this.fileChannel = fis.getChannel();
 
-      // Check for multipart ISO (.iso.0)
-      String fileName = getName();
-      if (fileName != null && fileName.toLowerCase().endsWith(MULTIPART_ISO_SUFFIX)) {
-        initMultipart();
-        // Multipart ISOs skip encryption
-      } else {
-        boolean isInPS3ISOFolder = documentFile.getParentFile() != null
-            && documentFile.getParentFile().getName() != null
-            && documentFile.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
+        // Check for multipart ISO (.iso.0)
+        String fileName = getName();
+        if (fileName != null && fileName.toLowerCase(Locale.US).endsWith(MULTIPART_ISO_SUFFIX)) {
+          initMultipart();
+          // Multipart ISOs skip encryption
+        } else {
+          boolean isInPS3ISOFolder = documentFile.getParentFile() != null
+              && documentFile.getParentFile().getName() != null
+              && documentFile.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
 
-        // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
-        int sec0Sec1Length = SECTOR_SIZE * 2;
-        if (isInPS3ISOFolder && documentFile.length() >= sec0Sec1Length) {
-          sec0sec1 = new byte[sec0Sec1Length];
-          fileChannel.position(0);
-          if (fileChannel.read(ByteBuffer.wrap(sec0sec1)) != sec0Sec1Length) {
-            sec0sec1 = null;
+          // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
+          int sec0Sec1Length = SECTOR_SIZE * 2;
+          if (isInPS3ISOFolder && documentFile.length() >= sec0Sec1Length) {
+            sec0sec1 = new byte[sec0Sec1Length];
+            fileChannel.position(0);
+            if (fileChannel.read(ByteBuffer.wrap(sec0sec1)) != sec0Sec1Length) {
+              sec0sec1 = null;
+            }
           }
-        }
 
-        // First try to get Redump key from external .dkey file
-        encryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
-        if (encryptionKey != null) {
-          detectedEncryptionType = EEncryptionType.REDUMP;
-        } else if (BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
-          // If no Redump key, check for 3k3y watermark and extract key if found
-          encryptionKey = BinaryUtils.convertD1ToKey(sec0sec1);
+          // First try to get Redump key from external .dkey file
+          encryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
           if (encryptionKey != null) {
-            detectedEncryptionType = EEncryptionType._3K3Y;
+            detectedEncryptionType = EEncryptionType.REDUMP;
+          } else if (BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
+            // If no Redump key, check for 3k3y watermark and extract key if found
+            encryptionKey = BinaryUtils.convertD1ToKey(sec0sec1);
+            if (encryptionKey != null) {
+              detectedEncryptionType = EEncryptionType._3K3Y;
+            }
           }
-        }
 
-        // Parse region info from sec0sec1 if we have encryption
-        if (encryptionKey != null && sec0sec1 != null) {
-          regions = BinaryUtils.getRegionInfos(sec0sec1);
+          // Parse region info from sec0sec1 if we have encryption
+          if (encryptionKey != null && sec0sec1 != null) {
+            regions = BinaryUtils.getRegionInfos(sec0sec1);
+          }
         }
       }
-    }
 
-    if (encryptionKey != null) {
-      this.decryptionKey = new SecretKeySpec(encryptionKey, "AES");
-      this.encryptionType = detectedEncryptionType;
-      Arrays.fill(encryptionKey, (byte) 0);
-    } else {
-      this.decryptionKey = null;
-      this.encryptionType = EEncryptionType.NONE;
-    }
-    this.regionInfos = regions != null ? regions : new PS3RegionInfo[0];
-    this.isInitialized = true;
+      if (encryptionKey != null) {
+        this.decryptionKey = new SecretKeySpec(encryptionKey, "AES");
+        this.encryptionType = detectedEncryptionType;
+        Arrays.fill(encryptionKey, (byte) 0);
+      } else {
+        this.decryptionKey = null;
+        this.encryptionType = EEncryptionType.NONE;
+      }
+      this.regionInfos = regions != null ? regions : new PS3RegionInfo[0];
+      this.isInitialized = true;
 
-    if (sec0sec1 != null) {
-      Arrays.fill(sec0sec1, (byte) 0);
+      if (sec0sec1 != null) {
+        Arrays.fill(sec0sec1, (byte) 0);
+      }
+    } catch (IOException | RuntimeException | Error e) {
+      close();
+      throw e;
     }
   }
 
@@ -275,6 +283,21 @@ public class DocumentFileCustom implements IFile {
     if (isMultipart) {
       return totalSize;
     }
+    String name = getName();
+    if (!isInitialized && isFile() && name != null
+        && name.toLowerCase(Locale.US).endsWith(MULTIPART_ISO_SUFFIX)) {
+      long size = documentFile.length();
+      DocumentFile parent = documentFile.getParentFile();
+      if (parent != null) {
+        String base = name.substring(0, name.length() - 1);
+        for (int i = 1; i < MAX_ISO_PARTS; i++) {
+          DocumentFile part = parent.findFile(base + i);
+          if (part == null || !part.isFile()) break;
+          size += part.length();
+        }
+      }
+      return size;
+    }
     if (cachedSize != null)
       return cachedSize;
     return documentFile.length();
@@ -282,17 +305,14 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public IFile[] listFiles() throws IOException {
-    if (cachedListFiles != null)
-      return cachedListFiles;
-    init(); // Ensure initialized for listFiles (though we try to avoid using this method)
     DocumentFile[] filesAux = documentFile.listFiles();
     IFile[] files = new IFile[filesAux.length];
     int i = 0;
     for (DocumentFile fileAux : filesAux) {
-      files[i] = new DocumentFileCustom(fileAux, contentResolver, androidContext);
+      files[i] = new DocumentFileCustom(fileAux, contentResolver, androidContext,
+          fileAux.getName(), fileAux.length(), fileAux.isDirectory());
       i++;
     }
-    cachedListFiles = files;
     return files;
   }
 
@@ -335,6 +355,7 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public int read(byte[] buffer, int offset, int length, long position) throws IOException {
+    if (closed) throw new IOException("File is closed");
     if (!isInitialized)
       init();
 
@@ -342,6 +363,7 @@ public class DocumentFileCustom implements IFile {
       return readMultipart(buffer, offset, length, position);
     }
 
+    if (fileChannel == null) throw new IOException("Not a regular document");
     fileChannel.position(position);
     int bytesRead = fileChannel.read(ByteBuffer.wrap(buffer, offset, length));
     if (encryptionType != EEncryptionType.NONE) {
@@ -385,6 +407,8 @@ public class DocumentFileCustom implements IFile {
 
   @Override
   public void close() throws IOException {
+    if (closed) return;
+    closed = true;
     if (isMultipart) {
       // Close all multipart handles (part 0 is the main file's channel/pfd/fis)
       for (int i = 0; i < partCount; i++) {

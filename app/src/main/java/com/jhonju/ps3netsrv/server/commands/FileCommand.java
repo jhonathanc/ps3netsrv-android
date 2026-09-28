@@ -14,7 +14,7 @@ import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
@@ -22,13 +22,13 @@ import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.R;
 
 public abstract class FileCommand extends AbstractCommand {
-  protected final short filePathLength;
+  protected final int filePathLength;
   protected String fileName;
   protected String requestedPath;
 
   public FileCommand(Context ctx, short filePathLength) {
     super(ctx);
-    this.filePathLength = filePathLength;
+    this.filePathLength = filePathLength & 0xffff;
   }
 
   private String getFormattedPath(String path) {
@@ -65,7 +65,7 @@ public abstract class FileCommand extends AbstractCommand {
     }
     this.requestedPath = path;
 
-    HashSet<IFile> files = new HashSet<>();
+    LinkedHashSet<IFile> files = new LinkedHashSet<>();
 
     String formattedPath = getFormattedPath(path);
     if (formattedPath == null) {
@@ -90,65 +90,72 @@ public abstract class FileCommand extends AbstractCommand {
       this.fileName = childName;
     }
 
-    for (String rootDirectory : ctx.getRootDirectories()) {
-      if (rootDirectory.startsWith("content:")) {
-        // Use SAF (DocumentFile)
-        androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile
-            .fromTreeUri(ctx.getAndroidContext(), Uri.parse(rootDirectory));
-        if (documentFile == null || !documentFile.exists()) {
-          continue;
-        }
-
-        if (!formattedPath.isEmpty()) {
-          String[] paths = formattedPath.split("/");
-          for (String s : paths) {
-            if (s.isEmpty())
-              continue;
-            
-            // Check for potential traversal in individual segments (redundant but safe)
-            if (s.equals("..") || s.equals(".")) continue;
-
-            DocumentFile found = findFileSafely(documentFile, s);
-            if (found == null) {
-              documentFile = null;
-              break;
-            }
-            documentFile = found;
-          }
-        }
-
-        if (documentFile != null && documentFile.exists()) {
-          files.add(new DocumentFileCustom(documentFile, ctx.getContentResolver(), ctx.getAndroidContext()));
-        }
-      } else {
-        // Use Standard File I/O
-        java.io.File rootDir = new java.io.File(rootDirectory);
-        java.io.File targetFile;
-        if (formattedPath.isEmpty()) {
-          targetFile = rootDir;
-        } else {
-          targetFile = new java.io.File(rootDir, formattedPath);
-        }
-
-        // Final security check: Ensure the canonical path still starts with the root directory
-        try {
-          String rootCanonical = rootDir.getCanonicalPath();
-          String targetCanonical = targetFile.getCanonicalPath();
-          
-          if (!targetCanonical.startsWith(rootCanonical)) {
-            FileLogger.logWarning("Path traversal attempt blocked: " + path + " resolves to " + targetCanonical);
+    try {
+      for (String rootDirectory : ctx.getRootDirectories()) {
+        if (rootDirectory.startsWith("content:")) {
+          // Use SAF (DocumentFile)
+          androidx.documentfile.provider.DocumentFile documentFile = androidx.documentfile.provider.DocumentFile
+              .fromTreeUri(ctx.getAndroidContext(), Uri.parse(rootDirectory));
+          if (documentFile == null || !documentFile.exists()) {
             continue;
           }
-          
-          if (targetFile.exists()) {
-            files.add(new FileCustom(targetFile));
+
+          if (!formattedPath.isEmpty()) {
+            String[] paths = formattedPath.split("/");
+            for (String s : paths) {
+              if (s.isEmpty())
+                continue;
+            
+              // Check for potential traversal in individual segments (redundant but safe)
+              if (s.equals("..") || s.equals(".")) continue;
+
+              DocumentFile found = findFileSafely(documentFile, s);
+              if (found == null) {
+                documentFile = null;
+                break;
+              }
+              documentFile = found;
+            }
           }
-        } catch (IOException e) {
-          FileLogger.logError("Error resolving canonical path", e);
+
+          if (documentFile != null && documentFile.exists()) {
+            files.add(new DocumentFileCustom(documentFile, ctx.getContentResolver(), ctx.getAndroidContext()));
+          }
+        } else {
+          // Use Standard File I/O
+          java.io.File rootDir = new java.io.File(rootDirectory);
+          java.io.File targetFile;
+          if (formattedPath.isEmpty()) {
+            targetFile = rootDir;
+          } else {
+            targetFile = new java.io.File(rootDir, formattedPath);
+          }
+
+          // Final security check: Ensure the canonical path still starts with the root directory
+          try {
+            String rootCanonical = rootDir.getCanonicalPath();
+            String targetCanonical = targetFile.getCanonicalPath();
+          
+            String rootPrefix = rootCanonical.endsWith(java.io.File.separator)
+                ? rootCanonical : rootCanonical + java.io.File.separator;
+            if (!targetCanonical.equals(rootCanonical) && !targetCanonical.startsWith(rootPrefix)) {
+              FileLogger.logWarning("Path traversal attempt blocked: " + path + " resolves to " + targetCanonical);
+              continue;
+            }
+          
+            if (targetFile.exists()) {
+              files.add(new FileCustom(targetFile));
+            }
+          } catch (IOException e) {
+            FileLogger.logError("Error resolving canonical path", e);
+          }
         }
       }
+      return files;
+    } catch (IOException | RuntimeException | Error e) {
+      Context.closeFiles(files);
+      throw e;
     }
-    return files;
   }
 
   private DocumentFile findFileSafely(DocumentFile parent, String name) {

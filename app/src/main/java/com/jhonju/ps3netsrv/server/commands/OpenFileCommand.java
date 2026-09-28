@@ -68,7 +68,11 @@ public class OpenFileCommand extends FileCommand {
         (requestedPath.toUpperCase().startsWith("/GAMES/") || requestedPath.toUpperCase().startsWith("GAMES/"));
 
     if (isGamesFolder && file.isDirectory()) {
-      file = new VirtualIsoFile(file, ctx.getAndroidContext());
+      try {
+        file = new VirtualIsoFile(file, ctx.getAndroidContext());
+      } finally {
+        Context.closeFiles(files);
+      }
 
       Set<IFile> newFiles = new java.util.HashSet<>();
       newFiles.add(file);

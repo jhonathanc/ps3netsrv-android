@@ -146,7 +146,30 @@ public class Context implements Closeable {
    * @param files Set of IFile objects
    */
   public void setFile(Set<IFile> files) {
+    if (file != null) {
+      for (IFile previous : file) {
+        if (previous != null && (files == null || !files.contains(previous))) {
+          closeFile(previous);
+        }
+      }
+    }
     this.file = files;
+  }
+
+  public static void closeFile(IFile file) {
+    if (file != null) {
+      try {
+        file.close();
+      } catch (IOException e) {
+        FileLogger.logWarning("Error closing file", e);
+      }
+    }
+  }
+
+  public static void closeFiles(Iterable<IFile> files) {
+    if (files != null) {
+      for (IFile file : files) closeFile(file);
+    }
   }
 
   /**
@@ -181,19 +204,7 @@ public class Context implements Closeable {
   @Override
   public void close() {
     // Close all open files
-    if (file != null) {
-      for (IFile f : file) {
-        if (f != null) {
-          try {
-            f.close();
-            FileLogger.logInfo("File closed: " + f.getName());
-          } catch (IOException e) {
-            FileLogger.logWarning("Error closing file: " + f.getName(), e);
-          }
-        }
-      }
-      file = null;
-    }
+    setFile(null);
 
     // Close the socket connection
     if (socket != null && !socket.isClosed()) {

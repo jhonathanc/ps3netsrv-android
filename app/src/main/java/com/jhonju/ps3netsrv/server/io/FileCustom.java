@@ -12,6 +12,7 @@ import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.SECTOR_SIZE;
 
 import com.jhonju.ps3netsrv.server.enums.EEncryptionType;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
+import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,11 +22,15 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
+import java.util.Locale;
 import javax.crypto.spec.SecretKeySpec;
 
 public class FileCustom implements IFile {
 
   private final File file;
+  private final boolean openContent;
+  private FileCustom openedFile;
+  private boolean closed;
   private final SecretKeySpec decryptionKey;
   private final EEncryptionType encryptionType;
   private final RandomAccessFile randomAccessFile;
@@ -44,9 +49,14 @@ public class FileCustom implements IFile {
     return file;
   }
 
-  @SuppressWarnings("")
   public FileCustom(File file) throws IOException {
+    this(file, true);
+  }
+
+  // Directory entries expose metadata without keeping every file descriptor open.
+  private FileCustom(File file, boolean openContent) throws IOException {
     this.file = file;
+    this.openContent = openContent;
     byte[] encryptionKey = null;
     EEncryptionType detectedEncryptionType = EEncryptionType.NONE;
     RandomAccessFile randomAccessFile = null;
@@ -60,93 +70,104 @@ public class FileCustom implements IFile {
     long multiPartSize = 0;
     long multiTotalSize = 0;
 
-    long fileSize;
-    boolean isRegularFile;
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-      BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-      fileSize = basicFileAttributes.size();
-      isRegularFile = basicFileAttributes.isRegularFile();
-    } else {
-      fileSize = file.length();
-      isRegularFile = file.isFile();
-    }
-    if (isRegularFile) {
-      randomAccessFile = new RandomAccessFile(file, READ_ONLY_MODE);
-
-      // Check for multipart ISO (.iso.0)
-      String fileName = file.getName();
-      if (fileName.toLowerCase().endsWith(MULTIPART_ISO_SUFFIX)) {
-        multipart = true;
-        multiParts = new RandomAccessFile[MAX_ISO_PARTS];
-        multiParts[0] = randomAccessFile;
-        multiPartSize = fileSize; // All parts except the last must be this size
-        multiPartCount = 1;
-        multiTotalSize = fileSize;
-
-        String basePath = file.getAbsolutePath();
-        String baseIsoPath = basePath.substring(0, basePath.length() - 1); // Remove trailing "0"
-
-        for (int i = 1; i < MAX_ISO_PARTS; i++) {
-          File partFile = new File(baseIsoPath + i);
-          if (!partFile.exists() || !partFile.isFile())
-            break;
-          multiParts[i] = new RandomAccessFile(partFile, READ_ONLY_MODE);
-          multiTotalSize += partFile.length();
-          multiPartCount++;
-        }
-        // Multipart ISOs skip encryption
+    try {
+      long fileSize;
+      boolean isRegularFile;
+      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+        fileSize = basicFileAttributes.size();
+        isRegularFile = basicFileAttributes.isRegularFile();
       } else {
-        boolean isInPS3ISOFolder = file.getParentFile() != null
-            && file.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
+        fileSize = file.length();
+        isRegularFile = file.isFile();
+      }
+      if (isRegularFile && openContent) {
+        randomAccessFile = new RandomAccessFile(file, READ_ONLY_MODE);
 
-        // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
-        int sec0Sec1Length = SECTOR_SIZE * 2;
-        if (isInPS3ISOFolder && fileSize >= sec0Sec1Length) {
-          sec0sec1 = new byte[sec0Sec1Length];
-          randomAccessFile.seek(0);
-          if (randomAccessFile.read(sec0sec1) != sec0Sec1Length) {
-            sec0sec1 = null;
+        // Check for multipart ISO (.iso.0)
+        String fileName = file.getName();
+        if (fileName.toLowerCase(Locale.US).endsWith(MULTIPART_ISO_SUFFIX)) {
+          multipart = true;
+          multiParts = new RandomAccessFile[MAX_ISO_PARTS];
+          multiParts[0] = randomAccessFile;
+          multiPartSize = fileSize; // All parts except the last must be this size
+          multiPartCount = 1;
+          multiTotalSize = fileSize;
+
+          String basePath = file.getAbsolutePath();
+          String baseIsoPath = basePath.substring(0, basePath.length() - 1); // Remove trailing "0"
+
+          for (int i = 1; i < MAX_ISO_PARTS; i++) {
+            File partFile = new File(baseIsoPath + i);
+            if (!partFile.exists() || !partFile.isFile())
+              break;
+            multiParts[i] = new RandomAccessFile(partFile, READ_ONLY_MODE);
+            multiTotalSize += partFile.length();
+            multiPartCount++;
           }
-        }
+          // Multipart ISOs skip encryption
+        } else {
+          boolean isInPS3ISOFolder = file.getParentFile() != null
+              && file.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
 
-        // First try to get Redump key from external .dkey file
-        encryptionKey = getRedumpKey(file.getParentFile(), file.getAbsolutePath(), file.getName());
-        if (encryptionKey != null) {
-          detectedEncryptionType = EEncryptionType.REDUMP;
-        } else if (BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
-          // If no Redump key, check for 3k3y watermark and extract key if found
-          encryptionKey = BinaryUtils.convertD1ToKey(sec0sec1);
+          // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
+          int sec0Sec1Length = SECTOR_SIZE * 2;
+          if (isInPS3ISOFolder && fileSize >= sec0Sec1Length) {
+            sec0sec1 = new byte[sec0Sec1Length];
+            randomAccessFile.seek(0);
+            if (randomAccessFile.read(sec0sec1) != sec0Sec1Length) {
+              sec0sec1 = null;
+            }
+          }
+
+          // First try to get Redump key from external .dkey file
+          encryptionKey = getRedumpKey(file.getParentFile(), file.getAbsolutePath(), file.getName());
           if (encryptionKey != null) {
-            detectedEncryptionType = EEncryptionType._3K3Y;
+            detectedEncryptionType = EEncryptionType.REDUMP;
+          } else if (BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {
+            // If no Redump key, check for 3k3y watermark and extract key if found
+            encryptionKey = BinaryUtils.convertD1ToKey(sec0sec1);
+            if (encryptionKey != null) {
+              detectedEncryptionType = EEncryptionType._3K3Y;
+            }
           }
-        }
 
-        // Parse region info from sec0sec1 if we have encryption
-        if (encryptionKey != null && sec0sec1 != null) {
-          regionInfos = BinaryUtils.getRegionInfos(sec0sec1);
+          // Parse region info from sec0sec1 if we have encryption
+          if (encryptionKey != null && sec0sec1 != null) {
+            regionInfos = BinaryUtils.getRegionInfos(sec0sec1);
+          }
         }
       }
-    }
 
-    this.randomAccessFile = randomAccessFile;
-    this.isMultipart = multipart;
-    this.parts = multiParts;
-    this.partCount = multiPartCount;
-    this.partSize = multiPartSize;
-    this.totalSize = multipart ? multiTotalSize : 0;
+      this.randomAccessFile = randomAccessFile;
+      this.isMultipart = multipart;
+      this.parts = multiParts;
+      this.partCount = multiPartCount;
+      this.partSize = multiPartSize;
+      this.totalSize = multipart ? multiTotalSize : 0;
 
-    if (encryptionKey != null) {
-      this.decryptionKey = new SecretKeySpec(encryptionKey, "AES");
-      this.encryptionType = detectedEncryptionType;
-      Arrays.fill(encryptionKey, (byte) 0);
-    } else {
-      this.decryptionKey = null;
-      this.encryptionType = EEncryptionType.NONE;
-    }
-    this.regionInfos = regionInfos != null ? regionInfos : new PS3RegionInfo[0];
+      if (encryptionKey != null) {
+        this.decryptionKey = new SecretKeySpec(encryptionKey, "AES");
+        this.encryptionType = detectedEncryptionType;
+        Arrays.fill(encryptionKey, (byte) 0);
+      } else {
+        this.decryptionKey = null;
+        this.encryptionType = EEncryptionType.NONE;
+      }
+      this.regionInfos = regionInfos != null ? regionInfos : new PS3RegionInfo[0];
 
-    if (sec0sec1 != null) {
-      Arrays.fill(sec0sec1, (byte) 0);
+      if (sec0sec1 != null) {
+        Arrays.fill(sec0sec1, (byte) 0);
+      }
+    } catch (IOException | RuntimeException | Error e) {
+      if (multiParts != null) {
+        for (RandomAccessFile part : multiParts) {
+          closeHandle(part);
+        }
+      } else {
+        closeHandle(randomAccessFile);
+      }
+      throw e;
     }
   }
 
@@ -201,6 +222,18 @@ public class FileCustom implements IFile {
 
   @Override
   public long length() {
+    if (!openContent && file.isFile()
+        && file.getName().toLowerCase(Locale.US).endsWith(MULTIPART_ISO_SUFFIX)) {
+      long size = file.length();
+      String base = file.getAbsolutePath();
+      base = base.substring(0, base.length() - 1);
+      for (int i = 1; i < MAX_ISO_PARTS; i++) {
+        File part = new File(base + i);
+        if (!part.isFile()) break;
+        size += part.length();
+      }
+      return size;
+    }
     if (isMultipart) {
       return totalSize;
     }
@@ -215,7 +248,7 @@ public class FileCustom implements IFile {
       files = new IFile[filesAux.length];
       int i = 0;
       for (File fileAux : filesAux) {
-        files[i] = new FileCustom(fileAux);
+        files[i] = new FileCustom(fileAux, false);
         i++;
       }
     }
@@ -249,6 +282,12 @@ public class FileCustom implements IFile {
 
   @Override
   public int read(byte[] buffer, int offset, int length, long position) throws IOException {
+    if (closed) throw new IOException("File is closed");
+    if (!openContent) {
+      if (openedFile == null) openedFile = new FileCustom(file);
+      return openedFile.read(buffer, offset, length, position);
+    }
+    if (randomAccessFile == null) throw new IOException("Not a regular file");
     if (isMultipart) {
       return readMultipart(buffer, offset, length, position);
     }
@@ -299,14 +338,39 @@ public class FileCustom implements IFile {
 
   @Override
   public void close() throws IOException {
+    if (closed) return;
+    closed = true;
+    IOException failure = null;
+    if (openedFile != null) {
+      try {
+        openedFile.close();
+      } catch (IOException e) {
+        failure = e;
+      }
+    }
     if (isMultipart) {
       for (int i = 0; i < partCount; i++) {
         if (parts[i] != null) {
-          parts[i].close();
+          try {
+            parts[i].close();
+          } catch (IOException e) {
+            failure = e;
+          }
         }
       }
     } else if (randomAccessFile != null) {
       randomAccessFile.close();
+    }
+    if (failure != null) throw failure;
+  }
+
+  private static void closeHandle(RandomAccessFile handle) {
+    if (handle != null) {
+      try {
+        handle.close();
+      } catch (IOException e) {
+        FileLogger.logWarning("Error closing partially opened file", e);
+      }
     }
   }
 

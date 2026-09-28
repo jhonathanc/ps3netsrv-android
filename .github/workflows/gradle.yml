@@ -34,6 +34,8 @@ jobs:
       run: chmod +x ./app/generateGitProperties.sh
     - name: Build with Gradle
       run: ./gradlew assembleDebug
+    - name: Server regression tests
+      run: python3 tests/jvm/run.py
     - name: Upload files
       uses: actions/upload-artifact@v4
       with:

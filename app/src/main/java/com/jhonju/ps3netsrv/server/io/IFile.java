@@ -1,8 +1,9 @@
 package com.jhonju.ps3netsrv.server.io;
 
+import java.io.Closeable;
 import java.io.IOException;
 
-public interface IFile {
+public interface IFile extends Closeable {
     boolean exists();
     boolean isFile();
     boolean isDirectory();
@@ -13,9 +14,10 @@ public interface IFile {
     String getName();
     String[] list();
     IFile findFile(String fileName) throws IOException;
-    int read(byte[] buffer, long position) throws IOException;
+    default int read(byte[] buffer, long position) throws IOException {
+        return read(buffer, 0, buffer.length, position);
+    }
     int read(byte[] buffer, int offset, int length, long position) throws IOException;
-    void close() throws IOException;
     void write(byte[] buffer) throws IOException;
     boolean createDirectory(String name);
     boolean createFile(String name);

@@ -6,11 +6,10 @@ import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
-import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -62,17 +61,13 @@ public class ReadDirCommand extends AbstractCommand {
      */
     public byte[] toByteArray() throws IOException {
       if (entries != null) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream(
+        ByteBuffer out = ByteBuffer.allocate(
             entries.size() * READ_DIR_ENTRY_LENGTH + LONG_CAPACITY);
-        try {
-          out.write(BinaryUtils.longToBytesBE(entries.size()));
-          for (ReadDirEntry entry : entries) {
-            out.write(entry.toByteArray());
-          }
-          return out.toByteArray();
-        } finally {
-          out.close();
+        out.putLong(entries.size());
+        for (ReadDirEntry entry : entries) {
+          entry.writeTo(out);
         }
+        return out.array();
       }
       return null;
     }
@@ -111,20 +106,11 @@ public class ReadDirCommand extends AbstractCommand {
      * Converts entry to binary format.
      * Format: [size (8)] [mtime (8)] [is_dir (1)] [UTF-8 name (512)]
      *
-     * @return Byte array (529 bytes) representing the entry
-     * @throws IOException If writing to stream fails
+     * @param out Destination buffer for the 529-byte entry
      */
-    public byte[] toByteArray() throws IOException {
-      ByteArrayOutputStream out = new ByteArrayOutputStream(READ_DIR_ENTRY_LENGTH);
-      try {
-        out.write(BinaryUtils.longToBytesBE(this.aFileSize));
-        out.write(BinaryUtils.longToBytesBE(this.bModifiedTime));
-        out.write(cIsDirectory ? 1 : 0);
-        out.write(dName);
-        return out.toByteArray();
-      } finally {
-        out.close();
-      }
+    public void writeTo(ByteBuffer out) {
+      out.putLong(aFileSize).putLong(bModifiedTime)
+          .put((byte) (cIsDirectory ? 1 : 0)).put(dName);
     }
   }
 
@@ -173,11 +159,10 @@ public class ReadDirCommand extends AbstractCommand {
                   FileLogger.logWarning("Skipping file name that cannot be represented in READ_DIR");
                   continue;
                 }
-                if (!addedNames.contains(fileName)) {
+                if (addedNames.add(fileName)) {
                   ReadDirEntry entry = new ReadDirEntry(f.isDirectory() ? EMPTY_SIZE : f.length(),
                       f.lastModified() / MILLISECONDS_IN_SECOND, f.isDirectory(), fileName);
                   entries.add(entry);
-                  addedNames.add(fileName);
                 }
               }
             }

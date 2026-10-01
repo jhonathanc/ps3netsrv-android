@@ -19,8 +19,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Locale;
 import javax.crypto.spec.SecretKeySpec;
@@ -71,17 +69,9 @@ public class FileCustom implements IFile {
     long multiTotalSize = 0;
 
     try {
-      long fileSize;
-      boolean isRegularFile;
-      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-        BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        fileSize = basicFileAttributes.size();
-        isRegularFile = basicFileAttributes.isRegularFile();
-      } else {
-        fileSize = file.length();
-        isRegularFile = file.isFile();
-      }
-      if (isRegularFile && openContent) {
+      // java.io supplies all metadata needed here on every supported API level.
+      if (openContent && file.isFile()) {
+        long fileSize = file.length();
         randomAccessFile = new RandomAccessFile(file, READ_ONLY_MODE);
 
         // Check for multipart ISO (.iso.0)
@@ -192,11 +182,8 @@ public class FileCustom implements IFile {
   }
 
   private static byte[] getKeyFromDocumentFile(File file) throws IOException {
-    FileInputStream fis = new FileInputStream(file);
-    try {
+    try (FileInputStream fis = new FileInputStream(file)) {
       return EncryptionKeyHelper.parseKeyFromStream(fis);
-    } finally {
-      fis.close();
     }
   }
 
@@ -273,11 +260,6 @@ public class FileCustom implements IFile {
   @Override
   public IFile findFile(String fileName) throws IOException {
     return new FileCustom(new File(file.getCanonicalPath() + "/" + fileName));
-  }
-
-  @Override
-  public int read(byte[] buffer, long position) throws IOException {
-    return read(buffer, 0, buffer.length, position);
   }
 
   @Override
@@ -376,11 +358,8 @@ public class FileCustom implements IFile {
 
   @Override
   public void write(byte[] buffer) throws IOException {
-    FileOutputStream fos = new java.io.FileOutputStream(file);
-    try {
+    try (FileOutputStream fos = new FileOutputStream(file)) {
       fos.write(buffer);
-    } finally {
-      fos.close();
     }
   }
 

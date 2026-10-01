@@ -82,7 +82,10 @@ public class BinaryUtils {
   }
 
   public static boolean isByteArrayEmpty(byte[] byteArray) {
-    return (byteArray.length == 0 || Arrays.equals(byteArray, new byte[byteArray.length]));
+    for (byte value : byteArray) {
+      if (value != 0) return false;
+    }
+    return true;
   }
 
   public static ByteBuffer readCommandData(InputStream in, int size) throws IOException {

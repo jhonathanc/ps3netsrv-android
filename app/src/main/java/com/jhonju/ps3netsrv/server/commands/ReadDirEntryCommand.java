@@ -4,15 +4,14 @@ import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.IFile;
-import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 public class ReadDirEntryCommand extends AbstractCommand {
 
-  private static final int RESULT_LENGTH = 266;
+  private static final int HEADER_LENGTH = 11;
   private static final short MAX_FILE_NAME_LENGTH = 255;
   private static final short EMPTY_FILE_NAME_LENGTH = 0;
 
@@ -41,18 +40,10 @@ public class ReadDirEntryCommand extends AbstractCommand {
     }
 
     public byte[] toByteArray() throws IOException {
-      ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
-      try {
-        out.write(BinaryUtils.longToBytesBE(this.aFileSize));
-        out.write(BinaryUtils.shortToBytesBE(this.bFileNameLength));
-        out.write(cIsDirectory ? 1 : 0);
-        if (dFileName != null) {
-          out.write(dFileName.getBytes(StandardCharsets.UTF_8));
-        }
-        return out.toByteArray();
-      } finally {
-        out.close();
-      }
+      byte[] name = dFileName != null ? dFileName.getBytes(StandardCharsets.UTF_8) : new byte[0];
+      return ByteBuffer.allocate(HEADER_LENGTH + name.length)
+          .putLong(aFileSize).putShort(bFileNameLength)
+          .put((byte) (cIsDirectory ? 1 : 0)).put(name).array();
     }
   }
 

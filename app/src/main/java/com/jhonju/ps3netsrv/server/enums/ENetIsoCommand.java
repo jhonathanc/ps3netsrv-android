@@ -40,13 +40,14 @@ public enum ENetIsoCommand {
     NETISO_CMD_CUSTOM_0(0x2412);
 
     public final int value;
+    private static final ENetIsoCommand[] COMMANDS = values();
 
     ENetIsoCommand(int value) {
         this.value = value;
     }
 
     public static ENetIsoCommand valueOf(int command) {
-        for (ENetIsoCommand comm : ENetIsoCommand.values()) {
+        for (ENetIsoCommand comm : COMMANDS) {
             if (comm.value == command) {
                 return comm;
             }

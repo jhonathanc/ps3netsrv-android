@@ -32,7 +32,9 @@ public abstract class FileCommand extends AbstractCommand {
   }
 
   private String getFormattedPath(String path) {
-    path = path.replaceAll("\\x00+$", "");
+    int end = path.length();
+    while (end > 0 && path.charAt(end - 1) == '\0') end--;
+    if (end < path.length()) path = path.substring(0, end);
 
     // Path Traversal Protection: Reject any path containing ".."
     if (path.contains("..")) {
@@ -42,7 +44,7 @@ public abstract class FileCommand extends AbstractCommand {
     if (path.equals("/.") || path.equals("/"))
       path = "";
     if (path.startsWith("/"))
-      path = path.replaceFirst("/", "");
+      path = path.substring(1);
     return path;
   }
 

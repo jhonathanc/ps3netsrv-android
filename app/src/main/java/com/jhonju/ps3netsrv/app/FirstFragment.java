@@ -1,7 +1,7 @@
 package com.jhonju.ps3netsrv.app;
 
 import android.content.Intent;
-import android.os.Build;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,15 +10,14 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.jhonju.ps3netsrv.R;
 import com.jhonju.ps3netsrv.app.utils.NetworkUtils;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -53,13 +52,10 @@ public class FirstFragment extends Fragment {
         btnStartServer.setText(isNowRunning ? R.string.stop_server : R.string.start_server);
 
         List<String> folderPaths = SettingsService.getFolders();
-        Set<String> folderPathsAux = new HashSet<>();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-          for (String folderPath : folderPaths) {
-            folderPathsAux.add(URLDecoder.decode(folderPath, StandardCharsets.UTF_8.displayName()));
-          }
-        } else {
-          folderPathsAux = new HashSet<>(folderPaths);
+        Set<String> folderPathsAux = new LinkedHashSet<>();
+        for (String folderPath : folderPaths) {
+          // Only SAF URIs are encoded; literal paths can contain '+' or '%'.
+          folderPathsAux.add(folderPath.startsWith("content:") ? Uri.decode(folderPath) : folderPath);
         }
         int port = SettingsService.getPort();
 
@@ -77,10 +73,6 @@ public class FirstFragment extends Fragment {
   }
 
   private void startPs3NetService() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      requireActivity().startForegroundService(new Intent(getActivity(), PS3NetService.class));
-    } else {
-      requireActivity().startService(new Intent(getActivity(), PS3NetService.class));
-    }
+    ContextCompat.startForegroundService(requireActivity(), new Intent(getActivity(), PS3NetService.class));
   }
 }

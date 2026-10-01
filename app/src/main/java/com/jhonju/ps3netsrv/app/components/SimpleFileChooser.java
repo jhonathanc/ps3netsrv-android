@@ -37,10 +37,10 @@ public class SimpleFileChooser {
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
         builder.setTitle(mCurrentPath.getPath());
         if (mOnlyDirectories) {
-            builder.setPositiveButton("Ok", onPositiveButtonClickListener);
+            builder.setPositiveButton("Ok", this::onPositiveButtonClick);
         }
         // populate dialog with list of files and directories.
-        builder.setItems(mFileList, onDialogItemClickedListener);
+        builder.setItems(mFileList, this::onDialogItemClicked);
         builder.show();
     }
 
@@ -74,50 +74,36 @@ public class SimpleFileChooser {
 
     // Comparator for Arrays.sort(). Separate folders from files, order
     // alphabetically, ignore case.
-    private final Comparator<File> fileArrayComparator = (file1, file2) -> {
-        if (file1 == null || file2 == null) // if either null, assume equal
-            return 0;
-            // put folder first before file
-        else if (file1.isDirectory() && (!file2.isDirectory()))
-            return -1;
-        else if (file2.isDirectory() && (!file1.isDirectory()))
-            return 1;
-        else
-            // when both are folders or both are files, sort by name
-            return file1.getName().toUpperCase().compareTo(file2.getName().toUpperCase());
-    };
+    private static final Comparator<File> fileArrayComparator = Comparator
+            .comparingInt((File file) -> file.isDirectory() ? 0 : 1)
+            .thenComparing(File::getName, String.CASE_INSENSITIVE_ORDER);
 
-    private final DialogInterface.OnClickListener onPositiveButtonClickListener = new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-            File selectedFile = (which < 0) ? mCurrentPath : getSelectedFile(mFileList[which]);
+    private void onPositiveButtonClick(DialogInterface dialog, int which) {
+        File selectedFile = (which < 0) ? mCurrentPath : getSelectedFile(mFileList[which]);
 
-            // always remove previous dlg first
-            dialog.cancel();
-            dialog.dismiss();
+        // always remove previous dlg first
+        dialog.cancel();
+        dialog.dismiss();
 
+        if (mFileListener != null)
+            mFileListener.onFileSelected(selectedFile);
+    }
+
+    // Event when user click item on dialog
+    private void onDialogItemClicked(DialogInterface dialog, int which) {
+        String selectedFileName = mFileList[which];
+        File selectedFile = getSelectedFile(selectedFileName);
+
+        // always remove previous dlg first
+        dialog.cancel();
+        dialog.dismiss();
+
+        if (selectedFile.isDirectory()) {
+            rebuildFileList(selectedFile);
+            showDialog(); // create new dlg
+        } else {
             if (mFileListener != null)
                 mFileListener.onFileSelected(selectedFile);
         }
-    };
-
-    // Event when user click item on dialog
-    private final DialogInterface.OnClickListener onDialogItemClickedListener = new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int which) {
-            String selectedFileName = mFileList[which];
-            File selectedFile = getSelectedFile(selectedFileName);
-
-            // always remove previous dlg first
-            dialog.cancel();
-            dialog.dismiss();
-
-            if (selectedFile.isDirectory()) {
-                rebuildFileList(selectedFile);
-                showDialog(); // create new dlg
-            } else {
-                if (mFileListener != null)
-                    mFileListener.onFileSelected(selectedFile);
-            }
-        }
-    };
+    }
 }

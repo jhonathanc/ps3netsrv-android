@@ -33,7 +33,7 @@ jobs:
     - name: Grant execute permission on generateGitProperties
       run: chmod +x ./app/generateGitProperties.sh
     - name: Build with Gradle
-      run: ./gradlew assembleDebug
+      run: ./gradlew :app:assembleDebug :app:assembleRelease :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest
     - name: Server regression tests
       run: python3 tests/jvm/run.py
     - name: Upload files

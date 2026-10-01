@@ -26,13 +26,11 @@ public class AboutActivity extends AppCompatActivity {
 
   private String getCommitHash() {
     Properties properties = new Properties();
-    InputStream inputStream = null;
-    try {
-      inputStream = getAssets().open(GIT_PROPERTIES_FILE);
+    try (InputStream inputStream = getAssets().open(GIT_PROPERTIES_FILE)) {
       properties.load(inputStream);
       String commit = properties.getProperty(GIT_COMMIT_ID);
       if (commit != null) {
-        commit = commit.replaceAll("'", "");
+        commit = commit.replace("'", "");
         if (commit.length() >= COMMIT_HASH_LENGTH) {
           return commit.substring(0, COMMIT_HASH_LENGTH);
         }
@@ -40,14 +38,6 @@ public class AboutActivity extends AppCompatActivity {
       return commit != null ? commit : UNKNOWN;
     } catch (IOException e) {
       return UNKNOWN;
-    } finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        } catch (IOException e) {
-          // Ignore
-        }
-      }
     }
   }
 }

@@ -2,7 +2,7 @@ package com.jhonju.ps3netsrv.server.commands;
 
 import android.os.Build;
 
-import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.io.IOException;
 import java.util.Set;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -13,7 +13,6 @@ import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.FileCustom;
 import com.jhonju.ps3netsrv.server.io.IFile;
-import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
 public class StatFileCommand extends FileCommand {
@@ -49,17 +48,9 @@ public class StatFileCommand extends FileCommand {
     }
 
     public byte[] toByteArray() throws IOException {
-      ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
-      try {
-        out.write(BinaryUtils.longToBytesBE(this.aFileSize));
-        out.write(BinaryUtils.longToBytesBE(this.bModifiedTime));
-        out.write(BinaryUtils.longToBytesBE(this.cCreationTime));
-        out.write(BinaryUtils.longToBytesBE(this.dLastAccessTime));
-        out.write(eIsDirectory ? 1 : 0);
-        return out.toByteArray();
-      } finally {
-        out.close();
-      }
+      return ByteBuffer.allocate(RESULT_LENGTH)
+          .putLong(aFileSize).putLong(bModifiedTime).putLong(cCreationTime).putLong(dLastAccessTime)
+          .put((byte) (eIsDirectory ? 1 : 0)).array();
     }
   }
 

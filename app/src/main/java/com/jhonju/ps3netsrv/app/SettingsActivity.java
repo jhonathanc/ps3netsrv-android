@@ -225,11 +225,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             if (PS3NetService.isRunning()) {
                 stopService(new Intent(this, PS3NetService.class));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(new Intent(this, PS3NetService.class));
-                } else {
-                    startService(new Intent(this, PS3NetService.class));
-                }
+                ContextCompat.startForegroundService(this, new Intent(this, PS3NetService.class));
             }
         }
     }

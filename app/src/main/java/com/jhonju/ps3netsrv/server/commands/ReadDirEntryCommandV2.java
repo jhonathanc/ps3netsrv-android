@@ -7,11 +7,10 @@ import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException;
 import com.jhonju.ps3netsrv.server.io.FileCustom;
 import com.jhonju.ps3netsrv.server.io.IFile;
-import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,7 +18,7 @@ import java.util.Set;
 
 public class ReadDirEntryCommandV2 extends AbstractCommand {
 
-  private static final int RESULT_LENGTH = 290;
+  private static final int HEADER_LENGTH = 35;
   private static final short MAX_FILE_NAME_LENGTH = 255;
   private static final short EMPTY_FILE_NAME_LENGTH = 0;
 
@@ -58,21 +57,10 @@ public class ReadDirEntryCommandV2 extends AbstractCommand {
     }
 
     public byte[] toByteArray() throws IOException {
-      ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
-      try {
-        out.write(BinaryUtils.longToBytesBE(this.aFileSize));
-        out.write(BinaryUtils.longToBytesBE(this.bModifiedTime));
-        out.write(BinaryUtils.longToBytesBE(this.cCreationTime));
-        out.write(BinaryUtils.longToBytesBE(this.dAccessedTime));
-        out.write(BinaryUtils.shortToBytesBE(this.eFileNameLength));
-        out.write(fIsDirectory ? 1 : 0);
-        if (gFileName != null) {
-          out.write(gFileName.getBytes(StandardCharsets.UTF_8));
-        }
-        return out.toByteArray();
-      } finally {
-        out.close();
-      }
+      byte[] name = gFileName != null ? gFileName.getBytes(StandardCharsets.UTF_8) : new byte[0];
+      return ByteBuffer.allocate(HEADER_LENGTH + name.length)
+          .putLong(aFileSize).putLong(bModifiedTime).putLong(cCreationTime).putLong(dAccessedTime)
+          .putShort(eFileNameLength).put((byte) (fIsDirectory ? 1 : 0)).put(name).array();
     }
   }
 

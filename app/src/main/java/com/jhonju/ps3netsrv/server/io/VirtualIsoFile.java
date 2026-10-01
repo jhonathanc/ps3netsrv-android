@@ -15,11 +15,13 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 /**
@@ -102,6 +104,12 @@ public class VirtualIsoFile implements IFile {
     final List<FileEntry> files = new ArrayList<>();
   }
 
+  private static final Comparator<String> NAME_ORDER =
+      Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER);
+  private static final Comparator<IFile> FILE_ORDER = Comparator.comparing(IFile::getName, NAME_ORDER);
+  private static final Comparator<DirList> DIRECTORY_ORDER = Comparator.comparing(dir -> dir.name, NAME_ORDER);
+  private static final Comparator<FileEntry> ENTRY_ORDER = Comparator.comparing(file -> file.name, NAME_ORDER);
+
   public VirtualIsoFile(IFile rootDir, android.content.Context context) throws IOException {
     if (rootDir == null) {
       throw new IOException("root dir should not be null");
@@ -117,7 +125,7 @@ public class VirtualIsoFile implements IFile {
     if (ps3Mode) {
       this.volumeName = "PS3VOLUME";
     } else {
-      this.volumeName = rootDir.getName() != null ? rootDir.getName().toUpperCase() : "DVDVIDEO";
+      this.volumeName = rootDir.getName() != null ? rootDir.getName().toUpperCase(Locale.US) : "DVDVIDEO";
     }
     build();
   }
@@ -140,12 +148,7 @@ public class VirtualIsoFile implements IFile {
     Map<DirList, List<DirList>> childrenMap = new HashMap<>();
     for (DirList dir : allDirs) {
       if (dir.parent != null && dir != rootList) {
-        List<DirList> children = childrenMap.get(dir.parent);
-        if (children == null) {
-          children = new ArrayList<>();
-          childrenMap.put(dir.parent, children);
-        }
-        children.add(dir);
+        childrenMap.computeIfAbsent(dir.parent, parent -> new ArrayList<>()).add(dir);
       }
     }
 
@@ -192,15 +195,7 @@ public class VirtualIsoFile implements IFile {
       List<DirList> children = childrenMap.get(parent);
       if (children != null) {
         // Sort siblings by name
-        Collections.sort(children, (o1, o2) -> {
-          String n1 = o1.name;
-          String n2 = o2.name;
-          if (n1 == null)
-            return -1;
-          if (n2 == null)
-            return 1;
-          return n1.compareToIgnoreCase(n2);
-        });
+        children.sort(DIRECTORY_ORDER);
 
         for (DirList child : children) {
           // Assign index based on position in the FINAL sorted list
@@ -393,18 +388,10 @@ public class VirtualIsoFile implements IFile {
       return;
     }
 
-    Arrays.sort(files, (o1, o2) -> {
-      String n1 = o1.getName();
-      String n2 = o2.getName();
-      if (n1 == null)
-        return -1;
-      if (n2 == null)
-        return 1;
-      return n1.compareToIgnoreCase(n2);
-    });
+    Arrays.sort(files, FILE_ORDER);
 
     // Track multipart base names to avoid duplicates
-    List<String> processedMultiparts = new ArrayList<>();
+    Set<String> processedMultiparts = new HashSet<>();
 
     for (IFile f : files) {
       processFile(f, f.getName(), dir, dirEntry, allDirs, processedMultiparts);
@@ -412,7 +399,7 @@ public class VirtualIsoFile implements IFile {
   }
 
   private void processFile(IFile f, String name, IFile dir, DirList dirEntry, List<DirList> allDirs,
-      List<String> processedMultiparts) throws IOException {
+      Set<String> processedMultiparts) throws IOException {
     if (name == null)
       return;
 
@@ -432,10 +419,9 @@ public class VirtualIsoFile implements IFile {
 
         // This is the first part (.66600), process the whole set
         String baseName = name.substring(0, name.length() - 6); // Remove ".66600"
-        if (processedMultiparts.contains(baseName)) {
+        if (!processedMultiparts.add(baseName)) {
           return;
         }
-        processedMultiparts.add(baseName);
 
         FileEntry fe = createMultipartFileEntry(dir, baseName, f);
         dirEntry.files.add(fe);
@@ -452,23 +438,18 @@ public class VirtualIsoFile implements IFile {
   }
 
   // Visited set prevents infinite loops
-  private java.util.Set<String> visitedDocIds;
+  private final Set<String> visitedDocIds = new HashSet<>();
 
   @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
   private void scanDirectoryOptimized(DocumentFileCustom dir, DirList dirEntry, List<DirList> allDirs)
       throws IOException {
-    if (visitedDocIds == null) {
-      visitedDocIds = new java.util.HashSet<>();
-    }
-
     // We assume dir.documentFile is a TreeDocumentFile
     android.net.Uri currentUri = dir.documentFile.getUri();
     String dirDocId = android.provider.DocumentsContract.getDocumentId(currentUri);
 
-    if (visitedDocIds.contains(dirDocId)) {
+    if (!visitedDocIds.add(dirDocId)) {
       return;
     }
-    visitedDocIds.add(dirDocId);
 
     android.content.ContentResolver resolver = context.getContentResolver();
 
@@ -487,8 +468,7 @@ public class VirtualIsoFile implements IFile {
         android.provider.DocumentsContract.Document.COLUMN_SIZE
     };
 
-    android.database.Cursor c = resolver.query(childrenUri, projection, null, null, null);
-    try {
+    try (android.database.Cursor c = resolver.query(childrenUri, projection, null, null, null)) {
       if (c != null) {
         while (c.moveToNext()) {
           String docId = c.getString(0);
@@ -520,21 +500,13 @@ public class VirtualIsoFile implements IFile {
       }
     } catch (Exception e) {
       FileLogger.logError("Error in scanDirectoryOptimized", e);
-    } finally {
-      if (c != null) {
-        c.close();
-      }
     }
 
     // Sort files
-    Collections.sort(filesList, (o1, o2) -> {
-      String n1 = o1.getName();
-      String n2 = o2.getName();
-      return (n1 == null) ? -1 : (n2 == null) ? 1 : n1.compareToIgnoreCase(n2);
-    });
+    filesList.sort(FILE_ORDER);
 
     // Track multipart base names
-    List<String> processedMultiparts = new ArrayList<>();
+    Set<String> processedMultiparts = new HashSet<>();
 
     for (IFile f : filesList) {
       processFile(f, f.getName(), dir, dirEntry, allDirs, processedMultiparts);
@@ -646,7 +618,7 @@ public class VirtualIsoFile implements IFile {
         allEntries.add(d);
     }
 
-    Collections.sort(allEntries, (o1, o2) -> {
+    allEntries.sort((o1, o2) -> {
       String n1 = (o1 instanceof FileEntry) ? ((FileEntry) o1).name : ((DirList) o1).name;
       String n2 = (o2 instanceof FileEntry) ? ((FileEntry) o2).name : ((DirList) o2).name;
       return n1.toUpperCase(Locale.US).compareTo(n2.toUpperCase(Locale.US));
@@ -688,11 +660,7 @@ public class VirtualIsoFile implements IFile {
     // Process Files in THIS directory first (alphabetical order)
     List<FileEntry> sortedFiles = new ArrayList<>(dir.files);
 
-    Collections.sort(sortedFiles, (o1, o2) -> {
-      if (o1.name == null) return -1;
-      if (o2.name == null) return 1;
-      return o1.name.compareToIgnoreCase(o2.name);
-    });
+    sortedFiles.sort(ENTRY_ORDER);
 
     for (FileEntry file : sortedFiles) {
       file.rlba = currentSectorOffset;
@@ -711,11 +679,7 @@ public class VirtualIsoFile implements IFile {
     List<DirList> children = childrenMap.get(dir);
     if (children != null) {
       List<DirList> sortedChildren = new ArrayList<>(children);
-      Collections.sort(sortedChildren, (o1, o2) -> {
-        if (o1.name == null) return -1;
-        if (o2.name == null) return 1;
-        return o1.name.compareToIgnoreCase(o2.name);
-      });
+      sortedChildren.sort(DIRECTORY_ORDER);
 
       for (DirList child : sortedChildren) {
         currentSectorOffset = scanFilesDFS(child, currentSectorOffset, fileList, childrenMap);
@@ -827,7 +791,7 @@ public class VirtualIsoFile implements IFile {
 
     // Length of File Identifier includes suffix
     bb.put((byte) nameLenWithSuffix);
-    bb.put(name.toUpperCase().getBytes(StandardCharsets.US_ASCII));
+    bb.put(name.toUpperCase(Locale.US).getBytes(StandardCharsets.US_ASCII));
     bb.put((byte) ';');
     bb.put((byte) '1');
 
@@ -888,7 +852,7 @@ public class VirtualIsoFile implements IFile {
       putBothEndianShort(bb, (short) 1);
 
       bb.put((byte) nameLenWithSuffix);
-      bb.put(name.toUpperCase().getBytes(StandardCharsets.US_ASCII));
+      bb.put(name.toUpperCase(Locale.US).getBytes(StandardCharsets.US_ASCII));
       bb.put((byte) ';');
       bb.put((byte) '1');
 
@@ -1059,11 +1023,6 @@ public class VirtualIsoFile implements IFile {
   @Override
   public IFile findFile(String fileName) {
     return null;
-  }
-
-  @Override
-  public int read(byte[] buffer, long position) throws IOException {
-    return read(buffer, 0, buffer.length, position);
   }
 
   @Override

@@ -246,11 +246,9 @@ public class DocumentFileCustom implements IFile {
   }
 
   private byte[] getKeyFromDocumentFile(DocumentFile file) throws IOException {
-    InputStream is = contentResolver.openInputStream(file.getUri());
-    try {
+    try (InputStream is = contentResolver.openInputStream(file.getUri())) {
+      if (is == null) throw new IOException("Provider returned no input stream");
       return EncryptionKeyHelper.parseKeyFromStream(is);
-    } finally {
-      is.close();
     }
   }
 
@@ -346,11 +344,6 @@ public class DocumentFileCustom implements IFile {
   @Override
   public IFile findFile(String fileName) throws IOException {
     return new DocumentFileCustom(documentFile.findFile(fileName), contentResolver, androidContext);
-  }
-
-  @Override
-  public int read(byte[] buffer, long position) throws IOException {
-    return read(buffer, 0, buffer.length, position);
   }
 
   @Override
@@ -468,16 +461,11 @@ public class DocumentFileCustom implements IFile {
   @Override
   public void write(byte[] buffer) throws IOException {
     if (documentFile != null && documentFile.isFile()) {
-      OutputStream os = contentResolver.openOutputStream(documentFile.getUri());
-      try {
+      try (OutputStream os = contentResolver.openOutputStream(documentFile.getUri())) {
         if (os != null) {
           os.write(buffer);
         } else {
           throw new IOException(androidContext.getString(R.string.error_open_output_stream));
-        }
-      } finally {
-        if (os != null) {
-          os.close();
         }
       }
     } else {

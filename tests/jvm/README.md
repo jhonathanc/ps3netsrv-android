@@ -27,3 +27,10 @@ The fake SAF provider does not model permission revocation or all provider quirk
 The symlink integration test is skipped when the host disallows symlink creation;
 it also runs in Linux CI. Validate the APK on API 14, API 21–25, and a recent API,
 including network/lifecycle changes and mounting games through a real PS3 client.
+
+Modernization coverage also checks exact protocol serialization, SFO handle
+ownership on valid/invalid inputs, SAF descriptor cleanup, recursive directory
+sizes across multiple roots, and trailing NUL path normalization.
+The Android `DesugaringCompatibilityTest` exercises the packaged collection
+backports, default interface methods and automatic resource cleanup; see
+[Android compatibility](../../docs/android-compatibility.md) for device checks.

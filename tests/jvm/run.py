@@ -58,7 +58,7 @@ def main():
     argfile = BUILD / 'javac.args'
     argfile.write_text('\n'.join('"' + s.replace('\\', '/') + '"' for s in compile_args), encoding='utf-8')
     subprocess.run([javac, '@' + str(argfile)], check=True)
-    for test in ['ProtocolRegressionTest', 'FileRegressionTest', 'StateRegressionTest']:
+    for test in ['ProtocolRegressionTest', 'FileRegressionTest', 'ModernizationRegressionTest', 'StateRegressionTest']:
         subprocess.run([java, '-Xmx512m', '-cp', str(classes) + os.pathsep + str(json_jar),
                         test, str(BUILD)], check=True)
 

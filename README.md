@@ -97,6 +97,12 @@ The console will see and mount them as a single, complete ISO.
 | <img src="screenshots/main.jpg" width="250" /> | <img src="screenshots/settings.jpg" width="250" /> |
 | **Server Status & Folder List** | **Configuration Options** |
 
+## Building and Android Compatibility
+
+The app supports Android API 14 and newer, using Java 8 language features and
+core library desugaring. See [the compatibility review](docs/android-compatibility.md)
+for build requirements, retained API guards and validation commands.
+
 
 ## About
 

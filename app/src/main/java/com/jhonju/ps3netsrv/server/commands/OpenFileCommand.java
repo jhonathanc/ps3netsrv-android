@@ -1,7 +1,5 @@
 package com.jhonju.ps3netsrv.server.commands;
 
-import static com.jhonju.ps3netsrv.server.utils.BinaryUtils.longToBytesBE;
-
 import com.jhonju.ps3netsrv.server.Context;
 import com.jhonju.ps3netsrv.server.charset.StandardCharsets;
 import com.jhonju.ps3netsrv.server.enums.CDSectorSize;
@@ -11,8 +9,9 @@ import com.jhonju.ps3netsrv.server.io.VirtualIsoFile;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
 import com.jhonju.ps3netsrv.R;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Locale;
 import java.util.Set;
 
 public class OpenFileCommand extends FileCommand {
@@ -40,14 +39,8 @@ public class OpenFileCommand extends FileCommand {
     }
 
     public byte[] toByteArray() throws IOException {
-      ByteArrayOutputStream out = new ByteArrayOutputStream(RESULT_LENGTH);
-      try {
-        out.write(longToBytesBE(this.aFileSize));
-        out.write(longToBytesBE(this.bModifiedTime));
-        return out.toByteArray();
-      } finally {
-        out.close();
-      }
+      return ByteBuffer.allocate(RESULT_LENGTH)
+          .putLong(aFileSize).putLong(bModifiedTime).array();
     }
   }
 
@@ -64,8 +57,8 @@ public class OpenFileCommand extends FileCommand {
     // For OpenFile, we typically expect one valid file.
     IFile file = files.iterator().next();
 
-    boolean isGamesFolder = requestedPath != null &&
-        (requestedPath.toUpperCase().startsWith("/GAMES/") || requestedPath.toUpperCase().startsWith("GAMES/"));
+    String upperPath = requestedPath == null ? "" : requestedPath.toUpperCase(Locale.US);
+    boolean isGamesFolder = upperPath.startsWith("/GAMES/") || upperPath.startsWith("GAMES/");
 
     if (isGamesFolder && file.isDirectory()) {
       try {

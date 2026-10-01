@@ -6,7 +6,7 @@ import com.jhonju.ps3netsrv.server.io.IFile;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.Set;
 
 public class GetDirSizeCommand extends FileCommand {
@@ -18,23 +18,30 @@ public class GetDirSizeCommand extends FileCommand {
 
   @Override
   public void executeTask() throws IOException, PS3NetSrvException {
-    send(BinaryUtils.longToBytesBE(calculateFileSize(getFile())));
+    Set<IFile> files = getFile();
+    try {
+      long size = 0;
+      for (IFile file : files) {
+        size += calculateFileSize(file);
+      }
+      send(BinaryUtils.longToBytesBE(size));
+    } finally {
+      Context.closeFiles(files);
+    }
   }
 
-  private static long calculateFileSize(Set<IFile> files) throws IOException {
-    long fileSize = EMPTY_SIZE;
-    for (IFile file : files) {
-      if (file.isDirectory()) {
-        IFile[] filesAux = file.listFiles();
-        for (IFile subFile : filesAux) {
-          Set<IFile> subFileAux = new HashSet<>();
-          subFileAux.add(subFile);
-          fileSize += calculateFileSize(subFileAux);
-        }
-      } else {
-        fileSize = file.length();
+  private static long calculateFileSize(IFile file) throws IOException {
+    if (!file.isDirectory()) return file.length();
+    IFile[] children = file.listFiles();
+    if (children == null) return 0;
+    try {
+      long size = 0;
+      for (IFile child : children) {
+        size += calculateFileSize(child);
       }
+      return size;
+    } finally {
+      Context.closeFiles(Arrays.asList(children));
     }
-    return fileSize;
   }
 }

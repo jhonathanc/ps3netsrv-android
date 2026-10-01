@@ -1,14 +1,16 @@
 package com.jhonju.ps3netsrv.app;
 
-import android.app.Application;
 import android.content.Context;
+
+import androidx.multidex.MultiDexApplication;
 
 import java.lang.ref.WeakReference;
 
-public class PS3NetSrvApp extends Application {
+public class PS3NetSrvApp extends MultiDexApplication {
 
     private static WeakReference<Context> contextRef;
 
+    @Override
     public void onCreate() {
         super.onCreate();
         contextRef = new WeakReference<>(getApplicationContext());

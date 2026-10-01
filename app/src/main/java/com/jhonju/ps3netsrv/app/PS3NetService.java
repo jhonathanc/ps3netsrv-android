@@ -10,7 +10,6 @@ import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -38,10 +37,7 @@ public class PS3NetService extends Service {
 
   private final Thread.UncaughtExceptionHandler exceptionHandler = (thread, throwable) -> {
     final String message = throwable.getMessage();
-    HandlerThread handlerThread = new HandlerThread("ToastThread");
-    handlerThread.start();
-    Looper looper = handlerThread.getLooper();
-    Handler handler = new Handler(looper);
+    Handler handler = new Handler(Looper.getMainLooper());
     handler.post(() -> Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show());
   };
 
@@ -70,8 +66,8 @@ public class PS3NetService extends Service {
   }
 
   private void startForegroundNotification() {
+    String channelId = getPackageName();
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      String channelId = getPackageName();
       String channelName = getString(R.string.notification_channel_name);
       NotificationChannel channel = new NotificationChannel(
           channelId, channelName, NotificationManager.IMPORTANCE_LOW);
@@ -80,24 +76,15 @@ public class PS3NetService extends Service {
       channel.setShowBadge(false);
       NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       manager.createNotificationChannel(channel);
-
-      Notification notification = new NotificationCompat.Builder(this, channelId)
-          .setOngoing(true)
-          .setSmallIcon(R.drawable.ic_notification)
-          .setContentTitle(getString(R.string.notification_title))
-          .setPriority(NotificationCompat.PRIORITY_LOW)
-          .setCategory(Notification.CATEGORY_SERVICE)
-          .build();
-      startForeground(NOTIFICATION_ID, notification);
-    } else {
-      Notification notification = new NotificationCompat.Builder(this, "")
-          .setOngoing(true)
-          .setSmallIcon(R.drawable.ic_notification)
-          .setContentTitle(getString(R.string.notification_title))
-          .setPriority(NotificationCompat.PRIORITY_LOW)
-          .build();
-      startForeground(NOTIFICATION_ID, notification);
     }
+    Notification notification = new NotificationCompat.Builder(this, channelId)
+        .setOngoing(true)
+        .setSmallIcon(R.drawable.ic_notification)
+        .setContentTitle(getString(R.string.notification_title))
+        .setPriority(NotificationCompat.PRIORITY_LOW)
+        .setCategory(NotificationCompat.CATEGORY_SERVICE)
+        .build();
+    startForeground(NOTIFICATION_ID, notification);
   }
 
   private void acquireWakeLocks() {
@@ -111,11 +98,7 @@ public class PS3NetService extends Service {
     // Wi-Fi lock keeps the Wi-Fi radio active during sleep
     WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
     if (wm != null) {
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-        wifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, TAG + ":WifiLock");
-      } else {
-        wifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL, TAG + ":WifiLock");
-      }
+      wifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, TAG + ":WifiLock");
       wifiLock.acquire();
     }
   }

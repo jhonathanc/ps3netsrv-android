@@ -10,6 +10,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,11 +48,7 @@ public class MainActivity extends AppCompatActivity {
                         .setMessage(R.string.language_changed_dialog_message)
                         .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                             stopService(new Intent(this, PS3NetService.class));
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                startForegroundService(new Intent(this, PS3NetService.class));
-                            } else {
-                                startService(new Intent(this, PS3NetService.class));
-                            }
+                            ContextCompat.startForegroundService(this, new Intent(this, PS3NetService.class));
                             recreate();
                         }).setNegativeButton(android.R.string.no, null).show();
             } else {

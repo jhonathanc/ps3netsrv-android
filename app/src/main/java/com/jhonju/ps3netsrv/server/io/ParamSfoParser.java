@@ -25,18 +25,18 @@ public class ParamSfoParser {
       return null;
     }
 
-    try {
+    try (IFile ps3GameDir = gameDir.findFile("PS3_GAME")) {
       // Try to find PS3_GAME/PARAM.SFO
-      IFile ps3GameDir = gameDir.findFile("PS3_GAME");
       if (ps3GameDir == null || !ps3GameDir.exists() || !ps3GameDir.isDirectory()) {
         return null;
       }
 
-      IFile paramSfo = ps3GameDir.findFile("PARAM.SFO");
-      if (paramSfo == null || !paramSfo.exists() || !paramSfo.isFile()) {
-        return null;
+      try (IFile paramSfo = ps3GameDir.findFile("PARAM.SFO")) {
+        if (paramSfo == null || !paramSfo.exists() || !paramSfo.isFile()) {
+          return null;
+        }
+        return parseTitleId(paramSfo);
       }
-      return parseTitleId(paramSfo);
     } catch (IOException e) {
       com.jhonju.ps3netsrv.server.utils.FileLogger.logError(e);
       return null;

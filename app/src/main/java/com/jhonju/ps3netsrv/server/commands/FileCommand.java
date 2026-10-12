@@ -25,6 +25,8 @@ public abstract class FileCommand extends AbstractCommand {
   protected final int filePathLength;
   protected String fileName;
   protected String requestedPath;
+  // null: no virtual ISO prefix; true: PS3 image; false: data DVD image.
+  protected Boolean virtualIsoPs3Mode;
 
   public FileCommand(Context ctx, short filePathLength) {
     super(ctx);
@@ -62,7 +64,11 @@ public abstract class FileCommand extends AbstractCommand {
     String path = new String(buffer.array(), StandardCharsets.UTF_8);
 
     // Strip Virtual ISO prefixes if present (based on C++ ps3netsrv implementation)
-    if (path.startsWith("/***PS3***/") || path.startsWith("/***DVD***/")) {
+    if (path.startsWith("/***PS3***/")) {
+      virtualIsoPs3Mode = true;
+      path = path.substring(10);
+    } else if (path.startsWith("/***DVD***/")) {
+      virtualIsoPs3Mode = false;
       path = path.substring(10);
     }
     this.requestedPath = path;

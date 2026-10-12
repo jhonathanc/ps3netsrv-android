@@ -60,9 +60,17 @@ public class OpenFileCommand extends FileCommand {
     String upperPath = requestedPath == null ? "" : requestedPath.toUpperCase(Locale.US);
     boolean isGamesFolder = upperPath.startsWith("/GAMES/") || upperPath.startsWith("GAMES/");
 
-    if (isGamesFolder && file.isDirectory()) {
+    if (virtualIsoPs3Mode != null || (isGamesFolder && file.isDirectory())) {
       try {
-        file = new VirtualIsoFile(file, ctx.getAndroidContext());
+        if (!file.isDirectory()) {
+          throw new IOException("Virtual ISO source must be a directory");
+        }
+        file = new VirtualIsoFile(file, ctx.getAndroidContext(), virtualIsoPs3Mode);
+      } catch (IOException e) {
+        FileLogger.logError(e);
+        ctx.setFile(null);
+        send(new OpenFileResult());
+        throw new PS3NetSrvException(e.getMessage());
       } finally {
         Context.closeFiles(files);
       }

@@ -111,15 +111,23 @@ public class VirtualIsoFile implements IFile {
   private static final Comparator<FileEntry> ENTRY_ORDER = Comparator.comparing(file -> file.name, NAME_ORDER);
 
   public VirtualIsoFile(IFile rootDir, android.content.Context context) throws IOException {
+    this(rootDir, context, null);
+  }
+
+  /** Explicit protocol mode, or null to retain automatic PS3_GAME detection. */
+  public VirtualIsoFile(IFile rootDir, android.content.Context context, Boolean requestedPs3Mode) throws IOException {
     if (rootDir == null) {
       throw new IOException("root dir should not be null");
     }
     this.context = context;
     this.rootFile = rootDir;
 
-    // Detect PS3 mode by checking for PS3_GAME/PARAM.SFO
-    String detectedTitleId = ParamSfoParser.getTitleId(rootDir);
-    this.ps3Mode = (detectedTitleId != null);
+    // The original server uses the protocol prefix to select DVD or PS3 mode.
+    String detectedTitleId = Boolean.FALSE.equals(requestedPs3Mode) ? null : ParamSfoParser.getTitleId(rootDir);
+    if (Boolean.TRUE.equals(requestedPs3Mode) && detectedTitleId == null) {
+      throw new IOException("Missing PS3 title ID for virtual PS3 ISO");
+    }
+    this.ps3Mode = requestedPs3Mode != null ? requestedPs3Mode : detectedTitleId != null;
     this.titleId = detectedTitleId;
 
     if (ps3Mode) {

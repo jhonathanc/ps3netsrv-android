@@ -35,6 +35,65 @@ public class FileRegressionTest extends TestSupport {
     }
     return entries;
   }
+  static void virtualDirectoryMounts(Path base) throws Exception {
+    Path share=directory(base,"virtual-mounts");
+    Path pkg=directory(share,"PKG");
+    byte[] payload={31,32,33,34};Files.write(pkg.resolve("test.pkg"),payload);
+    Path game=directory(share,"GAMES/Test"),ps3=directory(game,"PS3_GAME");
+    byte[] sfo=new byte[55];
+    ByteBuffer.wrap(sfo).order(ByteOrder.LITTLE_ENDIAN)
+        .putInt(0,0x46535000).putInt(8,36).putInt(12,45).putInt(16,1).putInt(24,10);
+    System.arraycopy("TITLE_ID\0".getBytes(StandardCharsets.US_ASCII),0,sfo,36,9);
+    System.arraycopy("BCES00104\0".getBytes(StandardCharsets.US_ASCII),0,sfo,45,10);
+    Files.write(ps3.resolve("PARAM.SFO"),sfo);
+    for(boolean saf:new boolean[]{false,true}) {
+      String root=(saf?"content:":"")+share;
+      for(String path:new String[]{"/***DVD***/PKG","/***DVD***/PKG\0",
+          "/***DVD***/GAMES/Test","/***PS3***/GAMES/Test","/GAMES/Test"}) {
+        MemorySocket socket=new MemorySocket(path);
+        try(Context ctx=context(socket,root)) {
+          new OpenFileCommand(ctx,(short)path.getBytes(StandardCharsets.UTF_8).length).executeTask();
+          byte[] opened=socket.output.toByteArray();
+          check(opened.length==16,"virtual mount OPEN retains its 16-byte reply");
+          long size=ByteBuffer.wrap(opened).getLong();
+          check(size>=17*2048&&size%2048==0,"virtual mount exposes sector-aligned ISO size: "+path+", SAF="+saf);
+          socket.output.reset();
+          new ReadFileCriticalCommand(ctx,(int)size,0).executeTask();
+          byte[] image=socket.output.toByteArray();
+          check(image.length==size&&new String(image,16*2048+1,5,StandardCharsets.US_ASCII).equals("CD001"),
+              "virtual mount serves a readable ISO9660 descriptor: "+path+", SAF="+saf);
+          String system=new String(image,2048,12,StandardCharsets.US_ASCII);
+          check(path.startsWith("/***DVD***/")?!system.equals("PlayStation3"):system.equals("PlayStation3"),
+              "explicit DVD/PS3 mode is respected while plain GAMES retains detection: "+path);
+          if(path.contains("PKG")) {
+            int lba=ByteBuffer.wrap(image).order(ByteOrder.LITTLE_ENDIAN).getInt(158+16*2048);
+            int record=lba*2048;
+            record+=image[record]&255;record+=image[record]&255;
+            int dataLba=ByteBuffer.wrap(image).order(ByteOrder.LITTLE_ENDIAN).getInt(record+2);
+            check(Arrays.equals(Arrays.copyOfRange(image,dataLba*2048,dataLba*2048+payload.length),payload),
+                "mounted PKG content matches the original bytes, SAF="+saf);
+          }
+        }
+        check(android.os.ParcelFileDescriptor.openCount==0,"virtual mount releases SAF descriptors");
+      }
+      try(Context ctx=context(new MemorySocket("/PKG"),root)) {
+        Set<IFile> files=new ProbeCommand(ctx,"/PKG").resolve();ctx.setFile(files);
+        check(files.iterator().next().isDirectory(),"ordinary PKG lookup remains a directory, SAF="+saf);
+      }
+      for(String path:new String[]{"/***PS3***/PKG","/***DVD***/PKG/test.pkg"}) {
+        MemorySocket socket=new MemorySocket(path);
+        try(Context ctx=context(socket,root)) {
+          fails(com.jhonju.ps3netsrv.server.exceptions.PS3NetSrvException.class,
+              ()->new OpenFileCommand(ctx,(short)path.length()).executeTask(),
+              "invalid virtual ISO source fails OPEN: "+path+", SAF="+saf);
+          byte[] reply=socket.output.toByteArray();
+          check(reply.length==16&&ByteBuffer.wrap(reply).getLong()==-1&&ctx.getFile()==null,
+              "invalid virtual ISO source returns the normal OPEN failure response");
+        }
+        check(android.os.ParcelFileDescriptor.openCount==0,"failed virtual mount releases SAF descriptors");
+      }
+    }
+  }
   public static void main(String[] args) throws Exception {
     Path base=Files.createTempDirectory(Paths.get(args[0]),"files-");
     Path first=directory(base,"first"),second=directory(base,"first-backup");
@@ -134,5 +193,6 @@ public class FileRegressionTest extends TestSupport {
       check(Arrays.equals(critical(encrypted,2048,4096),plain),"Redump decryption remains correct (SAF="+saf+")");
     }
     check(android.os.ParcelFileDescriptor.openCount==0,"all provider descriptors released");
+    virtualDirectoryMounts(base);
   }
 }

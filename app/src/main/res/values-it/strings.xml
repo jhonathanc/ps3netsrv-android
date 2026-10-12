@@ -78,4 +78,8 @@
     <string name="settings_log_errors">Registra errori</string>
     <string name="settings_log_commands">Registra comandi</string>
     <string name="error_invalid_path">Errore: Percorso non valido o dannoso richiesto</string>
+    <string name="server_starting">Avvio del server…</string>
+    <string name="server_stopping">Arresto del server…</string>
+    <string name="allow_background_operation">Consenti esecuzione in background</string>
+    <string name="battery_optimization_explanation">Per mantenere il server disponibile con lo schermo bloccato, consenti l’uso della batteria senza restrizioni. Questo consuma più batteria mentre il server è in esecuzione.</string>
 </resources>

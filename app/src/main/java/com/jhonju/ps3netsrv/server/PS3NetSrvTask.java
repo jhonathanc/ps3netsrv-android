@@ -9,6 +9,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.Set;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * PS3NetSrvTask handles the main server loop for the ps3netsrv protocol.
@@ -29,8 +31,10 @@ public class PS3NetSrvTask implements Runnable {
   private final int maxConnections;
   private final EListType listType;
   private final Set<String> filterAddresses;
-  private ServerSocket serverSocket;
+  private volatile ServerSocket serverSocket;
   private volatile boolean isRunning = true;
+  private Runnable onStarted;
+  private final Set<ContextHandler> clients = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final android.content.Context androidContext;
 
   /**
@@ -40,6 +44,11 @@ public class PS3NetSrvTask implements Runnable {
    */
   public boolean isRunning() {
     return isRunning;
+  }
+
+  /** Set before submitting this task; invoked only after the listening port is bound. */
+  public void setOnStarted(Runnable onStarted) {
+    this.onStarted = onStarted;
   }
 
   /**
@@ -89,14 +98,21 @@ public class PS3NetSrvTask implements Runnable {
   @Override
   public void run() {
     try {
-      this.serverSocket = new ServerSocket();
-      this.serverSocket.setReuseAddress(true);
-      this.serverSocket.bind(new java.net.InetSocketAddress(port));
-      FileLogger.logInfo("PS3NetSrv server started listening on port: " + port);
+      final ServerSocket listener;
+      synchronized (this) {
+        // A stop can arrive before the executor begins this task.
+        if (!isRunning) return;
+        listener = new ServerSocket();
+        serverSocket = listener;
+        listener.setReuseAddress(true);
+        listener.bind(new java.net.InetSocketAddress(port));
+        FileLogger.logInfo("PS3NetSrv server started listening on port: " + port);
+        if (onStarted != null) onStarted.run();
+      }
 
       while (isRunning) {
         try {
-          Socket clientSocket = serverSocket.accept();
+          Socket clientSocket = listener.accept();
           String hostAddress = clientSocket.getInetAddress().getHostAddress();
 
           if (!allowIncomingConnection(hostAddress)) {
@@ -110,23 +126,33 @@ public class PS3NetSrvTask implements Runnable {
           }
 
           FileLogger.logInfo("Client connected from IP: " + hostAddress);
-          ContextHandler handler = new ContextHandler(clientSocket, folderPaths, contentResolver,
-              exceptionHandler, androidContext);
-          if (!handler.startIfCapacity(maxConnections)) {
-            FileLogger.logWarning("Connection limit reached (" + maxConnections + "). Rejecting " + hostAddress);
-            closeSocket(clientSocket);
-            continue;
+          synchronized (this) {
+            if (!isRunning) {
+              closeSocket(clientSocket);
+              break;
+            }
+            ContextHandler handler = new ContextHandler(clientSocket, folderPaths, contentResolver,
+                exceptionHandler, androidContext, clients::remove);
+            clients.add(handler);
+            if (!handler.startIfCapacity(maxConnections)) {
+              clients.remove(handler);
+              FileLogger.logWarning("Connection limit reached (" + maxConnections + "). Rejecting " + hostAddress);
+              closeSocket(clientSocket);
+            }
           }
         } catch (IOException e) {
           if (isRunning) {
             FileLogger.logError("Error accepting client connection", e);
             exceptionHandler.uncaughtException(null, e);
           }
+          break;
         }
       }
     } catch (IOException e) {
-      FileLogger.logError("Failed to start server on port " + port, e);
-      exceptionHandler.uncaughtException(null, e);
+      if (isRunning) {
+        FileLogger.logError("Failed to start server on port " + port, e);
+        exceptionHandler.uncaughtException(null, e);
+      }
     } finally {
       shutdown();
     }
@@ -170,7 +196,7 @@ public class PS3NetSrvTask implements Runnable {
    * 3. Logs the shutdown event
    * 4. Handles any IOException that occurs during socket closure
    */
-  public void shutdown() {
+  public synchronized void shutdown() {
     isRunning = false;
     try {
       if (serverSocket != null && !serverSocket.isClosed()) {
@@ -181,6 +207,8 @@ public class PS3NetSrvTask implements Runnable {
       FileLogger.logError("Error closing server socket", e);
     } finally {
       serverSocket = null;
+      for (ContextHandler client : clients) client.shutdown();
+      clients.clear();
     }
   }
 }

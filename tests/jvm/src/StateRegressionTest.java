@@ -102,8 +102,75 @@ public class StateRegressionTest {
       } finally {task.shutdown();server.join(3000);}
     }
   }
+
+  static PS3NetSrvTask newTask(int port, Thread.UncaughtExceptionHandler errors) {
+    return new PS3NetSrvTask(port, Collections.emptyList(), 0, Collections.emptySet(),
+        EListType.LIST_TYPE_NONE, errors, new android.content.ContentResolver(), new android.content.Context());
+  }
+
+  static void serverLifecycle() throws Exception {
+    java.util.concurrent.atomic.AtomicInteger started = new java.util.concurrent.atomic.AtomicInteger();
+    java.util.concurrent.atomic.AtomicInteger errors = new java.util.concurrent.atomic.AtomicInteger();
+    PS3NetSrvTask cancelled = newTask(0, (t, e) -> errors.incrementAndGet());
+    cancelled.setOnStarted(started::incrementAndGet);
+    cancelled.shutdown();
+    Thread cancelledThread = new Thread(cancelled);
+    cancelledThread.start(); cancelledThread.join(3000);
+    expect("stop before executor starts never binds", started.get(), 0);
+    expect("cancelled task exits", cancelledThread.isAlive(), false);
+
+    try (ServerSocket occupied = new ServerSocket(0)) {
+      PS3NetSrvTask failed = newTask(occupied.getLocalPort(), (t, e) -> errors.incrementAndGet());
+      failed.setOnStarted(started::incrementAndGet);
+      Thread failedThread = new Thread(failed);
+      failedThread.start(); failedThread.join(3000);
+      expect("bind failure never reports started", started.get(), 0);
+      expect("bind failure exits", failedThread.isAlive(), false);
+      expect("bind failure clears running flag", failed.isRunning(), false);
+      expect("bind failure reported once", errors.get(), 1);
+    }
+
+    Field serverField = PS3NetSrvTask.class.getDeclaredField("serverSocket");
+    serverField.setAccessible(true);
+    PS3NetSrvTask live = newTask(0, (t, e) -> errors.incrementAndGet());
+    CountDownLatch listening = new CountDownLatch(1);
+    live.setOnStarted(listening::countDown);
+    Thread server = new Thread(live);
+    server.start();
+    try {
+      if (!listening.await(3, TimeUnit.SECONDS)) throw new AssertionError("listener did not start");
+      int port = ((ServerSocket) serverField.get(live)).getLocalPort();
+      try (Socket client = new Socket("127.0.0.1", port)) {
+        for (int i = 0; i < 500 && ContextHandler.getSimultaneousConnections() == 0; i++) Thread.sleep(2);
+        expect("live server owns client", ContextHandler.getSimultaneousConnections(), 1);
+        live.shutdown(); server.join(3000);
+        client.setSoTimeout(3000);
+        expect("stop closes accepted client socket", client.getInputStream().read(), -1);
+        for (int i = 0; i < 500 && ContextHandler.getSimultaneousConnections() != 0; i++) Thread.sleep(2);
+        expect("stop releases client slot without client disconnect", ContextHandler.getSimultaneousConnections(), 0);
+        expect("stop unblocks listener", server.isAlive(), false);
+        expect("intentional stop reports no errors", errors.get(), 1);
+        try (ServerSocket replacement = new ServerSocket()) {
+          replacement.setReuseAddress(true);
+          replacement.bind(new InetSocketAddress(port));
+          expect("stopped port can restart immediately", replacement.isBound(), true);
+        }
+      }
+    } finally { live.shutdown(); server.join(3000); }
+
+    for (int i = 0; i < 100; i++) {
+      PS3NetSrvTask racing = newTask(0, (t, e) -> errors.incrementAndGet());
+      Thread worker = new Thread(racing);
+      worker.start(); racing.shutdown(); worker.join(3000);
+      if (worker.isAlive() || racing.isRunning() || serverField.get(racing) != null) {
+        throw new AssertionError("start/stop race leaked listener at round " + i);
+      }
+    }
+    expect("100 immediate start/stop races report no errors", errors.get(), 1);
+  }
+
   public static void main(String[]args) throws Exception {
     migration();filtering();
-    race();admissionControls();
+    race();admissionControls();serverLifecycle();
   }
 }

@@ -95,4 +95,8 @@
     <string name="settings_log_commands">Log Commands</string>
     <string name="error_invalid_path">Error: Invalid or malicious path requested</string>
     <string name="str_hifen" translatable="false">-</string>
+    <string name="server_starting">Starting server…</string>
+    <string name="server_stopping">Stopping server…</string>
+    <string name="allow_background_operation">Allow background operation</string>
+    <string name="battery_optimization_explanation">To keep the server available while the screen is locked, allow unrestricted battery use. This uses more battery while the server is running.</string>
 </resources>

@@ -89,4 +89,8 @@
     <string name="settings_log_errors">エラーを記録</string>
     <string name="settings_log_commands">コマンドを記録</string>
     <string name="error_invalid_path">エラー：無効または悪意のあるパスが要求されました</string>
+    <string name="server_starting">Starting server…</string>
+    <string name="server_stopping">Stopping server…</string>
+    <string name="allow_background_operation">Allow background operation</string>
+    <string name="battery_optimization_explanation">To keep the server available while the screen is locked, allow unrestricted battery use. This uses more battery while the server is running.</string>
 </resources>

@@ -1,16 +1,12 @@
 package com.jhonju.ps3netsrv.app;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
-import android.net.*;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
 
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,9 +29,6 @@ public class MainActivity extends AppCompatActivity {
         // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            setupNetworkMonitoring();
-        }
     }
 
     @Override
@@ -47,41 +40,13 @@ public class MainActivity extends AppCompatActivity {
                 new AlertDialog.Builder(this).setTitle(R.string.app_name)
                         .setMessage(R.string.language_changed_dialog_message)
                         .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                            stopService(new Intent(this, PS3NetService.class));
-                            ContextCompat.startForegroundService(this, new Intent(this, PS3NetService.class));
+                            PS3NetService.restart(this);
                             recreate();
                         }).setNegativeButton(android.R.string.no, null).show();
             } else {
                 recreate();
             }
         }
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void setupNetworkMonitoring() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null)
-            return;
-
-        NetworkRequest request = new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
-                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build();
-        // Available since API 21; callbacks run on ConnectivityManager's internal Handler.
-        cm.registerNetworkCallback(request, new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(Network network) {
-                try {
-                    NetworkCapabilities caps = cm.getNetworkCapabilities(network);
-                    if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            cm.bindProcessToNetwork(network);
-                        } else {
-                            ConnectivityManager.setProcessDefaultNetwork(network);
-                        }
-                    }
-                } catch (Exception ignored) {
-                }
-            }
-        });
     }
 
     @Override

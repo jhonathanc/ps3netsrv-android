@@ -22,12 +22,12 @@ This is an Android implementation of the `ps3netsrv` server, allowing you to str
 - **Security:**
   - **IP Whitelist/Blacklist:** Restrict access to specific IP addresses.
   - **Read-Only Mode:** Prevent clients from deleting or modifying files on your device.
-- **Persistent Service:** Option to keep the server running in the background with a persistent notification (Android 13+ supported).
+- **Persistent Service:** Keep the server running independently of screen rotation, with a foreground notification and an option to allow background operation during prolonged screen-off idle.
 - **Multilingual:** Available in English, Portuguese, Spanish, Italian and Ryukyuan.
 
 ## How to Use
 
-1.  **Grant Permissions:** Upon first launch, grant the necessary storage permissions so the app can access your game files. On Android 13+, also grant notification permissions to ensure the service runs reliably in the background.
+1.  **Grant Permissions:** Grant the necessary storage permissions so the app can access your game files. On Android 13+, allow notifications when starting the server so its background notification and Stop action are visible.
 2.  **Add Folders:**
     - Tap "Add folder" (or "Adicionar pasta").
     - Navigate to the directory containing your PS3 content (e.g., `GAMES`, `PS3ISO`, `DVDISO`).
@@ -41,6 +41,7 @@ This is an Android implementation of the `ps3netsrv` server, allowing you to str
     - Return to the main screen.
     - Tap **Start Server** (Iniciar servidor).
     - The status will update to show the running port and IP address.
+    - On Android 6+, tap **Allow background operation** and accept the system battery prompt to keep the server available during prolonged screen-off idle. This uses more battery while running; some devices also require unrestricted background use in their app settings.
 5.  **Connect from PS3:**
     - On your PS3 (running WebMAN MOD or multiMAN), configure the `ps3netsrv` settings to point to your Android device's IP address and the port you configured (default 38008).
 
@@ -102,6 +103,8 @@ The console will see and mount them as a single, complete ISO.
 The app supports Android API 14 and newer, using Java 8 language features and
 core library desugaring. See [the compatibility review](docs/android-compatibility.md)
 for build requirements, retained API guards and validation commands.
+See [server lifecycle and battery settings](docs/server-lifecycle.md) for background
+operation, recovery behavior and device validation.
 
 
 ## About

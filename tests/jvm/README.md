@@ -34,3 +34,8 @@ sizes across multiple roots, and trailing NUL path normalization.
 The Android `DesugaringCompatibilityTest` exercises the packaged collection
 backports, default interface methods and automatic resource cleanup; see
 [Android compatibility](../../docs/android-compatibility.md) for device checks.
+
+Server lifecycle regressions include cancellation before the listener starts,
+occupied-port failure, closing idle accepted clients on stop, immediate port reuse
+and 100 immediate start/stop races. See [service/device validation](../../docs/server-lifecycle.md)
+for screen recreation, background execution and Doze checks.

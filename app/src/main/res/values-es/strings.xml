@@ -80,4 +80,8 @@
     <string name="settings_log_errors">Registrar errores</string>
     <string name="settings_log_commands">Registrar comandos</string>
     <string name="error_invalid_path">Error: Ruta inválida o maliciosa solicitada</string>
+    <string name="server_starting">Iniciando servidor…</string>
+    <string name="server_stopping">Deteniendo servidor…</string>
+    <string name="allow_background_operation">Permitir ejecución en segundo plano</string>
+    <string name="battery_optimization_explanation">Para mantener el servidor disponible con la pantalla bloqueada, permite el uso de batería sin restricciones. Esto consume más batería mientras el servidor está en ejecución.</string>
 </resources>

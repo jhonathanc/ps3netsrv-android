@@ -224,8 +224,7 @@ public class SettingsActivity extends AppCompatActivity {
             showMessage(view, getString(R.string.saveSuccess));
 
             if (PS3NetService.isRunning()) {
-                stopService(new Intent(this, PS3NetService.class));
-                ContextCompat.startForegroundService(this, new Intent(this, PS3NetService.class));
+                PS3NetService.restart(this);
             }
         }
     }

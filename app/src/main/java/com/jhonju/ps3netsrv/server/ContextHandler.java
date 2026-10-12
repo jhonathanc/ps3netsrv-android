@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 public class ContextHandler extends Thread {
   private static final byte IDX_OP_CODE = 0;
@@ -42,6 +43,7 @@ public class ContextHandler extends Thread {
   private final android.content.Context androidContext;
   private static final AtomicInteger simultaneousConnections = new AtomicInteger(0);
   private boolean connectionReserved;
+  private final Consumer<ContextHandler> onClosed;
 
   @Override
   public synchronized void start() {
@@ -90,15 +92,26 @@ public class ContextHandler extends Thread {
     return simultaneousConnections.get();
   }
 
+  void shutdown() {
+    closeSocket();
+  }
+
   public ContextHandler(Socket socket, List<String> folderPaths,
       ContentResolver contentResolver, Thread.UncaughtExceptionHandler exceptionHandler,
       android.content.Context androidContext) {
+    this(socket, folderPaths, contentResolver, exceptionHandler, androidContext, null);
+  }
+
+  ContextHandler(Socket socket, List<String> folderPaths,
+      ContentResolver contentResolver, Thread.UncaughtExceptionHandler exceptionHandler,
+      android.content.Context androidContext, Consumer<ContextHandler> onClosed) {
     super();
     setUncaughtExceptionHandler(exceptionHandler);
     this.socket = socket;
     this.folderPaths = folderPaths;
     this.contentResolver = contentResolver;
     this.androidContext = androidContext;
+    this.onClosed = onClosed;
   }
 
   @Override
@@ -119,7 +132,9 @@ public class ContextHandler extends Thread {
         }
       }
     } catch (IOException e) {
-      Objects.requireNonNull(getUncaughtExceptionHandler()).uncaughtException(this, e);
+      if (!socket.isClosed()) {
+        Objects.requireNonNull(getUncaughtExceptionHandler()).uncaughtException(this, e);
+      }
     } finally {
       try {
         if (ctx != null) {
@@ -129,6 +144,7 @@ public class ContextHandler extends Thread {
         }
       } finally {
         releaseConnection();
+        if (onClosed != null) onClosed.accept(this);
       }
     }
   }

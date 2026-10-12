@@ -89,4 +89,8 @@
     <string name="settings_log_errors">エラーを記録</string>
     <string name="settings_log_commands">コマンドを記録</string>
     <string name="error_invalid_path">エラー：無効または悪意のあるパスが要求されました</string>
+    <string name="server_starting">サーバーを起動中…</string>
+    <string name="server_stopping">サーバーを停止中…</string>
+    <string name="allow_background_operation">バックグラウンド実行を許可</string>
+    <string name="battery_optimization_explanation">画面がロックされている間もサーバーを利用できるように、バッテリー使用の制限を解除してください。サーバーの実行中はバッテリー消費が増加します。</string>
 </resources>

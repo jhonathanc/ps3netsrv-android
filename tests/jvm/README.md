@@ -21,6 +21,15 @@ root priority and traversal, multipart ISO reads, virtual ISO payloads, aligned
 Redump decryption, settings migration, IP filters, and concurrent admission
 (100 rounds of 32 clients with limit 1, plus unlimited and limit 3).
 
+A real TCP session opens a file, pauses beyond an accelerated idle deadline,
+then verifies exact critical-read bytes and cleanup after disconnect. Mounted
+connections must remain usable while idle; stopping the server still closes them.
+
+Virtual directory mounts exercise the actual OPEN_FILE and critical-read commands
+with `/***DVD***/PKG` and `/***PS3***/GAMES/...`, including SAF roots, ISO9660
+descriptors, package payloads, explicit DVD/PS3 selection, trailing NUL paths and
+failure replies for invalid sources. Plain GAMES paths retain automatic detection.
+
 These tests do not replace an Android APK build, Android lint, or device testing.
 Changing the stub SDK level exercises guarded branches, not the Android runtime.
 The fake SAF provider does not model permission revocation or all provider quirks.

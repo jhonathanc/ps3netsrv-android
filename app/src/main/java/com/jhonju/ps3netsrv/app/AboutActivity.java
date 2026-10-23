@@ -1,5 +1,6 @@
 package com.jhonju.ps3netsrv.app;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,9 +17,15 @@ public class AboutActivity extends AppCompatActivity {
   private static final int COMMIT_HASH_LENGTH = 7;
 
   @Override
+  protected void attachBaseContext(Context newBase) {
+    super.attachBaseContext(com.jhonju.ps3netsrv.app.utils.LocaleHelper.onAttach(newBase));
+  }
+
+  @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_about);
+    setTitle(R.string.title_activity_about);
 
     TextView tvCommitHash = findViewById(R.id.tvCommitHash);
     tvCommitHash.setText(getCommitHash());

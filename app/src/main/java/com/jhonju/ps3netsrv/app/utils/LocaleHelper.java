@@ -7,6 +7,8 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 
+import com.jhonju.ps3netsrv.app.Language;
+
 import java.util.Locale;
 
 public class LocaleHelper {
@@ -14,15 +16,15 @@ public class LocaleHelper {
     private static final String SELECTED_LANGUAGE = "Locale.Helper.Selected.Language";
 
     public static Context onAttach(Context context) {
-        String lang = getPersistedData(context, Locale.getDefault().getLanguage());
-        return setLocale(context, lang);
+        return setLocale(context, getLanguage(context));
     }
 
     public static String getLanguage(Context context) {
-        return getPersistedData(context, Locale.getDefault().getLanguage());
+        return Language.fromCode(getPersistedData(context, Locale.getDefault().getLanguage())).getCode();
     }
 
     public static Context setLocale(Context context, String language) {
+        language = Language.fromCode(language).getCode();
         persist(context, language);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -46,10 +48,10 @@ public class LocaleHelper {
 
     @TargetApi(Build.VERSION_CODES.N)
     private static Context updateResources(Context context, String language) {
-        Locale locale = new Locale(language);
+        Locale locale = Language.fromCode(language).getLocale();
         Locale.setDefault(locale);
 
-        Configuration configuration = context.getResources().getConfiguration();
+        Configuration configuration = new Configuration(context.getResources().getConfiguration());
         configuration.setLocale(locale);
         configuration.setLayoutDirection(locale);
 
@@ -57,7 +59,13 @@ public class LocaleHelper {
     }
 
     private static Context updateResourcesLegacy(Context context, String language) {
-        Locale locale = new Locale(language);
+        Locale locale = Language.fromCode(language).getLocale();
+        // Android before 5.0 cannot match three-letter resource language codes.
+        // values-ja contains the same Ryukyuan strings solely for these devices.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP
+                && Language.fromCode(language) == Language.RYUKYUAN) {
+            locale = new Locale("ja");
+        }
         Locale.setDefault(locale);
 
         Resources resources = context.getResources();

@@ -1,12 +1,13 @@
 <resources>
-    <string-array name="languages">
+    <string-array name="languages" translatable="false">
         <item>Italiano</item>
         <item>English</item>
         <item>Español</item>
         <item>Português</item>
         <item>Ryukyuan</item>
+        <item>Basa Jawa</item>
     </string-array>
-    <string name="app_name">ps3netsrv</string>
+    <string name="app_name" translatable="false">ps3netsrv</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label" translatable="false">First Fragment</string>
@@ -29,7 +30,7 @@
     <string name="start_server">Start server</string>
     <string name="stop_server">Stop server</string>
     <string name="server_stopped">Server is stopped</string>
-    <string name="server_running">Server is running at %s\nport %d\nfolders: %s</string>
+    <string name="server_running">Server is running at %1$s\nport %2$d\nfolders: %3$s</string>
     <string name="read_external_permission_error">You need to grant permission to read storage first</string>
     <string name="listType">List type:</string>
     <string name="rbNone">None</string>
@@ -37,11 +38,11 @@
     <string name="rbBlocked">Blocked</string>
     <string name="ipAddress">IP address:</string>
     <string name="add">Add</string>
-    <string name="ipRemoved">Removed IP: </string>
-    <string name="folderRemoved">Removed folder: </string>
+    <string name="ipRemoved">"Removed IP: "</string>
+    <string name="folderRemoved">"Removed folder: "</string>
     <string name="undo">Undo</string>
     <string name="select">Add folder</string>
-    <string name="empty_response_error">Tried to send an empty response to %s (method %s)</string>
+    <string name="empty_response_error">Tried to send an empty response to %1$s (method %2$s)</string>
     <string name="readOnly">Read only</string>
     <string name="maxConnectedClients">Max connections (0 means unlimited):</string>
     <string name="negativeMaxConnectedClients">Max connections can\'t be negative.</string>
@@ -76,7 +77,7 @@
     <string name="error_write_file_null">Error writing file: Content is null</string>
     <string name="version_format">Version: %s</string>
     <string name="action_ok" translatable="false">OK</string>
-    <string name="connection_disabled">The ethernet/wifi connection is disabled</string>
+    <string name="connection_disabled">The Ethernet/Wi-Fi connection is disabled</string>
     <string name="error_occurred">An error occurred: %s</string>
     <string name="error_redump_key_invalid">Redump key is invalid</string>
     <string name="error_redump_key_hex_short">Redump key hex string too short: %1$d</string>
@@ -91,8 +92,8 @@
     <string name="error_connection_limit_reached">Connection limit reached</string>
     <string name="error_invalid_opcode">Invalid opCode: %d</string>
     <string name="error_opcode_not_implemented">OpCode not implemented: %s</string>
-    <string name="settings_log_errors">Log Errors</string>
-    <string name="settings_log_commands">Log Commands</string>
+    <string name="settings_log_errors">Log errors</string>
+    <string name="settings_log_commands">Log commands</string>
     <string name="error_invalid_path">Error: Invalid or malicious path requested</string>
     <string name="str_hifen" translatable="false">-</string>
     <string name="server_starting">Starting server…</string>

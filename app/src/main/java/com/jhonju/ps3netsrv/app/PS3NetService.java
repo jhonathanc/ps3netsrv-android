@@ -22,6 +22,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.jhonju.ps3netsrv.R;
+import com.jhonju.ps3netsrv.app.utils.LocaleHelper;
 import com.jhonju.ps3netsrv.server.PS3NetSrvTask;
 import com.jhonju.ps3netsrv.server.enums.EListType;
 import com.jhonju.ps3netsrv.server.utils.FileLogger;
@@ -48,7 +49,7 @@ public class PS3NetService extends Service {
   private final Thread.UncaughtExceptionHandler exceptionHandler = (thread, throwable) -> {
     FileLogger.logError("Server error", throwable);
     mainHandler.post(() -> Toast.makeText(getApplicationContext(),
-        getString(R.string.error_occurred, throwable.getMessage()), Toast.LENGTH_LONG).show());
+        LocaleHelper.onAttach(this).getString(R.string.error_occurred, throwable.getMessage()), Toast.LENGTH_LONG).show());
   };
 
   public static LiveData<ServerState> getState() {
@@ -125,10 +126,11 @@ public class PS3NetService extends Service {
   }
 
   private void startForegroundNotification() {
+    Context localized = LocaleHelper.onAttach(this);
     String channelId = getPackageName();
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       NotificationChannel channel = new NotificationChannel(channelId,
-          getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_LOW);
+          localized.getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_LOW);
       channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
       channel.setShowBadge(false);
       NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -143,9 +145,9 @@ public class PS3NetService extends Service {
     Notification notification = new NotificationCompat.Builder(this, channelId)
         .setOngoing(true)
         .setSmallIcon(R.drawable.ic_notification)
-        .setContentTitle(getString(R.string.notification_title))
+        .setContentTitle(localized.getString(R.string.notification_title))
         .setContentIntent(open)
-        .addAction(R.drawable.ic_notification, getString(R.string.stop_server), stop)
+        .addAction(R.drawable.ic_notification, localized.getString(R.string.stop_server), stop)
         .setPriority(NotificationCompat.PRIORITY_LOW)
         .setCategory(NotificationCompat.CATEGORY_SERVICE)
         .build();

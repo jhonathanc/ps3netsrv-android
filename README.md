@@ -23,7 +23,7 @@ This is an Android implementation of the `ps3netsrv` server, allowing you to str
   - **IP Whitelist/Blacklist:** Restrict access to specific IP addresses.
   - **Read-Only Mode:** Prevent clients from deleting or modifying files on your device.
 - **Persistent Service:** Keep the server running independently of screen rotation, with a foreground notification and an option to allow background operation during prolonged screen-off idle.
-- **Multilingual:** Available in English, Portuguese, Spanish, Italian and Ryukyuan.
+- **Multilingual:** Available in English, Portuguese, Spanish, Italian, Ryukyuan (`ryu`) and Javanese (`jv`).
 
 ## How to Use
 

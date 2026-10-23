@@ -10,6 +10,51 @@ import com.jhonju.ps3netsrv.server.io.*;
 import com.jhonju.ps3netsrv.server.utils.BinaryUtils;
 
 public class ProtocolRegressionTest extends TestSupport {
+  static class ShortDeadlineSocket extends Socket {
+    public void setSoTimeout(int timeout) throws SocketException {
+      // Accelerate positive idle deadlines without changing blocking semantics.
+      super.setSoTimeout(timeout == 0 ? 0 : 60);
+    }
+  }
+  static class ShortDeadlineListener extends ServerSocket {
+    ShortDeadlineListener() throws IOException { super(0); }
+    public Socket accept() throws IOException {
+      Socket socket = new ShortDeadlineSocket();
+      implAccept(socket);
+      return socket;
+    }
+  }
+  static void idleMountedConnection(Path base) throws Exception {
+    ContextHandler worker = null;
+    java.util.concurrent.atomic.AtomicReference<Throwable> failure = new java.util.concurrent.atomic.AtomicReference<>();
+    try (ServerSocket listener = new ShortDeadlineListener();
+         Socket client = new Socket("127.0.0.1", listener.getLocalPort());
+         Socket accepted = listener.accept()) {
+      client.setSoTimeout(3000);
+      worker = new ContextHandler(accepted, Collections.singletonList(base.toString()),
+          new android.content.ContentResolver(), (t,e) -> failure.set(e), new android.content.Context());
+      worker.start();
+      byte[] path = "/small.bin".getBytes("UTF-8");
+      OutputStream out = client.getOutputStream();
+      DataInputStream in = new DataInputStream(client.getInputStream());
+      out.write(ByteBuffer.allocate(16).putShort((short)0x1224).putShort((short)path.length).array());
+      out.write(path); out.flush();
+      byte[] reply = new byte[16]; in.readFully(reply);
+      check(ByteBuffer.wrap(reply).getLong() == 3, "mounted file opens before idle pause");
+      Thread.sleep(200);
+      out.write(ByteBuffer.allocate(16).putShort((short)0x1225).putShort((short)0).putInt(3).putLong(0).array());
+      out.flush();
+      byte[] payload = new byte[3];
+      try { in.readFully(payload); }
+      catch (IOException e) { throw new AssertionError("Mounted connection closed during an idle pause", failure.get()); }
+      check(Arrays.equals(payload, new byte[]{1,2,3}), "mounted file still reads exact bytes after idle pause");
+      client.shutdownOutput(); worker.join(3000);
+      check(!worker.isAlive() && ContextHandler.getSimultaneousConnections() == 0 && failure.get() == null,
+          "idle mounted connection releases worker and file on disconnect");
+    } finally {
+      if (worker != null) worker.join(3000);
+    }
+  }
   static void socketFailure(Path base) throws Exception {
     try(ServerSocket listener=new ServerSocket(0);
         Socket client=new Socket("127.0.0.1",listener.getLocalPort());
@@ -85,6 +130,7 @@ public class ProtocolRegressionTest extends TestSupport {
       fails(EOFException.class, () -> new WriteFileCommand(ctx, (short)10, 8).executeTask(), "truncated write payload is rejected");
       check(Arrays.equals(Files.readAllBytes(small), new byte[]{1,2,3}), "truncated write preserves file contents");
     }
+    idleMountedConnection(base);
     socketFailure(base);
     byte[] complete=new byte[]{'/','s','m','a','l','l','.','b','i','n',9,8};
     MemorySocket writeSocket=new MemorySocket(complete);

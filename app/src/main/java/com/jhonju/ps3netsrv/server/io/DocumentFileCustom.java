@@ -104,7 +104,7 @@ public class DocumentFileCustom implements IFile {
     byte[] sec0sec1 = null;
 
     try {
-      if (documentFile != null && documentFile.isFile()) {
+      if (documentFile != null && isFile()) {
         this.pfd = contentResolver.openFileDescriptor(documentFile.getUri(), READ_ONLY_MODE);
         if (pfd == null) throw new IOException("Provider returned no file descriptor");
         this.fis = new FileInputStream(pfd.getFileDescriptor());
@@ -116,13 +116,16 @@ public class DocumentFileCustom implements IFile {
           initMultipart();
           // Multipart ISOs skip encryption
         } else {
-          boolean isInPS3ISOFolder = documentFile.getParentFile() != null
-              && documentFile.getParentFile().getName() != null
-              && documentFile.getParentFile().getName().equalsIgnoreCase(PS3ISO_FOLDER_NAME);
+          // Directory scans already supplied metadata for ordinary game assets.
+          // Only ISO images need parent lookups and disc-encryption detection.
+          boolean isIsoFile = fileName != null && fileName.toLowerCase(Locale.US).endsWith(ISO_EXTENSION);
+          DocumentFile parent = isIsoFile ? documentFile.getParentFile() : null;
+          String parentName = parent == null ? null : parent.getName();
+          boolean isInPS3ISOFolder = parentName != null && parentName.equalsIgnoreCase(PS3ISO_FOLDER_NAME);
 
           // For PS3ISO files, read sec0sec1 early to check for watermarks and region info
           int sec0Sec1Length = SECTOR_SIZE * 2;
-          if (isInPS3ISOFolder && documentFile.length() >= sec0Sec1Length) {
+          if (isInPS3ISOFolder && length() >= sec0Sec1Length) {
             sec0sec1 = new byte[sec0Sec1Length];
             fileChannel.position(0);
             if (fileChannel.read(ByteBuffer.wrap(sec0sec1)) != sec0Sec1Length) {
@@ -131,7 +134,7 @@ public class DocumentFileCustom implements IFile {
           }
 
           // First try to get Redump key from external .dkey file
-          encryptionKey = getRedumpKey(documentFile.getParentFile(), documentFile.getName());
+          encryptionKey = isInPS3ISOFolder ? getRedumpKey(parent, fileName) : null;
           if (encryptionKey != null) {
             detectedEncryptionType = EEncryptionType.REDUMP;
           } else if (BinaryUtils.has3K3YEncryptedWatermark(sec0sec1)) {

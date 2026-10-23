@@ -144,10 +144,29 @@ public class ModernizationRegressionTest extends TestSupport {
     }
   }
 
+  static void metadataBackedPayloadRead(Path base) throws Exception {
+    Path path=base.resolve("payload.bundle");byte[] expected={9,8,7,6};Files.write(path,expected);
+    androidx.documentfile.provider.DocumentFile provider=new androidx.documentfile.provider.DocumentFile(path.toFile()) {
+      public boolean isFile() { throw new AssertionError("Payload type was already supplied by the directory query"); }
+      public String getName() { throw new AssertionError("Payload name was already supplied by the directory query"); }
+      public androidx.documentfile.provider.DocumentFile getParentFile() {
+        throw new AssertionError("Ordinary game assets must not query their parent for ISO encryption");
+      }
+    };
+    android.content.Context app=new android.content.Context();
+    try(IFile file=new DocumentFileCustom(provider,app.getContentResolver(),app,"payload.bundle",expected.length,false)) {
+      byte[] actual=new byte[expected.length];
+      check(file.read(actual,0)==actual.length&&Arrays.equals(actual,expected),
+          "SAF payload with known metadata reads exact bytes without metadata or parent queries");
+    }
+    check(android.os.ParcelFileDescriptor.openCount==0,"metadata-backed payload closes its descriptor");
+  }
+
   public static void main(String[] args) throws Exception {
     Path base = Files.createTempDirectory(Paths.get(args[0]), "modernization-");
     wireFormats();
     sfoOwnership(base);
     directorySizesAndPaths(base);
+    metadataBackedPayloadRead(base);
   }
 }

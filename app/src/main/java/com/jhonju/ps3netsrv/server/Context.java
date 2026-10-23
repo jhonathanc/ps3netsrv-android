@@ -52,7 +52,9 @@ public class Context implements Closeable {
     this.androidContext = java.util.Objects.requireNonNull(androidContext, "androidContext cannot be null");
     this.cdSectorSize = CDSectorSize.CD_SECTOR_2352;
     try {
-      socket.setSoTimeout(60000);
+      // Mounted discs can remain idle while the PS3 uses cached data or the XMB.
+      // Keep the session until the peer disconnects or the server closes it.
+      socket.setSoTimeout(0);
     } catch (SocketException e) {
       FileLogger.logWarning("Failed to set socket timeout", e);
     }
